@@ -1,5 +1,5 @@
 {
-  "name": "4event",
+  "name": "rentevent",
   "version": "2.0.0",
   "private": true,
   "scripts": {
@@ -7,15 +7,15 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "test": "turbo test",
-    "dev:api": "turbo dev --filter=@4event/api",
-    "dev:web": "turbo dev --filter=@4event/web",
-    "dev:admin": "turbo dev --filter=@4event/admin",
-    "build:api": "turbo build --filter=@4event/api",
-    "build:web": "turbo build --filter=@4event/web",
-    "build:admin": "turbo build --filter=@4event/admin",
-    "db:generate": "turbo db:generate --filter=@4event/db",
-    "db:push": "turbo db:push --filter=@4event/db",
-    "db:studio": "pnpm --filter @4event/db db:studio"
+    "dev:api": "turbo dev --filter=@rentevent/api",
+    "dev:web": "turbo dev --filter=@rentevent/web",
+    "dev:admin": "turbo dev --filter=@rentevent/admin",
+    "build:api": "turbo build --filter=@rentevent/api",
+    "build:web": "turbo build --filter=@rentevent/web",
+    "build:admin": "turbo build --filter=@rentevent/admin",
+    "db:generate": "turbo db:generate --filter=@rentevent/db",
+    "db:push": "turbo db:push --filter=@rentevent/db",
+    "db:studio": "pnpm --filter @rentevent/db db:studio"
   },
   "devDependencies": {
     "railway": "^3.11.0",

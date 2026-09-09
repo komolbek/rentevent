@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Layers, ShoppingCart, Package } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import type { IProduct } from '@4event/types';
+import type { IProduct } from '@rentevent/types';
 import { setsApi, type SetPublic } from '@/lib/api';
 import { useCartStore } from '@/stores/cart-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';

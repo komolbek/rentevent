@@ -6,7 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { Prisma } from '@4event/db';
+import { Prisma } from '@rentevent/db';
 
 interface CreateReturnDto {
   order_id: string;

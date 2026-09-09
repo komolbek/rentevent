@@ -1,7 +1,7 @@
-// Re-export types from @4event/types with aliases used by the web app
-export type { IAddress as Address, IProduct as Product } from '@4event/types';
+// Re-export types from @rentevent/types with aliases used by the web app
+export type { IAddress as Address, IProduct as Product } from '@rentevent/types';
 
-// String literal union types matching the enum values from @4event/types
+// String literal union types matching the enum values from @rentevent/types
 // Used in consumer components that pass string literals directly
 export type DeliveryType = 'DELIVERY' | 'SELF_PICKUP';
 export type PaymentMethod = 'CASH' | 'ONLINE' | 'UZUM' | 'RAHMAT' | 'BANK_TRANSFER';

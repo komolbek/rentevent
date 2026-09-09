@@ -137,12 +137,12 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="mailto:info@4event.uz"
+                  href="mailto:info@rentevent.uz"
                   className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors text-sm"
-                  aria-label="Email: info@4event.uz"
+                  aria-label="Email: info@rentevent.uz"
                 >
                   <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  info@4event.uz
+                  info@rentevent.uz
                 </a>
               </li>
               <li className="flex items-start gap-3 text-muted-foreground text-sm">

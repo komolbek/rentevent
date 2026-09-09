@@ -14,7 +14,7 @@ import type {
   IDeliveryZone,
   IReturnRequest,
   IRentalExtension,
-} from '@4event/types';
+} from '@rentevent/types';
 
 // ---------------------------------------------------------------------------
 // Axios instance

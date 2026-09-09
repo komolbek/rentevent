@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { IUser } from '@4event/types';
+import type { IUser } from '@rentevent/types';
 
 export function getDeviceId(): string {
   if (typeof window === 'undefined') return 'server';

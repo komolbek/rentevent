@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { IProduct } from '@4event/types';
+import type { IProduct } from '@rentevent/types';
 import { userApi } from '@/lib/api';
 
 interface FavoritesState {

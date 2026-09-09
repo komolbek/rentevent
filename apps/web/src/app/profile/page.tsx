@@ -24,7 +24,7 @@ import { AddressForm } from '@/components/profile/AddressForm';
 import { AuthGuard } from '@/components/auth-guard';
 import { useAuthStore } from '@/stores/auth-store';
 import { userApi } from '@/lib/api';
-import type { IUser } from '@4event/types';
+import type { IUser } from '@rentevent/types';
 import { formatPhoneNumber } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { Address } from '@/types';

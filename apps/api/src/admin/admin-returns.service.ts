@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { Prisma, ReturnStatus, DamageLevel } from '@4event/db';
+import { Prisma, ReturnStatus, DamageLevel } from '@rentevent/db';
 
 @Injectable()
 export class AdminReturnsService {

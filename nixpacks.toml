@@ -2,10 +2,10 @@
 nixPkgs = ["nodejs_20"]
 
 [phases.install]
-cmds = ["cd 4event-server && pnpm install"]
+cmds = ["cd rentevent-server && pnpm install"]
 
 [phases.build]
-cmds = ["cd 4event-server && pnpm run build"]
+cmds = ["cd rentevent-server && pnpm run build"]
 
 [start]
-cmd = "cd 4event-server && pnpm run start"
+cmd = "cd rentevent-server && pnpm run start"

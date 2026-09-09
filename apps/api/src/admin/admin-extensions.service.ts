@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { ExtensionStatus } from '@4event/db';
+import { ExtensionStatus } from '@rentevent/db';
 
 @Injectable()
 export class AdminExtensionsService {

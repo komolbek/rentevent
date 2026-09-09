@@ -3,8 +3,8 @@ import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "4Event Admin",
-  description: "4Event Administration Panel",
+  title: "RentEvent Admin",
+  description: "RentEvent Administration Panel",
 };
 
 export default function RootLayout({

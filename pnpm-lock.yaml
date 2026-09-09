@@ -17,10 +17,10 @@ importers:
 
   apps/admin:
     dependencies:
-      '@4event/types':
+      '@rentevent/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@4event/validators':
+      '@rentevent/validators':
         specifier: workspace:*
         version: link:../../packages/validators
       '@tanstack/react-query':
@@ -96,13 +96,13 @@ importers:
 
   apps/api:
     dependencies:
-      '@4event/db':
+      '@rentevent/db':
         specifier: workspace:*
         version: link:../../packages/db
-      '@4event/types':
+      '@rentevent/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@4event/validators':
+      '@rentevent/validators':
         specifier: workspace:*
         version: link:../../packages/validators
       '@nestjs/common':
@@ -196,10 +196,10 @@ importers:
 
   apps/web:
     dependencies:
-      '@4event/types':
+      '@rentevent/types':
         specifier: workspace:*
         version: link:../../packages/types
-      '@4event/validators':
+      '@rentevent/validators':
         specifier: workspace:*
         version: link:../../packages/validators
       '@headlessui/react':

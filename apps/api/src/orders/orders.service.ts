@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { Prisma, OrderStatus } from '@4event/db';
+import { Prisma, OrderStatus } from '@rentevent/db';
 
 interface CreateOrderDto {
   items: { product_id: string; quantity: number }[];
@@ -306,7 +306,7 @@ export class OrdersService {
       this.prisma.order.count({ where }),
     ]);
 
-    // Use { items, meta } to match PaginatedResponse<T> from @4event/types —
+    // Use { items, meta } to match PaginatedResponse<T> from @rentevent/types —
     // same envelope as /products, so the web client and mobile client share it.
     return {
       items: orders,

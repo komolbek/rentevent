@@ -20,7 +20,7 @@ export class BusinessSettingsService {
     ]);
 
     return {
-      name: settings?.name ?? '4Event',
+      name: settings?.name ?? 'RentEvent',
       phone: settings?.phone ?? '',
       address: settings?.address ?? '',
       latitude: settings?.latitude ?? null,

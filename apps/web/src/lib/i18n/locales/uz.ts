@@ -64,7 +64,7 @@ const uz: Record<TranslationKey, string> = {
   'footer.faq': 'FAQ',
   'footer.rental_terms': 'Ijara shartlari',
   'footer.privacy_policy': 'Maxfiylik siyosati',
-  'footer.copyright': '\u00A9 {year} 4Event. Barcha huquqlar himoyalangan.',
+  'footer.copyright': '\u00A9 {year} RentEvent. Barcha huquqlar himoyalangan.',
   'footer.address': 'Toshkent sh., Amir Temur ko\'chasi, 1',
 
   // Home Page
@@ -401,13 +401,13 @@ const uz: Record<TranslationKey, string> = {
 
   // About Page
   'about.title': 'Biz haqimizda',
-  'about.subtitle': '4Event — Toshkentda tadbirlarni tashkil qilishdagi ishonchli hamkoringiz',
+  'about.subtitle': 'RentEvent — Toshkentda tadbirlarni tashkil qilishdagi ishonchli hamkoringiz',
   'about.stat_experience': 'Yillik tajriba',
   'about.stat_clients': 'Mamnun mijozlar',
   'about.stat_events': 'Tadbirlar',
   'about.stat_support': 'Qo\'llab-quvvatlash',
   'about.who_we_title': 'Biz kimmiz',
-  'about.who_we_text': '4Event — Toshkentda tadbirlar uchun inventarni ijaraga berish xizmatidir. Biz to\'ylar, korporativ tadbirlar, tug\'ilgan kunlar va boshqa bayramlar uchun keng tanlovdagi jihozlarni taklif qilamiz. Bizning vazifamiz — har bir tadbiringizni unutilmas qilishdir.',
+  'about.who_we_text': 'RentEvent — Toshkentda tadbirlar uchun inventarni ijaraga berish xizmatidir. Biz to\'ylar, korporativ tadbirlar, tug\'ilgan kunlar va boshqa bayramlar uchun keng tanlovdagi jihozlarni taklif qilamiz. Bizning vazifamiz — har bir tadbiringizni unutilmas qilishdir.',
   'about.why_us_title': 'Nega biz',
   'about.why_us_1': 'Sifatli jihozlarning keng assortimenti',
   'about.why_us_2': 'Arzon narxlar va moslashuvchan chegirmalar tizimi',
@@ -530,7 +530,7 @@ const uz: Record<TranslationKey, string> = {
   'terms.title': 'Ijara shartlari',
   'terms.last_updated': 'Oxirgi yangilanish: 01.01.2024',
   'terms.s1_title': '1. Umumiy qoidalar',
-  'terms.s1_content': 'Ushbu Ijara shartlari 4Event xizmati (keyingi o\'rinlarda — "Ijaraga beruvchi") va mijoz (keyingi o\'rinlarda — "Ijarachi") o\'rtasidagi tadbir jihozlarini ijaraga berish munosabatlarini tartibga soladi.\n\nSaytda buyurtma berib, Ijarachi ushbu Shartlar bilan tanishgan va rozi bo\'lganini tasdiqlaydi.',
+  'terms.s1_content': 'Ushbu Ijara shartlari RentEvent xizmati (keyingi o\'rinlarda — "Ijaraga beruvchi") va mijoz (keyingi o\'rinlarda — "Ijarachi") o\'rtasidagi tadbir jihozlarini ijaraga berish munosabatlarini tartibga soladi.\n\nSaytda buyurtma berib, Ijarachi ushbu Shartlar bilan tanishgan va rozi bo\'lganini tasdiqlaydi.',
   'terms.s2_title': '2. Ijara shartlari',
   'terms.s2_content': '• Minimal ijara muddati 1 kun\n• Ijara vaqti jihoz topshirilgan paytdan boshlanadi\n• Ijarachi jihozni o\'z vaqtida va to\'g\'ri holatda qaytarishga majbur\n• Jihozdan faqat maqsadli foydalanish mumkin',
   'terms.s3_title': '3. To\'lov va zaklad',

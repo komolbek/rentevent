@@ -64,7 +64,7 @@ const en: Record<TranslationKey, string> = {
   'footer.faq': 'FAQ',
   'footer.rental_terms': 'Rental terms',
   'footer.privacy_policy': 'Privacy policy',
-  'footer.copyright': '\u00A9 {year} 4Event. All rights reserved.',
+  'footer.copyright': '\u00A9 {year} RentEvent. All rights reserved.',
   'footer.address': 'Tashkent, Amir Temur st., 1',
 
   // Home Page
@@ -401,13 +401,13 @@ const en: Record<TranslationKey, string> = {
 
   // About Page
   'about.title': 'About Us',
-  'about.subtitle': '4Event — your reliable partner for organizing events in Tashkent',
+  'about.subtitle': 'RentEvent — your reliable partner for organizing events in Tashkent',
   'about.stat_experience': 'Years of experience',
   'about.stat_clients': 'Happy clients',
   'about.stat_events': 'Events',
   'about.stat_support': 'Support',
   'about.who_we_title': 'Who we are',
-  'about.who_we_text': '4Event is an event equipment rental service in Tashkent. We offer a wide range of equipment for weddings, corporate events, birthdays and other celebrations. Our mission is to make every event of yours unforgettable.',
+  'about.who_we_text': 'RentEvent is an event equipment rental service in Tashkent. We offer a wide range of equipment for weddings, corporate events, birthdays and other celebrations. Our mission is to make every event of yours unforgettable.',
   'about.why_us_title': 'Why choose us',
   'about.why_us_1': 'Wide range of quality equipment',
   'about.why_us_2': 'Affordable prices and flexible discounts',
@@ -530,7 +530,7 @@ const en: Record<TranslationKey, string> = {
   'terms.title': 'Rental Terms',
   'terms.last_updated': 'Last updated: 01.01.2024',
   'terms.s1_title': '1. General provisions',
-  'terms.s1_content': 'These Rental Terms govern the relationship between the 4Event service (hereinafter “Lessor”) and the customer (hereinafter “Renter”) when renting event equipment.\n\nBy placing an order on the site, the Renter confirms that they have read and agreed to these Terms.',
+  'terms.s1_content': 'These Rental Terms govern the relationship between the RentEvent service (hereinafter “Lessor”) and the customer (hereinafter “Renter”) when renting event equipment.\n\nBy placing an order on the site, the Renter confirms that they have read and agreed to these Terms.',
   'terms.s2_title': '2. Rental conditions',
   'terms.s2_content': '• The minimum rental period is 1 day\n• The rental time counts from the moment the equipment is handed over\n• The Renter is obligated to return the equipment on time and in proper condition\n• Equipment may only be used for its intended purpose',
   'terms.s3_title': '3. Payment and deposit',

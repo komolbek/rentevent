@@ -1,4 +1,4 @@
-# 4Event / RentEvent — Session Handoff
+# RentEvent / RentEvent — Session Handoff
 
 > Working notes for continuing this project in a new chat. Last updated after the
 > Aug 2026 build session (fonts, header, product i18n, categories, events, sets).
@@ -10,8 +10,8 @@ An event‑equipment **rental** business:
 - **API** (`api.rentevent.uz/api`) — NestJS backend.
 
 ## Repo layout (monorepo — pnpm + turbo)
-Everything lives in **`4event-backend/`** (git repo, default branch `main`).
-`4event-ios/` is a **separate** repo. Apps:
+Everything lives in **`rentevent-backend/`** (git repo, default branch `main`).
+`rentevent-ios/` is a **separate** repo. Apps:
 - `apps/web` — Next.js storefront (port 3000)
 - `apps/admin` — Next.js admin (port 3001)
 - `apps/api` — NestJS API (port 4000)
@@ -33,7 +33,7 @@ Everything lives in **`4event-backend/`** (git repo, default branch `main`).
   cd packages/db
   DATABASE_URL="<prod url>" npx prisma db push   # additive = safe, no data loss
   ```
-  Then `pnpm --filter @4event/db build` and rebuild the API. **Get user OK before pushing to prod.**
+  Then `pnpm --filter @rentevent/db build` and rebuild the API. **Get user OK before pushing to prod.**
 - Local API build needs the client generated: `pnpm db:generate` (or `cd packages/db && npx prisma generate`), else you get 198 "Property X does not exist on PrismaService" errors.
 
 ## ⚠️ Admin ↔ API contract gotcha (important)
@@ -83,9 +83,9 @@ blank fields → this mismatch is the first suspect.
 ## Handy commands
 ```bash
 # build one app
-pnpm --filter @4event/web build
+pnpm --filter @rentevent/web build
 cd apps/admin && npx next build
-pnpm --filter @4event/api exec nest build   # needs prisma client generated first
+pnpm --filter @rentevent/api exec nest build   # needs prisma client generated first
 
 # run storefront locally (no gate locally)
 cd apps/web && NEXT_PUBLIC_API_URL=https://api.rentevent.uz/api npx next dev --port 3009

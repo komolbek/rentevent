@@ -11,7 +11,7 @@ export class AdminSettingsService {
     return {
       settings: settings || {
         id: 'default',
-        name: '4Event',
+        name: 'RentEvent',
         phone: '',
         address: '',
         latitude: null,

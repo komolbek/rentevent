@@ -1,5 +1,5 @@
 {
-  "name": "@4event/api",
+  "name": "@rentevent/api",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -13,9 +13,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@4event/db": "workspace:*",
-    "@4event/types": "workspace:*",
-    "@4event/validators": "workspace:*",
+    "@rentevent/db": "workspace:*",
+    "@rentevent/types": "workspace:*",
+    "@rentevent/validators": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",

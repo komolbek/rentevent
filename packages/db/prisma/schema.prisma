@@ -419,7 +419,7 @@ model DeliveryZone {
 
 model BusinessSettings {
   id           String   @id @default("default")
-  name         String   @default("4Event")
+  name         String   @default("RentEvent")
   phone        String   @default("")
   address      String   @default("")
   latitude     Decimal? @db.Decimal(10, 8)

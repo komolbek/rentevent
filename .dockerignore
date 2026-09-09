@@ -4,8 +4,8 @@
 **/.pnp.js
 
 # Build outputs
-4event-backend/4event-server/.next
-4event-backend/4event-web/dist
+rentevent-backend/rentevent-server/.next
+rentevent-backend/rentevent-web/dist
 
 # Testing
 **/tests
@@ -30,7 +30,7 @@
 *~
 
 # iOS app (not needed for backend Docker image)
-4event-ios
+rentevent-ios
 
 # OS files
 **/.DS_Store

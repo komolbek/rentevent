@@ -14,7 +14,7 @@ import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { StaffId } from '../common/decorators';
 import { AdminOrdersService } from './admin-orders.service';
-import { OrderStatus, CorporateInvoiceStatus } from '@4event/db';
+import { OrderStatus, CorporateInvoiceStatus } from '@rentevent/db';
 
 @ApiTags('Admin')
 @UseGuards(AdminAuthGuard)

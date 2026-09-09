@@ -41,14 +41,14 @@ export default function ContactsPage() {
     {
       icon: Mail,
       title: t('contacts.email'),
-      value: 'info@4event.uz',
-      href: 'mailto:info@4event.uz',
+      value: 'info@rentevent.uz',
+      href: 'mailto:info@rentevent.uz',
     },
     {
       icon: MessageCircle,
       title: t('contacts.telegram'),
-      value: '@4event_uz',
-      href: 'https://t.me/4event_uz',
+      value: '@rentevent_uz',
+      href: 'https://t.me/rentevent_uz',
     },
     {
       icon: Clock,

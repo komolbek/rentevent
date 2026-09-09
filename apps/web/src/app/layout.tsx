@@ -4,8 +4,8 @@ import { Header, Footer } from '@/components/layout';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '4Event - Event Equipment Rental',
-  description: 'Rent event equipment easily with 4Event',
+  title: 'RentEvent - Event Equipment Rental',
+  description: 'Rent event equipment easily with RentEvent',
 };
 
 export const viewport: Viewport = {

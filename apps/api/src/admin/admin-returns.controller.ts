@@ -13,7 +13,7 @@ import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { StaffId } from '../common/decorators';
 import { AdminReturnsService } from './admin-returns.service';
-import { ReturnStatus, DamageLevel } from '@4event/db';
+import { ReturnStatus, DamageLevel } from '@rentevent/db';
 
 @ApiTags('Admin')
 @UseGuards(AdminAuthGuard)

@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { Prisma, OrderStatus, CorporateInvoiceStatus } from '@4event/db';
+import { Prisma, OrderStatus, CorporateInvoiceStatus } from '@rentevent/db';
 
 const VALID_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   CONFIRMED: [OrderStatus.PREPARING, OrderStatus.CANCELLED],

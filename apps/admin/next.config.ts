@@ -3,7 +3,7 @@ import type { NextConfig } from 'next';
 const nextConfig: NextConfig = {
   output: 'standalone',
   reactStrictMode: true,
-  transpilePackages: ['@4event/types', '@4event/validators'],
+  transpilePackages: ['@rentevent/types', '@rentevent/validators'],
   images: {
     remotePatterns: [
       {

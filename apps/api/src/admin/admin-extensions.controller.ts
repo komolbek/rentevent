@@ -9,7 +9,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { StaffId } from '../common/decorators';
 import { AdminExtensionsService } from './admin-extensions.service';
-import { ExtensionStatus } from '@4event/db';
+import { ExtensionStatus } from '@rentevent/db';
 
 @ApiTags('Admin')
 @UseGuards(AdminAuthGuard)

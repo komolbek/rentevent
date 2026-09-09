@@ -8,7 +8,7 @@ services:
     ports:
       - '4000:4000'
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/4event
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/rentevent
       - NODE_ENV=production
       - ADMIN_API_KEY=${ADMIN_API_KEY:-change-me-in-production}
       - ENABLE_TEST_AUTH=${ENABLE_TEST_AUTH:-false}
@@ -59,7 +59,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=4event
+      - POSTGRES_DB=rentevent
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

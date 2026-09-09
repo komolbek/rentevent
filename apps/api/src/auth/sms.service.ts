@@ -34,7 +34,7 @@ export class SmsService {
   }
 
   async sendOTP(phoneNumber: string, code: string): Promise<SMSResult> {
-    const message = `Kod podtverzhdeniya dlya vhoda na platformu 4Event: ${code}. Nikomu ne soobshchayte etot kod.`;
+    const message = `RentEvent: tasdiqlash kodi ${code}. Hech kimga aytmang.`;
     if (this.isMockMode()) {
       this.addDevEntry(phoneNumber, code, 'customer_auth', message);
     }
@@ -42,7 +42,7 @@ export class SmsService {
   }
 
   async sendAdminOTP(phoneNumber: string, code: string): Promise<SMSResult> {
-    const message = `Kod dlya vosstanovleniya parolya na platforme 4Event: ${code}. Nikomu ne soobshchayte etot kod.`;
+    const message = `RentEvent: parolni tiklash kodi ${code}. Hech kimga aytmang.`;
     if (this.isMockMode()) {
       this.addDevEntry(phoneNumber, code, 'admin_reset', message);
     }

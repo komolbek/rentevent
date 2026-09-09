@@ -1,5 +1,5 @@
 {
-  "name": "@4event/web",
+  "name": "@rentevent/web",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -9,9 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@4event/types": "workspace:*",
+    "@rentevent/types": "workspace:*",
     "@headlessui/react": "^2.2.0",
-    "@4event/validators": "workspace:*",
+    "@rentevent/validators": "workspace:*",
     "@tanstack/react-query": "^5.90.0",
     "axios": "^1.13.0",
     "class-variance-authority": "^0.7.1",
