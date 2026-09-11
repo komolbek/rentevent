@@ -51,10 +51,14 @@ export function validateAdminSession(
     .update(payload)
     .digest('hex');
 
-  const isValid = crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature),
-  );
+  const signatureBuf = Buffer.from(signature);
+  const expectedBuf = Buffer.from(expectedSignature);
+
+  // timingSafeEqual throws on buffers of different length; a malformed
+  // signature must be rejected as invalid, not surfaced as a 500.
+  if (signatureBuf.length !== expectedBuf.length) return { valid: false };
+
+  const isValid = crypto.timingSafeEqual(signatureBuf, expectedBuf);
 
   return isValid ? { valid: true, staffId } : { valid: false };
 }
