@@ -24,7 +24,17 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/_next/') ||
       pathname === '/favicon.ico' ||
       pathname === '/robots.txt' ||
-      pathname === '/sitemap.xml';
+      pathname === '/sitemap.xml' ||
+      // Brand assets must stay reachable without the access cookie: browsers
+      // fetch icons/manifest before any auth, and link-preview crawlers
+      // (Telegram, Facebook, ...) request the OG image with no cookie at all.
+      pathname === '/icon.svg' ||
+      pathname === '/apple-icon.png' ||
+      pathname === '/opengraph-image.png' ||
+      pathname === '/manifest.webmanifest' ||
+      pathname === '/icon-192.png' ||
+      pathname === '/icon-512.png' ||
+      pathname === '/icon-512-maskable.png';
 
     if (!isExempt) {
       const secret = process.env.SITE_ACCESS_SECRET;

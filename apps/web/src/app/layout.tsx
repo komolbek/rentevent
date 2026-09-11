@@ -3,16 +3,39 @@ import { Providers } from './providers';
 import { Header, Footer } from '@/components/layout';
 import './globals.css';
 
+const SITE_URL = 'https://rentevent.uz';
+const SITE_TITLE = 'RentEvent - Event Equipment Rental';
+const SITE_DESCRIPTION = 'Rent event equipment easily with RentEvent';
+
+// Icons, apple-touch-icon and the OG image come from the file conventions in
+// this directory (favicon.ico, icon.svg, apple-icon.png, opengraph-image.png);
+// Next emits the <link>/<meta> tags for them, so none are hand-written here.
+// metadataBase makes the generated og:image URL absolute — relative paths
+// break link previews.
 export const metadata: Metadata = {
-  title: 'RentEvent - Event Equipment Rental',
-  description: 'Rent event equipment easily with RentEvent',
+  metadataBase: new URL(SITE_URL),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  manifest: '/manifest.webmanifest',
+  openGraph: {
+    type: 'website',
+    url: SITE_URL,
+    siteName: 'RentEvent',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#6366f1',
+  themeColor: '#F2562B',
 };
 
 export default function RootLayout({
