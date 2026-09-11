@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Phone, Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { adminAuthApi } from '@/lib/api';
 import { useAdminAuthStore } from '@/stores/admin-auth-store';
+import { Logo } from "@/components/Logo";
 
 function formatPhoneInput(value: string): string {
   const digits = value.replace(/\D/g, '');
@@ -87,8 +88,8 @@ function AdminLoginContent() {
       <div className="w-full max-w-md">
         {/* Logo & Title */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-500 text-white text-2xl font-bold mb-4 shadow-lg shadow-primary-500/25">
-            4E
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-orange text-white mb-4">
+            <Logo className="h-4 w-auto" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">RentEvent</h1>
           <p className="text-gray-500 mt-1">Панель администратора</p>

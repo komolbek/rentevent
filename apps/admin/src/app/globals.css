@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 @theme {
+  /* Brand mark colour. The panel's own palette stays blue; only the logo uses this. */
+  --color-brand-orange: #F2562B;
+
   --color-primary-50: #eff6ff;
   --color-primary-100: #dbeafe;
   --color-primary-200: #bfdbfe;

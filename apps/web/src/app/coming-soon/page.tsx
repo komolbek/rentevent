@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useLanguageStore } from '@/stores/language-store';
 import type { Locale } from '@/lib/i18n';
+import { Logo } from '@/components/layout/Logo';
 
 const LANGUAGES: { code: Locale; label: string; full: string }[] = [
   { code: 'ru', label: 'RU', full: 'Русский' },
@@ -95,6 +96,7 @@ function ComingSoonForm() {
       <div className="flex flex-1 items-center justify-center px-6 pb-10">
         <div className="w-full max-w-md">
           <div className="mb-10 text-center">
+            <Logo className="mx-auto mb-5 h-10 w-auto text-primary dark:text-white" />
             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
               {t('coming_soon.brand')}
             </p>

@@ -128,10 +128,9 @@ export function Header() {
         <div className="container mx-auto px-4">
           <div className="flex h-20 items-center gap-6">
             {/* Logo */}
-            <Link href="/" className="flex shrink-0 items-center" aria-label="rent event — Home">
+            <Link href="/" className="flex h-9 shrink-0 items-center" aria-label="RentEvent — Home">
               <motion.span whileHover={{ scale: 1.03 }} className="flex">
-                <Logo className="h-9 w-auto block dark:hidden" />
-                <Logo inverted className="h-9 w-auto hidden dark:block" />
+                <Logo className="h-9 w-auto text-primary dark:text-white" />
               </motion.span>
             </Link>
 

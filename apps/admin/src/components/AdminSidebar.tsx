@@ -21,6 +21,7 @@ import { useTranslation } from "@/lib/i18n/useTranslation";
 import { adminAuthApi } from "@/lib/api";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { Logo } from "@/components/Logo";
 
 const navItems = [
   { href: "/admin/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard },
@@ -65,7 +66,10 @@ export function AdminSidebar() {
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
       <div className="flex h-16 items-center border-b border-gray-200 px-6">
-        <h1 className="text-xl font-bold text-gray-900">RentEvent Admin</h1>
+        <h1 className="flex items-center gap-2.5 text-xl font-bold text-gray-900">
+          <Logo className="h-5 w-auto text-brand-orange" />
+          <span>Admin</span>
+        </h1>
       </div>
 
       <nav className="flex-1 space-y-1 px-3 py-4">

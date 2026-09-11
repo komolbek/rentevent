@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { api } from '@/lib/api';
+import { Logo } from "@/components/Logo";
 
 type Step = 'phone' | 'otp' | 'password';
 
@@ -199,8 +200,8 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-500 text-white text-2xl font-bold mb-4 shadow-lg shadow-primary-500/25">
-            4E
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-orange text-white mb-4">
+            <Logo className="h-4 w-auto" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
             Восстановление пароля

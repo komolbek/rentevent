@@ -45,9 +45,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <Link href="/" className="flex items-center" aria-label="rent event. — Home">
-              <Logo className="h-10 w-auto block dark:hidden" />
-              <Logo inverted className="h-10 w-auto hidden dark:block" />
+            <Link href="/" className="flex h-10 items-center" aria-label="RentEvent — Home">
+              <Logo className="h-10 w-auto text-primary dark:text-white" />
             </Link>
             <p className="eyebrow text-muted-foreground">{t('footer.support')}</p>
             <div className="flex gap-3">
