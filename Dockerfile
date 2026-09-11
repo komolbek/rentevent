@@ -73,6 +73,9 @@ ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 appuser
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
+# Standalone output does not include public/ — without this every file in
+# it (manifest, PWA icons, ...) 404s in production.
+COPY --from=builder /app/apps/web/public ./apps/web/public
 RUN chown -R appuser:nodejs /app
 USER appuser
 ENV PORT=3000
