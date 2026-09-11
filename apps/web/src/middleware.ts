@@ -28,7 +28,8 @@ export async function middleware(request: NextRequest) {
       // Brand assets must stay reachable without the access cookie: browsers
       // fetch icons/manifest before any auth, and link-preview crawlers
       // (Telegram, Facebook, ...) request the OG image with no cookie at all.
-      pathname === '/icon.svg' ||
+      pathname === '/icon0.svg' ||
+      pathname === '/icon1.png' ||
       pathname === '/apple-icon.png' ||
       pathname === '/opengraph-image.png' ||
       pathname === '/manifest.webmanifest' ||
