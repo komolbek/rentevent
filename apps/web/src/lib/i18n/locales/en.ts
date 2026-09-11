@@ -55,6 +55,7 @@ const en: Record<TranslationKey, string> = {
   'header.search_label': 'Search the catalog',
   'header.search_placeholder': 'Search the catalog',
   'header.search_submit': 'Search',
+  'header.rent_now': 'Rent now',
   'nav.delivery': 'Delivery',
   'nav.contacts': 'Contacts',
   'footer.social': 'Follow us',

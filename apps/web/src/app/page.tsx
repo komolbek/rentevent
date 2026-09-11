@@ -3,10 +3,9 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { Truck, Shield, Clock, Phone, ArrowUpRight, PackageCheck } from 'lucide-react';
+import { Truck, Shield, Clock, Phone, ArrowUpRight, ArrowRight, PackageCheck } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { CategoryCard } from '@/components/catalog/CategoryCard';
-import { HeroSearch } from '@/components/home/HeroSearch';
 import { ProductRail } from '@/components/home/ProductRail';
 import { settingsApi, categoriesApi, productsApi } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
@@ -63,11 +62,6 @@ export default function HomePage() {
     createdAt: c.createdAt,
   }));
 
-  const searchCategories = rootCategories.map((c) => ({
-    id: c.id,
-    name: localizeName(c.name),
-  }));
-
   // Three real product shots for the hero collage. The catalogue photos are
   // white-background cutouts, which is exactly why the hero is light now —
   // they sit on the warm paper background instead of fighting a black panel.
@@ -109,9 +103,8 @@ export default function HomePage() {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="relative rounded-3xl border border-border bg-muted px-5 py-6 sm:px-10 sm:py-8 md:px-12 md:py-10"
         >
-          {/* Decoration lives in its own clipped layer so the hero itself can
-              stay unclipped — the search bar's calendar popover overflows the
-              hero box, and `overflow-hidden` here would cut it in half. */}
+          {/* Decoration lives in its own clipped layer so the grain and wash
+              never bleed past the rounded corners. */}
           <div
             className="u-grain pointer-events-none absolute inset-0 overflow-hidden rounded-3xl"
             aria-hidden="true"
@@ -137,6 +130,21 @@ export default function HomePage() {
               <p className="mt-4 max-w-xl text-sm text-muted-foreground sm:text-base">
                 {t('home.hero_subtitle')}
               </p>
+
+              {/* Search lives in the header now; the hero's job is to say
+                  what this is and hand the visitor to the catalog. */}
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <Link href="/catalog">
+                  <Button size="lg" variant="primary" rightIcon={<ArrowRight className="h-5 w-5" />}>
+                    {t('home.view_catalog')}
+                  </Button>
+                </Link>
+                <a href={`tel:${phoneNumber}`}>
+                  <Button size="lg" variant="outline" leftIcon={<Phone className="h-5 w-5" />}>
+                    {t('home.call')}
+                  </Button>
+                </a>
+              </div>
             </div>
 
             {/* Product collage — desktop only, and only once real photos load. */}
@@ -172,10 +180,6 @@ export default function HomePage() {
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="relative z-20 mt-6 sm:mt-8">
-            <HeroSearch categories={searchCategories} />
           </div>
         </motion.div>
       </section>

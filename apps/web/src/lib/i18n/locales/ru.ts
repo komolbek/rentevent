@@ -53,6 +53,7 @@ const ru = {
   'header.search_label': 'Поиск по каталогу',
   'header.search_placeholder': 'Поиск по каталогу',
   'header.search_submit': 'Найти',
+  'header.rent_now': 'Арендовать',
   'nav.delivery': 'Доставка',
   'nav.contacts': 'Контакты',
   'footer.social': 'Мы в соцсетях',

@@ -55,6 +55,7 @@ const uz: Record<TranslationKey, string> = {
   'header.search_label': 'Katalogdan qidirish',
   'header.search_placeholder': 'Katalogdan qidirish',
   'header.search_submit': 'Qidirish',
+  'header.rent_now': 'Ijaraga olish',
   'nav.delivery': 'Yetkazib berish',
   'nav.contacts': 'Kontaktlar',
   'footer.social': 'Ijtimoiy tarmoqlarda',

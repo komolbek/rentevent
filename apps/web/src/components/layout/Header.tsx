@@ -113,14 +113,18 @@ export function Header() {
   };
 
   // Sections only — favourites, cart and account are utilities and live in
-  // the icon cluster, so they are not repeated here.
+  // the icon cluster. The catalog is not here either: on desktop it is the
+  // red "Арендовать" tab on the right edge (the fair.rent pattern), so
+  // listing it twice would just be noise. The phone menu, where the tab is
+  // hidden, keeps a Catalog entry.
   const navLinks = [
-    { href: '/catalog', label: t('nav.catalog') },
     { href: '/sets', label: t('nav.sets') },
     { href: '/events', label: t('nav.events') },
     { href: '/delivery', label: t('nav.delivery') },
+    { href: '/about', label: t('footer.about') },
     { href: '/contacts', label: t('nav.contacts') },
   ];
+  const mobileNavLinks = [{ href: '/catalog', label: t('nav.catalog') }, ...navLinks];
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
@@ -328,6 +332,24 @@ export function Header() {
         </div>
       </div>
 
+      {/* "Rent now" tab — fixed to the right edge of the viewport, the way
+          fair.rent does it. This is the one route into the catalog on
+          desktop, so it stays in view on every page and every scroll
+          position. Hidden below md, where it would sit on top of content. */}
+      <Link
+        href="/catalog"
+        className={cn(
+          // rounded-r + rotate(180deg) = rounded on the visible left edge.
+          'fixed right-0 top-1/2 z-30 hidden items-center gap-2 rounded-r-lg bg-rent px-2.5 py-4 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)] transition-colors hover:bg-rent-hover md:flex',
+          pathname === '/catalog' && 'md:hidden',
+        )}
+        style={{ writingMode: 'vertical-rl', transform: 'translateY(-50%) rotate(180deg)' }}
+        aria-label={t('header.rent_now')}
+      >
+        <ShoppingCart className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
+        {t('header.rent_now')}
+      </Link>
+
       {/* Mobile menu */}
       <AnimatePresence>
         {isMenuOpen && (
@@ -354,7 +376,7 @@ export function Header() {
               </form>
 
               <nav className="space-y-0.5" aria-label="Mobile navigation">
-                {navLinks.map((link) => (
+                {mobileNavLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}

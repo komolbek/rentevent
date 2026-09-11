@@ -31,6 +31,12 @@
   --color-brand-light-gray: #D0D0D0;
   --color-brand-dark-gray: #404040;
 
+  /* The fixed "Арендовать" tab on the right edge is a true red, deliberately
+     one step away from the brand orange so it reads as the one hard call
+     to action on the page (the fair.rent "RENT NOW" pattern). */
+  --color-rent: #D92C1E;
+  --color-rent-hover: #B8231A;
+
   --color-primary: #F2562B;
   --color-primary-text: #CF4A25;
   --color-primary-50: #fff6f2;

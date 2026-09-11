@@ -180,7 +180,7 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
 
             <div className="flex items-end justify-between gap-2">
               <div className="min-w-0">
-                <p className="eyebrow text-muted-foreground mb-1.5">{t('product_card.per_day')}</p>
+                <p className="eyebrow whitespace-nowrap text-muted-foreground mb-1.5">{t('product_card.per_day')}</p>
                 <p className="text-lg font-semibold text-foreground truncate">
                   {formatPrice(product.dailyPrice)}
                   <span className="ml-1 text-xs font-normal text-muted-foreground">UZS</span>
@@ -192,10 +192,12 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
                   add that the card never did (dates are chosen on the
                   product page). Same arrow chip as the category tiles. */}
               <span
-                className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-muted pl-3 pr-2 text-xs font-medium text-foreground/80 transition-colors group-hover:bg-primary group-hover:text-white"
+                className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-muted px-2.5 text-xs font-medium text-foreground/80 transition-colors group-hover:bg-primary group-hover:text-white md:pl-3 md:pr-2"
                 aria-hidden="true"
               >
-                {t('product_card.view')}
+                {/* Two cards share a 375px phone screen; the word only fits
+                    from md up, the arrow alone is the affordance below. */}
+                <span className="hidden md:inline">{t('product_card.view')}</span>
                 <ArrowUpRight className="h-4 w-4" />
               </span>
             </div>
