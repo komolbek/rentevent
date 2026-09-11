@@ -191,13 +191,14 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
                   not a cart button — a cart icon here promised a one-click
                   add that the card never did (dates are chosen on the
                   product page). Same arrow chip as the category tiles. */}
+              {/* Two cards share a 375px phone screen, and even an arrow-only
+                  chip leaves the price ~87px and clips it. Below md the card
+                  itself (image + name + price) is the affordance. */}
               <span
-                className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-muted px-2.5 text-xs font-medium text-foreground/80 transition-colors group-hover:bg-primary group-hover:text-white md:pl-3 md:pr-2"
+                className="hidden h-9 shrink-0 items-center gap-1 rounded-full bg-muted pl-3 pr-2 text-xs font-medium text-foreground/80 transition-colors group-hover:bg-primary group-hover:text-white md:inline-flex"
                 aria-hidden="true"
               >
-                {/* Two cards share a 375px phone screen; the word only fits
-                    from md up, the arrow alone is the affordance below. */}
-                <span className="hidden md:inline">{t('product_card.view')}</span>
+                {t('product_card.view')}
                 <ArrowUpRight className="h-4 w-4" />
               </span>
             </div>

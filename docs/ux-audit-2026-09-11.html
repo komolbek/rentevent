@@ -97,7 +97,7 @@
   <header class="top">
     <span class="eyebrow">Storefront · apps/web · 11 Sep 2026</span>
     <h1>RentEvent Storefront Audit</h1>
-    <p class="lede">Every page and state of rentevent.uz checked against <em>Don’t Make Me Think</em> (Krug), with the client’s reference site, fair.rent, used as the size guide for the header. Most findings are already fixed in the working tree; the ones that need a decision from you are marked <em>open</em>.</p>
+    <p class="lede">Every page and state of rentevent.uz checked against <em>Don’t Make Me Think</em> (Krug), with the client’s reference site, fair.rent, used as the size guide for the header. Fixes are live on rentevent.uz (commits 3a50597 and the follow-up); the ones that need a decision from you are marked <em>open</em>.</p>
     <div class="meta">
       <span>Pages reviewed <b>21</b></span>
       <span>States <b>loading · empty · error · signed-out · dark · phone</b></span>
@@ -105,8 +105,8 @@
     </div>
     <div class="tally">
       <div><div class="n">38</div><div class="l">findings</div></div>
-      <div><div class="n">31</div><div class="l">fixed in this pass (uncommitted)</div></div>
-      <div><div class="n">7</div><div class="l">open — need content or a product call</div></div>
+      <div><div class="n">32</div><div class="l">fixed and deployed to rentevent.uz</div></div>
+      <div><div class="n">6</div><div class="l">open — need content or a product call</div></div>
     </div>
   </header>
 
@@ -119,10 +119,11 @@
         <tbody>
           <tr><td>Header height</td><td>≈ 85 px, one bar</td><td>116 px (36 px strip + 80 px bar)</td><td>80 px desktop · 64 px phone, one bar</td></tr>
           <tr><td>Logo</td><td>Mark + “Fair.Rent” + “GLOBAL” tag, ≈ 40 px</td><td>“re.” mark only, 36 px — does not say what the site is</td><td>“re.” mark 36 px + “RentEvent” + tagline “Аренда для мероприятий”</td></tr>
-          <tr><td>Main nav</td><td>5 items, 11 px uppercase, centred</td><td>5 items, 14 px uppercase; included Home and Favorites</td><td>Каталог · Сеты · Мероприятия · Доставка · Контакты, 11 px / 0.12 em tracking</td></tr>
-          <tr><td>Search</td><td>Hairline field under the nav</td><td>None (removed in an earlier pass)</td><td>Hairline field under the nav, 352 px; synced with the catalog’s <code>?q=</code></td></tr>
+          <tr><td>Main nav</td><td>5 items, 11 px uppercase, centred</td><td>5 items, 14 px uppercase; included Home and Favorites</td><td>Сеты · Мероприятия · Доставка · О нас · Контакты, 11 px / 0.12 em tracking; the catalog is the red side tab</td></tr>
+          <tr><td>Search</td><td>Hairline field under the nav</td><td>None (removed in an earlier pass)</td><td>Hairline field under the nav, 352 px; synced with the catalog’s <code>?q=</code>. The home-page hero search was removed as a duplicate</td></tr>
           <tr><td>Icon cluster</td><td>≈ 16 px icons, tight</td><td>20 px icons in 40 px buttons</td><td>18 px icons in 36 px buttons (44 px on phone)</td></tr>
           <tr><td>Contact row</td><td>“PHONE › or EMAIL ›”, 10 px uppercase</td><td>“Телефон ›” that reveals the number on click</td><td>“Телефон › или Почта ›” — direct <code>tel:</code> and <code>mailto:</code> links</td></tr>
+          <tr><td>“Rent now” tab</td><td>Red vertical tab fixed to the right edge</td><td>None</td><td>Red vertical “Арендовать” tab on the right edge (desktop), opens the catalog; hidden on the catalog page and on phones</td></tr>
           <tr><td>Language</td><td>Small “EU-en ▾” tab hanging from the top edge</td><td>Full-width strip; a button that cycles RU→EN→UZ blind</td><td>Small tab, top-right, with a real RU / UZ / EN selector and the theme toggle</td></tr>
         </tbody>
       </table>
@@ -131,7 +132,7 @@
 
   <section>
     <h2>Findings by page</h2>
-    <p class="sub">The mono tag names the Krug principle each finding fails. “Fixed” means the change is in the working tree and type-checks; nothing is committed or deployed yet.</p>
+    <p class="sub">The mono tag names the Krug principle each finding fails. “Fixed” means the change is deployed and was checked on production behind the gate.</p>
 
     <div class="page">
       <div><h3>Site-wide</h3><div class="route">layout · header · footer · Button</div></div>
@@ -152,7 +153,7 @@
       <div><h3>Home</h3><div class="route">/</div></div>
       <ul class="items">
         <li class="item"><span class="chip fixed">fixed</span><div><div class="k">the home-page test</div><div class="t">“Всё для вашего идеального мероприятия” is a slogan; it never says what you rent or where.</div><div class="d">Now “Аренда оборудования для мероприятий в Ташкенте” with a concrete second line (what, from 1 day, delivery). Same in UZ and EN.</div></div></li>
-        <li class="item"><span class="chip open">open</span><div><div class="k">honest controls</div><div class="t">The hero date picker looks like an availability filter but the products endpoint has no date parameters.</div><div class="d">It is remembered and carried to product pages, which is useful. Either add date filtering to the API or relabel it “Даты аренды” on the search bar.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">one search, not two</div><div class="t">The hero search bar duplicated the header search, and its date picker looked like an availability filter the API cannot do.</div><div class="d">Hero search removed; the hero now ends in “Смотреть каталог” and “Позвонить”. Dates are chosen on the product page, where they actually apply.</div></div></li>
       </ul>
     </div>
 
@@ -234,7 +235,7 @@
   <section>
     <h2>What I could not verify</h2>
     <div class="callout">
-      <b>Local preview shows no products.</b> The dev server talks to api.rentevent.uz, which rejects localhost with CORS, so catalog, product, sets and events pages render their loading and empty states locally and the production site is still behind the coming-soon gate. Data-filled layouts were checked in code, and the header, hero, catalog chrome, cart and phone menu were checked in the browser. <code>next.config.ts</code> now has an inert <code>/api-proxy</code> rewrite; start the server with <code>DEV_API_PROXY_TARGET=https://api.rentevent.uz/api NEXT_PUBLIC_API_URL=/api-proxy</code> to see real data locally.
+      <b>Checkout and account pages.</b> They need an SMS login, so they were checked in code only. Everything else was verified on production after deploy. One console error remains on production: a React hydration mismatch (#418) on first load that does not reproduce in the dev build in either theme — it predates this work as far as I can tell and does not affect rendering, but it is worth a look. <code>next.config.ts</code> now has an inert <code>/api-proxy</code> rewrite; start the server with <code>DEV_API_PROXY_TARGET=https://api.rentevent.uz/api NEXT_PUBLIC_API_URL=/api-proxy</code> to see real data locally.
     </div>
   </section>
 
@@ -244,7 +245,7 @@
       <li>Open the site locally (or deploy to a preview) and look at the header against fair.rent — that is the change the client will judge first.</li>
       <li>Send the real Instagram / Facebook URLs, the real phone number, and the About-page figures.</li>
       <li>Decide the two product calls: date filtering in the catalog, and a date prompt on “add set to cart”.</li>
-      <li>Commit and push to <code>main</code> when happy — Railway deploys the web service on push.</li>
+      <li>Both commits are on <code>main</code> and deployed; the production check covered home, catalog, product, cart, sets, events and the phone layout. Checkout was not exercised (needs an SMS login).</li>
     </ol>
     <p class="sub" style="margin-top:22px">Files touched</p>
     <div class="files">
