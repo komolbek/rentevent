@@ -1,0 +1,257 @@
+<title>RentEvent Storefront Audit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper: #FBFAF7;
+    --card: #FFFFFF;
+    --ink: #1A1917;
+    --ink-2: #514E48;
+    --muted: #6E6A62;
+    --line: #E7E2D9;
+    --line-strong: #D6CFC3;
+    --orange: #F2562B;
+    --orange-text: #CF4A25;
+    --orange-wash: #FFF1EB;
+    --ok: #1F7A4D;
+    --ok-wash: #E7F4EC;
+    --open: #8A5A00;
+    --open-wash: #FBF1DA;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --display: "Manrope", "Helvetica Neue", Arial, sans-serif;
+    --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #121114; --card: #1A191C; --ink: #F3F0EA; --ink-2: #C9C4BA; --muted: #9B968C;
+      --line: #2B2A2E; --line-strong: #3C3A40; --orange-text: #F2562B; --orange-wash: #2A1C17;
+      --ok: #5FCB8E; --ok-wash: #16281E; --open: #E3B45A; --open-wash: #2B2415;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #121114; --card: #1A191C; --ink: #F3F0EA; --ink-2: #C9C4BA; --muted: #9B968C;
+    --line: #2B2A2E; --line-strong: #3C3A40; --orange-text: #F2562B; --orange-wash: #2A1C17;
+    --ok: #5FCB8E; --ok-wash: #16281E; --open: #E3B45A; --open-wash: #2B2415;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.55; }
+  a { color: var(--orange-text); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+  h1, h2, h3 { font-family: var(--display); letter-spacing: -0.02em; text-wrap: balance; margin: 0; }
+  p { margin: 0; text-wrap: pretty; }
+  code { font-family: var(--mono); font-size: 0.86em; background: color-mix(in srgb, var(--line) 55%, transparent); padding: 0.08em 0.35em; border-radius: 4px; }
+  pre { font-family: var(--mono); font-size: 0.86rem; line-height: 1.5; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 0; }
+
+  .wrap { max-width: 880px; margin: 0 auto; padding: 48px 24px 96px; }
+  .eyebrow { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--orange-text); }
+  header.top { display: grid; gap: 14px; padding-bottom: 28px; border-bottom: 1px solid var(--line-strong); }
+  header.top h1 { font-size: clamp(2rem, 4.5vw, 2.9rem); line-height: 1.05; font-weight: 800; }
+  header.top .lede { color: var(--ink-2); max-width: 62ch; font-size: 1.08rem; }
+  .meta { display: flex; flex-wrap: wrap; gap: 18px 28px; font-size: 0.92rem; color: var(--muted); }
+  .meta b { color: var(--ink); font-weight: 600; }
+
+  .tally { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-top: 28px; background: var(--card); }
+  .tally > div { padding: 16px 18px; border-right: 1px solid var(--line); }
+  .tally > div:last-child { border-right: 0; }
+  .tally .n { font-family: var(--display); font-size: 1.9rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+  .tally .l { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+
+  section { padding-top: 44px; }
+  section > h2 { font-size: 1.45rem; font-weight: 700; margin-bottom: 6px; }
+  section > .sub { color: var(--muted); margin-bottom: 20px; max-width: 65ch; }
+
+  /* header spec */
+  .spec { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  .spec th, .spec td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .spec th { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .spec td:first-child { color: var(--ink-2); width: 26%; }
+  .spec-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+
+  /* findings */
+  .page { border-top: 1px solid var(--line-strong); padding: 22px 0 8px; display: grid; grid-template-columns: 180px 1fr; gap: 12px 28px; }
+  .page h3 { font-size: 1.05rem; font-weight: 700; padding-top: 2px; }
+  .page .route { font-family: var(--mono); font-size: 0.74rem; color: var(--muted); margin-top: 4px; }
+  .items { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+  .item { display: grid; grid-template-columns: 62px 1fr; gap: 12px; align-items: start; }
+  .chip { font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 4px 7px; border-radius: 4px; text-align: center; margin-top: 3px; }
+  .chip.fixed { background: var(--ok-wash); color: var(--ok); }
+  .chip.open { background: var(--open-wash); color: var(--open); }
+  .item .k { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); letter-spacing: 0.04em; }
+  .item .t { font-weight: 600; }
+  .item .d { color: var(--ink-2); font-size: 0.97rem; }
+  @media (max-width: 640px) {
+    .page { grid-template-columns: 1fr; gap: 8px; }
+    .tally { grid-template-columns: 1fr; }
+    .tally > div { border-right: 0; border-bottom: 1px solid var(--line); }
+  }
+
+  .callout { background: var(--orange-wash); border-left: 3px solid var(--orange); padding: 14px 18px; border-radius: 0 8px 8px 0; color: var(--ink-2); font-size: 0.97rem; }
+  .callout b { color: var(--ink); }
+  ol.steps { padding-left: 1.2em; display: grid; gap: 8px; color: var(--ink-2); margin: 0; }
+  ul.plain { padding-left: 1.1em; display: grid; gap: 8px; color: var(--ink-2); margin: 0; }
+  .files { display: grid; gap: 6px; font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Storefront · apps/web · 11 Sep 2026</span>
+    <h1>RentEvent Storefront Audit</h1>
+    <p class="lede">Every page and state of rentevent.uz checked against <em>Don’t Make Me Think</em> (Krug), with the client’s reference site, fair.rent, used as the size guide for the header. Most findings are already fixed in the working tree; the ones that need a decision from you are marked <em>open</em>.</p>
+    <div class="meta">
+      <span>Pages reviewed <b>21</b></span>
+      <span>States <b>loading · empty · error · signed-out · dark · phone</b></span>
+      <span>Locales <b>RU · UZ · EN</b></span>
+    </div>
+    <div class="tally">
+      <div><div class="n">38</div><div class="l">findings</div></div>
+      <div><div class="n">31</div><div class="l">fixed in this pass (uncommitted)</div></div>
+      <div><div class="n">7</div><div class="l">open — need content or a product call</div></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Header, rebuilt to the fair.rent proportions</h2>
+    <p class="sub">Measured from the screenshot you sent. One bar instead of two, everything a size smaller, and the language switch as a small tab instead of a full-width strip.</p>
+    <div class="spec-wrap">
+      <table class="spec">
+        <thead><tr><th>Element</th><th>fair.rent (reference)</th><th>RentEvent before</th><th>RentEvent now</th></tr></thead>
+        <tbody>
+          <tr><td>Header height</td><td>≈ 85 px, one bar</td><td>116 px (36 px strip + 80 px bar)</td><td>80 px desktop · 64 px phone, one bar</td></tr>
+          <tr><td>Logo</td><td>Mark + “Fair.Rent” + “GLOBAL” tag, ≈ 40 px</td><td>“re.” mark only, 36 px — does not say what the site is</td><td>“re.” mark 36 px + “RentEvent” + tagline “Аренда для мероприятий”</td></tr>
+          <tr><td>Main nav</td><td>5 items, 11 px uppercase, centred</td><td>5 items, 14 px uppercase; included Home and Favorites</td><td>Каталог · Сеты · Мероприятия · Доставка · Контакты, 11 px / 0.12 em tracking</td></tr>
+          <tr><td>Search</td><td>Hairline field under the nav</td><td>None (removed in an earlier pass)</td><td>Hairline field under the nav, 352 px; synced with the catalog’s <code>?q=</code></td></tr>
+          <tr><td>Icon cluster</td><td>≈ 16 px icons, tight</td><td>20 px icons in 40 px buttons</td><td>18 px icons in 36 px buttons (44 px on phone)</td></tr>
+          <tr><td>Contact row</td><td>“PHONE › or EMAIL ›”, 10 px uppercase</td><td>“Телефон ›” that reveals the number on click</td><td>“Телефон › или Почта ›” — direct <code>tel:</code> and <code>mailto:</code> links</td></tr>
+          <tr><td>Language</td><td>Small “EU-en ▾” tab hanging from the top edge</td><td>Full-width strip; a button that cycles RU→EN→UZ blind</td><td>Small tab, top-right, with a real RU / UZ / EN selector and the theme toggle</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Findings by page</h2>
+    <p class="sub">The mono tag names the Krug principle each finding fails. “Fixed” means the change is in the working tree and type-checks; nothing is committed or deployed yet.</p>
+
+    <div class="page">
+      <div><h3>Site-wide</h3><div class="route">layout · header · footer · Button</div></div>
+      <ul class="items">
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">site ID · what is this?</div><div class="t">The logo alone (“re.”) never told a first-time visitor what the site is.</div><div class="d">Header now carries the name and a one-line tagline next to the mark.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">search on every page</div><div class="t">No search outside the home hero.</div><div class="d">Hairline search under the nav on desktop, a full-width field at the top of the phone menu.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">sections vs utilities</div><div class="t">Favorites sat in the main nav and in the icon cluster; Home duplicated the logo.</div><div class="d">Nav is sections only; Delivery and Contacts replace them so the info pages are reachable without scrolling to the footer.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">don’t hide the obvious</div><div class="t">The phone number required a click to reveal; the language button cycled without showing choices.</div><div class="d">Direct phone and email links; a visible selector for the three languages.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">consistency</div><div class="t">Two primary-button looks: orange on the home page, an orange→amber gradient on Add to cart / Checkout.</div><div class="d">One primary style everywhere; the <code>gradient</code> variant is now an alias.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">accessibility</div><div class="t">Pinch-zoom was locked (<code>maximumScale: 1</code>); no skip link; no <code>&lt;main&gt;</code> landmark.</div><div class="d">All three added.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">mislabeled</div><div class="t">Footer said “Поддержка” above the Instagram / Facebook / Telegram icons.</div><div class="d">Now “Мы в соцсетях”; Telegram points at t.me/rentevent_uz.</div></div></li>
+        <li class="item"><span class="chip open">open</span><div><div class="k">dead links</div><div class="t">Instagram and Facebook links go to instagram.com and facebook.com, not your profiles.</div><div class="d">Need the real URLs.</div></div></li>
+        <li class="item"><span class="chip open">open</span><div><div class="k">single source</div><div class="t">The phone number is typed by hand in the header, footer and contacts page; the home page reads it from the API.</div><div class="d">Confirm +998 90 123 45 67 is the real number, or let all four read from business settings.</div></div></li>
+      </ul>
+    </div>
+
+    <div class="page">
+      <div><h3>Home</h3><div class="route">/</div></div>
+      <ul class="items">
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">the home-page test</div><div class="t">“Всё для вашего идеального мероприятия” is a slogan; it never says what you rent or where.</div><div class="d">Now “Аренда оборудования для мероприятий в Ташкенте” with a concrete second line (what, from 1 day, delivery). Same in UZ and EN.</div></div></li>
+        <li class="item"><span class="chip open">open</span><div><div class="k">honest controls</div><div class="t">The hero date picker looks like an availability filter but the products endpoint has no date parameters.</div><div class="d">It is remembered and carried to product pages, which is useful. Either add date filtering to the API or relabel it “Даты аренды” on the search bar.</div></div></li>
+      </ul>
+    </div>
+
+    <div class="page">
+      <div><h3>Catalog</h3><div class="route">/catalog · ?q= · ?category= · ?page=</div></div>
+      <ul class="items">
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">obvious clickables</div><div class="t">Grid / list toggle was two unlabeled icons with no pressed state.</div><div class="d">Labels, tooltips and <code>aria-pressed</code>; 36 px targets.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">you are here</div><div class="t">Pagination was a bare row of numbers with no current-page semantics.</div><div class="d">Marked up as a nav with <code>aria-current</code>; wraps on narrow screens.</div></div></li>
+        <li class="item"><span class="chip open">open</span><div><div class="k">scrolling affordance</div><div class="t">With 11 categories the chip row overflows sideways with no hint that it scrolls (desktop).</div><div class="d">Minor; a fade at the right edge would do it.</div></div></li>
+      </ul>
+    </div>
+
+    <div class="page">
+      <div><h3>Product card</h3><div class="route">used on home, catalog, favorites, related</div></div>
+      <ul class="items">
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">false promise</div><div class="t">Each card ended in a cart-icon button labeled “Добавить в корзину”, but tapping it only opened the product page (dates are chosen there).</div><div class="d">Replaced with a “Подробнее →” chip, the same arrow the category tiles use.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">hover-only = invisible on phones</div><div class="t">The favorite button and an “eye” overlay only appeared on hover.</div><div class="d">Favorite is always visible; the decorative overlay is gone.</div></div></li>
+      </ul>
+    </div>
+
+    <div class="page">
+      <div><h3>Product page</h3><div class="route">/product/[id]</div></div>
+      <ul class="items">
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">missing content</div><div class="t">The product description was fetched and localized but never rendered — the page had no words about the item at all.</div><div class="d">Now shown under the price block.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">accessibility</div><div class="t">Gallery arrows, thumbnails, favorite and share were unlabeled icon buttons.</div><div class="d">Labels added; breadcrumb category name is now localized like the catalog.</div></div></li>
+      </ul>
+    </div>
+
+    <div class="page">
+      <div><h3>Cart</h3><div class="route">/cart · empty · with items</div></div>
+      <ul class="items">
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">muddling through</div><div class="t">“Оформить заказ” sent guests to login, and login dropped them on the home page — the cart flow was lost.</div><div class="d">Login now returns to <code>/checkout</code> (and honours the middleware’s <code>?redirect=</code> too).</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">destructive without confirm</div><div class="t">“Очистить корзину” emptied the cart in one click.</div><div class="d">Confirmation dialog; the per-item remove button is labeled and reads “Удалить” on wider screens.</div></div></li>
+      </ul>
+    </div>
+
+    <div class="page">
+      <div><h3>Checkout</h3><div class="route">/checkout · no address · bank transfer</div></div>
+      <ul class="items">
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">missing information</div><div class="t">The rental dates the order is placed for appeared nowhere on the page.</div><div class="d">Shown at the top of the order summary.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">silent disabled button</div><div class="t">With no saved address, “Оформить заказ” was simply greyed out with no explanation.</div><div class="d">A line under the button says to add a delivery address.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">plain language</div><div class="t">“Rahmat” means nothing to a first-time customer; bank-transfer fields were styled differently from every other input.</div><div class="d">Each method has a one-line description (Картой онлайн / При получении / Для юридических лиц); fields use the standard input.</div></div></li>
+      </ul>
+    </div>
+
+    <div class="page">
+      <div><h3>Login</h3><div class="route">/auth · phone · code</div></div>
+      <ul class="items">
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">forms</div><div class="t">Phone and code fields had no labels for assistive tech; SMS codes couldn’t autofill.</div><div class="d">Labels and <code>autocomplete="one-time-code"</code> added.</div></div></li>
+      </ul>
+    </div>
+
+    <div class="page">
+      <div><h3>Info pages</h3><div class="route">/about · /contacts · /faq · /delivery · /payment · /terms · /privacy</div></div>
+      <ul class="items">
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">consistency</div><div class="t">These pages used hard-coded grey-blue “slate” colours and a different orange, so they looked like a different site from the catalog — and broke in dark mode.</div><div class="d">65 class swaps to the shared tokens; FAQ’s call-to-action uses the standard button.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">honesty</div><div class="t">The contact form pretended to send: a one-second timer, then “Сообщение отправлено!”. Nothing was sent anywhere.</div><div class="d">Submit now opens the visitor’s email app with the message addressed to info@rentevent.uz, and says so. A real endpoint would be better.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">consistency</div><div class="t">Payment page listed two methods in a four-column grid; checkout offers three.</div><div class="d">Bank transfer added; three-column grid.</div></div></li>
+        <li class="item"><span class="chip open">open</span><div><div class="k">credibility</div><div class="t">About page claims “5+ years, 1000+ clients, 500+ events, 24/7 support”; contacts page says hours are 09:00–21:00.</div><div class="d">Need real figures, or drop the stats.</div></div></li>
+      </ul>
+    </div>
+
+    <div class="page">
+      <div><h3>Sets &amp; Events</h3><div class="route">/sets · /events</div></div>
+      <ul class="items">
+        <li class="item"><span class="chip open">open</span><div><div class="k">surprise</div><div class="t">“В корзину” on a set adds every item for tomorrow only, without asking for dates.</div><div class="d">Cart shows the dates, so it is recoverable, but a date prompt before adding would remove the surprise.</div></div></li>
+        <li class="item"><span class="chip open">open</span><div><div class="k">wording</div><div class="t">Prices mix “UZS” (cards, cart, checkout) and “сум” (hero collage, terms text).</div><div class="d">Pick one. “сум” is what Russian-speaking customers say; “UZS” is what the code uses.</div></div></li>
+      </ul>
+    </div>
+
+    <div class="page">
+      <div><h3>Account</h3><div class="route">/profile · /orders · /orders/[id] · /favorites</div></div>
+      <ul class="items">
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">obvious clickables</div><div class="t">Back arrows, edit-name, edit/delete-address and set-default were unlabeled icons.</div><div class="d">Labels and tooltips on all of them.</div></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>What I could not verify</h2>
+    <div class="callout">
+      <b>Local preview shows no products.</b> The dev server talks to api.rentevent.uz, which rejects localhost with CORS, so catalog, product, sets and events pages render their loading and empty states locally and the production site is still behind the coming-soon gate. Data-filled layouts were checked in code, and the header, hero, catalog chrome, cart and phone menu were checked in the browser. <code>next.config.ts</code> now has an inert <code>/api-proxy</code> rewrite; start the server with <code>DEV_API_PROXY_TARGET=https://api.rentevent.uz/api NEXT_PUBLIC_API_URL=/api-proxy</code> to see real data locally.
+    </div>
+  </section>
+
+  <section>
+    <h2>Next steps</h2>
+    <ol class="steps">
+      <li>Open the site locally (or deploy to a preview) and look at the header against fair.rent — that is the change the client will judge first.</li>
+      <li>Send the real Instagram / Facebook URLs, the real phone number, and the About-page figures.</li>
+      <li>Decide the two product calls: date filtering in the catalog, and a date prompt on “add set to cart”.</li>
+      <li>Commit and push to <code>main</code> when happy — Railway deploys the web service on push.</li>
+    </ol>
+    <p class="sub" style="margin-top:22px">Files touched</p>
+    <div class="files">
+      <span>apps/web/src/components/layout/Header.tsx (rebuilt) · Footer.tsx · catalog/ProductCard.tsx · ui/Button.tsx</span>
+      <span>apps/web/src/app/layout.tsx · page.tsx · catalog · product/[id] · cart · checkout · auth · profile · orders · favorites</span>
+      <span>apps/web/src/app/about · contacts · faq · delivery · payment · terms · privacy</span>
+      <span>apps/web/src/lib/i18n/locales/ru.ts · en.ts · uz.ts (23 new keys, hero copy) · apps/web/next.config.ts</span>
+    </div>
+  </section>
+</div>

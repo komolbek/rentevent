@@ -3,7 +3,7 @@
 import { useState, memo, useCallback } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Heart, ShoppingCart, Eye } from 'lucide-react';
+import { Heart, ArrowUpRight } from 'lucide-react';
 import type { Product } from '@/types';
 import { Card, Badge } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
@@ -88,6 +88,8 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={handleFavoriteClick}
+                  aria-label={isFav ? t('product_card.remove_from_favorites') : t('product_card.add_to_favorites')}
+                  aria-pressed={isFav}
                   className={cn('h-9 w-9 rounded-full flex items-center justify-center transition-colors', isFav ? 'bg-red-500 text-white' : 'bg-muted')}
                 >
                   <Heart className={cn('h-4 w-4', isFav && 'fill-current')} />
@@ -151,42 +153,23 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
               )}
             </div>
 
-            {/* Favorite Button */}
+            {/* Favorite button — always visible, so it exists on touch
+                screens too (a hover-only control is invisible on a phone). */}
             <motion.button
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: isHovered || isFav ? 1 : 0, scale: 1 }}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={handleFavoriteClick}
               aria-label={isFav ? t('product_card.remove_from_favorites') : t('product_card.add_to_favorites')}
               aria-pressed={isFav}
               className={cn(
-                'absolute top-3 right-3 h-9 w-9 rounded-full flex items-center justify-center transition-colors',
+                'absolute top-3 right-3 h-9 w-9 rounded-full flex items-center justify-center shadow-sm transition-colors',
                 isFav
                   ? 'bg-red-500 text-white'
-                  : 'bg-white/90 dark:bg-slate-800/90 text-foreground hover:bg-white dark:hover:bg-slate-800'
+                  : 'bg-card/90 text-foreground/70 hover:bg-card hover:text-foreground'
               )}
             >
               <Heart className={cn('h-4 w-4', isFav && 'fill-current')} />
             </motion.button>
-
-            {/* Quick View Overlay */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: isHovered ? 1 : 0 }}
-              className="absolute inset-0 bg-black/20 flex items-center justify-center"
-              aria-hidden="true"
-            >
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: isHovered ? 0 : 20, opacity: isHovered ? 1 : 0 }}
-                className="flex gap-2"
-              >
-                <span className="h-10 w-10 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center shadow-lg">
-                  <Eye className="h-5 w-5" />
-                </span>
-              </motion.div>
-            </motion.div>
           </div>
 
           {/* Content */}
@@ -204,15 +187,17 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
                 </p>
               </div>
 
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-colors"
-                role="img"
-                aria-label={t('product_card.add_to_cart')}
+              {/* The whole card is the link; this is the "go" affordance,
+                  not a cart button — a cart icon here promised a one-click
+                  add that the card never did (dates are chosen on the
+                  product page). Same arrow chip as the category tiles. */}
+              <span
+                className="inline-flex h-9 shrink-0 items-center gap-1 rounded-full bg-muted pl-3 pr-2 text-xs font-medium text-foreground/80 transition-colors group-hover:bg-primary group-hover:text-white"
+                aria-hidden="true"
               >
-                <ShoppingCart className="h-[18px] w-[18px]" />
-              </motion.div>
+                {t('product_card.view')}
+                <ArrowUpRight className="h-4 w-4" />
+              </span>
             </div>
           </div>
         </Card>

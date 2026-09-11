@@ -40,7 +40,7 @@ export default function DeliveryPage() {
         className="text-center mb-12"
       >
         <h1 className="text-4xl font-bold mb-4">{t('delivery_page.title')}</h1>
-        <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           {t('delivery_page.subtitle')}
         </p>
       </motion.div>
@@ -54,15 +54,15 @@ export default function DeliveryPage() {
         >
           <Card className="p-6 h-full">
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-12 w-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                <MapPin className="h-6 w-6 text-primary-500" />
+              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <MapPin className="h-6 w-6 text-primary" />
               </div>
               <h2 className="text-xl font-semibold">{t('delivery_page.zone_title')}</h2>
             </div>
-            <p className="text-slate-600 dark:text-slate-400 mb-4">
+            <p className="text-muted-foreground mb-4">
               {t('delivery_page.zone_desc')}
             </p>
-            <ul className="space-y-2 text-slate-600 dark:text-slate-400">
+            <ul className="space-y-2 text-muted-foreground">
               <li>{t('delivery_page.zone_1')}</li>
               <li>{t('delivery_page.zone_2')}</li>
               <li>{t('delivery_page.zone_3')}</li>
@@ -77,15 +77,15 @@ export default function DeliveryPage() {
         >
           <Card className="p-6 h-full">
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-12 w-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-primary-500" />
+              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Clock className="h-6 w-6 text-primary" />
               </div>
               <h2 className="text-xl font-semibold">{t('delivery_page.time_title')}</h2>
             </div>
-            <p className="text-slate-600 dark:text-slate-400 mb-4">
+            <p className="text-muted-foreground mb-4">
               {t('delivery_page.time_desc')}
             </p>
-            <ul className="space-y-2 text-slate-600 dark:text-slate-400">
+            <ul className="space-y-2 text-muted-foreground">
               <li>{t('delivery_page.time_1')}</li>
               <li>{t('delivery_page.time_2')}</li>
               <li>{t('delivery_page.time_3')}</li>
@@ -107,14 +107,14 @@ export default function DeliveryPage() {
             transition={{ delay: index * 0.1 }}
           >
             <Card className="p-6 text-center h-full">
-              <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4">
-                <step.icon className="h-6 w-6 text-primary-500" />
+              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <step.icon className="h-6 w-6 text-primary" />
               </div>
               <div className="text-sm font-medium text-primary-text mb-2">
                 {t('delivery_page.step')} {index + 1}
               </div>
               <h3 className="font-semibold mb-2">{step.title}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{step.description}</p>
+              <p className="text-sm text-muted-foreground">{step.description}</p>
             </Card>
           </motion.div>
         ))}

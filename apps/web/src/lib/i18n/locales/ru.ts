@@ -46,6 +46,28 @@ const ru = {
   'header.cart': 'Корзина',
   'header.user_menu': 'Меню пользователя',
   'header.skip_to_content': 'Перейти к содержимому',
+  'header.tagline': 'Аренда для мероприятий',
+  'header.language': 'Язык',
+  'header.theme': 'Тема',
+  'header.or': 'или',
+  'header.search_label': 'Поиск по каталогу',
+  'header.search_placeholder': 'Поиск по каталогу',
+  'header.search_submit': 'Найти',
+  'nav.delivery': 'Доставка',
+  'nav.contacts': 'Контакты',
+  'footer.social': 'Мы в соцсетях',
+  'home.hero_subtitle': 'Мебель, декор, свет и звук — от 1 дня, с доставкой по Ташкенту.',
+  'product_card.view': 'Подробнее',
+  'cart.clear_confirm_title': 'Очистить корзину?',
+  'cart.clear_confirm_message': 'Все товары будут удалены из корзины. Это действие нельзя отменить.',
+  'checkout.rental_period': 'Период аренды',
+  'checkout.address_required_hint': 'Чтобы оформить заказ, добавьте адрес доставки.',
+  'checkout.method_rahmat_desc': 'Картой онлайн',
+  'checkout.method_cash_desc': 'При получении',
+  'checkout.method_bank_transfer_desc': 'Для юридических лиц',
+  'payment.bank_title': 'По реквизитам',
+  'payment.bank_desc': 'Счёт для юридических лиц',
+  'contacts.form_via_email': 'Сообщение откроется в вашей почте — отправьте его на info@rentevent.uz.',
 
   // Footer
   'footer.description': 'Аренда оборудования для мероприятий в Ташкенте. Широкий выбор, доступные цены, быстрая доставка.',
@@ -67,7 +89,7 @@ const ru = {
 
   // Home Page
   'home.hero_badge': 'Аренда для мероприятий',
-  'home.hero_title': 'Всё для вашего идеального мероприятия',
+  'home.hero_title': 'Аренда оборудования для мероприятий в Ташкенте',
   'home.view_catalog': 'Смотреть каталог',
   'home.call': 'Позвонить',
 

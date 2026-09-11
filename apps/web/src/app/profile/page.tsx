@@ -165,7 +165,9 @@ function ProfilePageContent() {
                       </h2>
                       <button
                         onClick={() => setIsEditingName(true)}
-                        className="p-1 rounded hover:bg-muted transition-colors"
+                        aria-label={t('profile.edit_name')}
+                        title={t('profile.edit_name')}
+                        className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
                       >
                         <Pencil className="h-4 w-4 text-muted-foreground" />
                       </button>
@@ -233,6 +235,7 @@ function ProfilePageContent() {
                             onClick={() => setDefaultAddressMutation.mutate(address.id)}
                             className="p-2 rounded-lg hover:bg-muted transition-colors"
                             title={t('profile.set_default')}
+                            aria-label={t('profile.set_default')}
                           >
                             <Check className="h-4 w-4 text-muted-foreground" />
                           </button>
@@ -242,12 +245,16 @@ function ProfilePageContent() {
                             setEditingAddress(address);
                             setShowAddressModal(true);
                           }}
+                          aria-label={t('profile.edit')}
+                          title={t('profile.edit')}
                           className="p-2 rounded-lg hover:bg-muted transition-colors"
                         >
                           <Pencil className="h-4 w-4 text-muted-foreground" />
                         </button>
                         <button
                           onClick={() => setDeletingAddressId(address.id)}
+                          aria-label={t('profile.delete')}
+                          title={t('profile.delete')}
                           className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />

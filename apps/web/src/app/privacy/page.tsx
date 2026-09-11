@@ -26,11 +26,11 @@ export default function PrivacyPage() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-12"
       >
-        <div className="h-16 w-16 rounded-2xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4">
-          <Shield className="h-8 w-8 text-primary-500" />
+        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+          <Shield className="h-8 w-8 text-primary" />
         </div>
         <h1 className="text-4xl font-bold mb-4">{t('privacy.title')}</h1>
-        <p className="text-slate-600 dark:text-slate-400">
+        <p className="text-muted-foreground">
           {t('privacy.last_updated')}
         </p>
       </motion.div>
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
           >
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">{section.title}</h2>
-              <div className="text-slate-600 dark:text-slate-400 whitespace-pre-line">
+              <div className="text-muted-foreground whitespace-pre-line">
                 {section.content}
               </div>
             </Card>

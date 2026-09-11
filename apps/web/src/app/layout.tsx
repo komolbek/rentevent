@@ -31,10 +31,11 @@ export const metadata: Metadata = {
   },
 };
 
+// No maximumScale: locking pinch-zoom is a WCAG 1.4.4 failure and hurts
+// anyone reading small type on a phone.
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
   themeColor: '#F2562B',
 };
 
@@ -71,8 +72,14 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased font-sans">
         <Providers>
+          <a
+            href="#main"
+            className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
+          >
+            Перейти к содержимому
+          </a>
           <Header />
-          {children}
+          <main id="main">{children}</main>
           <Footer />
         </Providers>
       </body>

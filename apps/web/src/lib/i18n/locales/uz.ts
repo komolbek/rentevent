@@ -48,6 +48,28 @@ const uz: Record<TranslationKey, string> = {
   'header.cart': 'Savatcha',
   'header.user_menu': 'Foydalanuvchi menyusi',
   'header.skip_to_content': 'Kontentga o\'tish',
+  'header.tagline': 'Tadbirlar uchun ijara',
+  'header.language': 'Til',
+  'header.theme': 'Mavzu',
+  'header.or': 'yoki',
+  'header.search_label': 'Katalogdan qidirish',
+  'header.search_placeholder': 'Katalogdan qidirish',
+  'header.search_submit': 'Qidirish',
+  'nav.delivery': 'Yetkazib berish',
+  'nav.contacts': 'Kontaktlar',
+  'footer.social': 'Ijtimoiy tarmoqlarda',
+  'home.hero_subtitle': 'Mebel, dekor, yorug\'lik va ovoz — 1 kundan boshlab, Toshkent bo\'ylab yetkazib berish bilan.',
+  'product_card.view': 'Batafsil',
+  'cart.clear_confirm_title': 'Savatchani tozalaymizmi?',
+  'cart.clear_confirm_message': 'Barcha mahsulotlar savatchadan o\'chiriladi. Buni bekor qilib bo\'lmaydi.',
+  'checkout.rental_period': 'Ijara muddati',
+  'checkout.address_required_hint': 'Buyurtma berish uchun yetkazib berish manzilini qo\'shing.',
+  'checkout.method_rahmat_desc': 'Karta orqali, onlayn',
+  'checkout.method_cash_desc': 'Qabul qilishda',
+  'checkout.method_bank_transfer_desc': 'Yuridik shaxslar uchun',
+  'payment.bank_title': 'Rekvizitlar bo\'yicha',
+  'payment.bank_desc': 'Yuridik shaxslar uchun hisob',
+  'contacts.form_via_email': 'Xabar pochta dasturingizda ochiladi — uni info@rentevent.uz manziliga yuboring.',
 
   // Footer
   'footer.description': 'Toshkentda tadbirlar uchun jihozlar ijarasi. Keng tanlov, arzon narxlar, tez yetkazib berish.',
@@ -69,7 +91,7 @@ const uz: Record<TranslationKey, string> = {
 
   // Home Page
   'home.hero_badge': 'Tadbirlar uchun ijara',
-  'home.hero_title': 'Mukammal tadbiringiz uchun hamma narsa',
+  'home.hero_title': 'Toshkentda tadbirlar uchun jihozlar ijarasi',
   'home.view_catalog': 'Katalogni ko\'rish',
   'home.call': 'Qo\'ng\'iroq qilish',
 

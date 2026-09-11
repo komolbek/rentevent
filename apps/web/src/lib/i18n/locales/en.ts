@@ -48,6 +48,28 @@ const en: Record<TranslationKey, string> = {
   'header.cart': 'Cart',
   'header.user_menu': 'User menu',
   'header.skip_to_content': 'Skip to content',
+  'header.tagline': 'Event rental',
+  'header.language': 'Language',
+  'header.theme': 'Theme',
+  'header.or': 'or',
+  'header.search_label': 'Search the catalog',
+  'header.search_placeholder': 'Search the catalog',
+  'header.search_submit': 'Search',
+  'nav.delivery': 'Delivery',
+  'nav.contacts': 'Contacts',
+  'footer.social': 'Follow us',
+  'home.hero_subtitle': 'Furniture, decor, lighting and sound — from 1 day, delivered across Tashkent.',
+  'product_card.view': 'View',
+  'cart.clear_confirm_title': 'Clear the cart?',
+  'cart.clear_confirm_message': 'All items will be removed from the cart. This cannot be undone.',
+  'checkout.rental_period': 'Rental period',
+  'checkout.address_required_hint': 'Add a delivery address to place the order.',
+  'checkout.method_rahmat_desc': 'Card, online',
+  'checkout.method_cash_desc': 'On delivery',
+  'checkout.method_bank_transfer_desc': 'For companies',
+  'payment.bank_title': 'Bank transfer',
+  'payment.bank_desc': 'Invoice for companies',
+  'contacts.form_via_email': 'The message opens in your email app — send it to info@rentevent.uz.',
 
   // Footer
   'footer.description': 'Event equipment rental in Tashkent. Wide selection, affordable prices, fast delivery.',
@@ -69,7 +91,7 @@ const en: Record<TranslationKey, string> = {
 
   // Home Page
   'home.hero_badge': 'Event rental',
-  'home.hero_title': 'Everything for your perfect event',
+  'home.hero_title': 'Event equipment rental in Tashkent',
   'home.view_catalog': 'View catalog',
   'home.call': 'Call',
 

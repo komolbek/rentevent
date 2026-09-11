@@ -46,9 +46,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         'bg-transparent text-foreground hover:bg-foreground/[0.06]',
       destructive:
         'bg-destructive text-destructive-foreground hover:brightness-95 shadow-[0_6px_20px_-6px_rgba(229,72,77,0.5)]',
-      // Fire gradient — orange → amber, on-brand replacement for the old purple.
+      // One primary look site-wide: the gradient used to make "Add to cart"
+      // and "Checkout" read as a different kind of button from every other
+      // CTA. Kept as an alias so call sites don't need to change.
       gradient:
-        'bg-[linear-gradient(100deg,var(--color-primary),var(--color-accent-500))] text-white shadow-[0_8px_24px_-8px_rgba(242,86,41,0.55)] hover:brightness-[1.04] hover:shadow-[0_12px_30px_-8px_rgba(242,86,41,0.6)]',
+        'bg-primary text-primary-foreground shadow-[0_6px_20px_-6px_rgba(242,86,41,0.55)] hover:bg-primary-600 hover:shadow-[0_10px_28px_-8px_rgba(242,86,41,0.6)]',
     };
 
     const sizes = {

@@ -134,7 +134,9 @@ export default function HomePage() {
               <h1 className="font-display max-w-2xl text-2xl font-semibold leading-[1.1] sm:text-4xl sm:leading-[1.06] lg:text-5xl">
                 {t('home.hero_title')}
               </h1>
-
+              <p className="mt-4 max-w-xl text-sm text-muted-foreground sm:text-base">
+                {t('home.hero_subtitle')}
+              </p>
             </div>
 
             {/* Product collage — desktop only, and only once real photos load. */}

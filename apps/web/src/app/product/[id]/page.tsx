@@ -164,6 +164,12 @@ export default function ProductDetailPage() {
 
   const name = localizedName(product, locale);
   const description = localizedDescription(product, locale);
+  // Category names are localised the same way the catalog does it.
+  const categoryName = (() => {
+    const raw = product.category?.name ?? '';
+    const translated = t(`category_name.${raw}`);
+    return translated.startsWith('category_name.') ? raw : translated;
+  })();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -183,7 +189,7 @@ export default function ProductDetailPage() {
               href={`/catalog?category=${product.categoryId}`}
               className="hover:text-primary-text transition-colors"
             >
-              {product.category.name}
+              {categoryName}
             </Link>
             <span>/</span>
           </>
@@ -221,7 +227,8 @@ export default function ProductDetailPage() {
                       prev === 0 ? product.photos.length - 1 : prev - 1
                     )
                   }
-                  className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 dark:bg-slate-800/90 flex items-center justify-center shadow-lg hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                  aria-label={t('product.previous_image')}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-card/90 flex items-center justify-center shadow-lg hover:bg-card transition-colors"
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
@@ -231,7 +238,8 @@ export default function ProductDetailPage() {
                       prev === product.photos.length - 1 ? 0 : prev + 1
                     )
                   }
-                  className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 dark:bg-slate-800/90 flex items-center justify-center shadow-lg hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                  aria-label={t('product.next_image')}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-card/90 flex items-center justify-center shadow-lg hover:bg-card transition-colors"
                 >
                   <ChevronRight className="h-5 w-5" />
                 </button>
@@ -256,6 +264,8 @@ export default function ProductDetailPage() {
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}
+                  aria-label={t('product.image_thumbnail', { index: index + 1 })}
+                  aria-current={selectedImageIndex === index ? 'true' : undefined}
                   className={cn(
                     'shrink-0 h-20 w-20 rounded-xl overflow-hidden border-2 transition-all',
                     selectedImageIndex === index
@@ -289,7 +299,7 @@ export default function ProductDetailPage() {
                   href={`/catalog?category=${product.categoryId}`}
                   className="text-muted-foreground hover:text-primary-text transition-colors"
                 >
-                  {product.category.name}
+                  {categoryName}
                 </Link>
               )}
             </div>
@@ -298,6 +308,9 @@ export default function ProductDetailPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleFavoriteToggle}
+                aria-label={isFav ? t('product_card.remove_from_favorites') : t('product_card.add_to_favorites')}
+                aria-pressed={isFav}
+                title={t('product.favorite')}
                 className={cn(
                   'h-10 w-10 rounded-xl flex items-center justify-center transition-colors',
                   isFav
@@ -311,6 +324,8 @@ export default function ProductDetailPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleShare}
+                aria-label={t('product.share')}
+                title={t('product.share')}
                 className="h-10 w-10 rounded-xl bg-muted hover:bg-muted/80 flex items-center justify-center transition-colors"
               >
                 <Share2 className="h-5 w-5" />
@@ -373,6 +388,14 @@ export default function ProductDetailPage() {
           >
             {product.totalStock === 0 ? t('product_card.out_of_stock') : t('product.add_to_cart')}
           </Button>
+
+          {/* Description — was computed but never rendered, so the page
+              had no words about the product at all. */}
+          {description && (
+            <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground sm:text-base">
+              {description}
+            </p>
+          )}
 
           {/* Benefits */}
           <div className="grid grid-cols-2 gap-3">

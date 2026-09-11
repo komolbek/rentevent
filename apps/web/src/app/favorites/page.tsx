@@ -34,7 +34,9 @@ function FavoritesPageContent() {
       >
         <button
           onClick={() => router.back()}
-          className="p-2 rounded-lg hover:bg-muted transition-colors"
+          aria-label={t('favorites.back')}
+          title={t('favorites.back')}
+          className="h-10 w-10 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>

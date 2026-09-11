@@ -224,6 +224,7 @@ function CatalogPageContent() {
           {selectedCategory && (
             <button
               onClick={() => updateParams({ category: undefined })}
+              aria-label={`${t('catalog.reset_filters')}: ${getCategoryName(selectedCategory.name, t)}`}
               className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary-text text-sm"
             >
               {getCategoryName(selectedCategory.name, t)}
@@ -233,21 +234,27 @@ function CatalogPageContent() {
         </div>
 
         {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-muted">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-muted" role="group" aria-label={`${t('catalog.grid_view')} / ${t('catalog.list_view')}`}>
           <button
             onClick={() => setViewMode('grid')}
+            title={t('catalog.grid_view')}
+            aria-label={t('catalog.grid_view')}
+            aria-pressed={viewMode === 'grid'}
             className={cn(
-              'p-2 rounded-lg transition-colors',
-              viewMode === 'grid' ? 'bg-card shadow-sm' : 'hover:bg-card/50'
+              'h-9 w-9 flex items-center justify-center rounded-lg transition-colors',
+              viewMode === 'grid' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:bg-card/50'
             )}
           >
             <Grid3X3 className="h-4 w-4" />
           </button>
           <button
             onClick={() => setViewMode('list')}
+            title={t('catalog.list_view')}
+            aria-label={t('catalog.list_view')}
+            aria-pressed={viewMode === 'list'}
             className={cn(
-              'p-2 rounded-lg transition-colors',
-              viewMode === 'list' ? 'bg-card shadow-sm' : 'hover:bg-card/50'
+              'h-9 w-9 flex items-center justify-center rounded-lg transition-colors',
+              viewMode === 'list' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:bg-card/50'
             )}
           >
             <LayoutList className="h-4 w-4" />
@@ -309,15 +316,17 @@ function CatalogPageContent() {
 
           {/* Pagination */}
           {products && products.meta.totalPages > 1 && (
-            <motion.div
+            <motion.nav
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex justify-center gap-2 mt-12"
+              className="flex flex-wrap justify-center gap-2 mt-12"
+              aria-label="Pagination"
             >
               {[...Array(products.meta.totalPages)].map((_, i) => (
                 <button
                   key={i}
                   onClick={() => updateParams({ page: String(i + 1) })}
+                  aria-current={page === i + 1 ? 'page' : undefined}
                   className={cn(
                     'h-10 w-10 rounded-xl text-sm font-medium transition-colors',
                     page === i + 1
@@ -328,7 +337,7 @@ function CatalogPageContent() {
                   {i + 1}
                 </button>
               ))}
-            </motion.div>
+            </motion.nav>
           )}
         </>
       )}

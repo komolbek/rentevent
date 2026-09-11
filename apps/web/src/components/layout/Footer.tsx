@@ -48,7 +48,7 @@ export function Footer() {
             <Link href="/" className="flex h-10 items-center" aria-label="RentEvent — Home">
               <Logo className="h-10 w-auto text-primary dark:text-white" />
             </Link>
-            <p className="eyebrow text-muted-foreground">{t('footer.support')}</p>
+            <p className="eyebrow text-muted-foreground">{t('footer.social')}</p>
             <div className="flex gap-3">
               <motion.a
                 whileHover={{ scale: 1.1 }}
@@ -75,7 +75,7 @@ export function Footer() {
               <motion.a
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
-                href="https://t.me"
+                href="https://t.me/rentevent_uz"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-white transition-colors"

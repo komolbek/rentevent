@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, HelpCircle } from 'lucide-react';
-import { Card } from '@/components/ui';
+import { Card, Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
@@ -17,11 +18,12 @@ function FAQAccordion({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boole
     <Card className="overflow-hidden">
       <button
         onClick={onToggle}
-        className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+        aria-expanded={isOpen}
+        className="w-full p-4 flex items-center justify-between text-left hover:bg-muted/60 transition-colors"
       >
         <span className="font-medium pr-4">{item.question}</span>
         <ChevronDown
-          className={cn('h-5 w-5 text-slate-400 shrink-0 transition-transform', isOpen && 'rotate-180')}
+          className={cn('h-5 w-5 text-muted-foreground shrink-0 transition-transform', isOpen && 'rotate-180')}
         />
       </button>
       <AnimatePresence>
@@ -32,7 +34,7 @@ function FAQAccordion({ item, isOpen, onToggle }: { item: FAQItem; isOpen: boole
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="px-4 pb-4 text-slate-600 dark:text-slate-400">{item.answer}</div>
+            <div className="px-4 pb-4 text-muted-foreground">{item.answer}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -63,11 +65,11 @@ export default function FAQPage() {
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-12"
       >
-        <div className="h-16 w-16 rounded-2xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4">
-          <HelpCircle className="h-8 w-8 text-primary-500" />
+        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+          <HelpCircle className="h-8 w-8 text-primary" />
         </div>
         <h1 className="text-4xl font-bold mb-4">{t('faq.title')}</h1>
-        <p className="text-lg text-slate-600 dark:text-slate-400">
+        <p className="text-lg text-muted-foreground">
           {t('faq.subtitle')}
         </p>
       </motion.div>
@@ -101,15 +103,12 @@ export default function FAQPage() {
           <h2 className="text-xl font-semibold mb-2">
             {t('faq.still_questions')}
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-4">
+          <p className="text-muted-foreground mb-4">
             {t('faq.still_questions_desc')}
           </p>
-          <a
-            href="/contacts"
-            className="inline-flex items-center justify-center h-12 px-6 rounded-xl bg-primary-500 text-white font-medium hover:bg-primary-600 transition-colors"
-          >
-            {t('faq.contact_us')}
-          </a>
+          <Link href="/contacts">
+            <Button size="md" variant="primary">{t('faq.contact_us')}</Button>
+          </Link>
         </Card>
       </motion.div>
     </div>

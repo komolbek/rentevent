@@ -14,21 +14,19 @@ export default function ContactsPage() {
     phone: '',
     message: '',
   });
-  const [sending, setSending] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  // There is no contact endpoint on the API, and the old form only pretended
+  // to send (a 1s timer and a "sent!" toast). Hand the message to the
+  // visitor's email client instead — honest, and it actually reaches us.
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.phone.trim() || !formData.message.trim()) {
       toast.error(t('contacts.form_fill_all'));
       return;
     }
 
-    setSending(true);
-    // Simulate sending
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    toast.success(t('contacts.form_sent'));
-    setFormData({ name: '', phone: '', message: '' });
-    setSending(false);
+    const subject = `RentEvent — ${formData.name.trim()}`;
+    const body = `${formData.message.trim()}\n\n${formData.name.trim()}\n${formData.phone.trim()}`;
+    window.location.href = `mailto:info@rentevent.uz?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   const contactInfo = [
@@ -67,7 +65,7 @@ export default function ContactsPage() {
         className="text-center mb-12"
       >
         <h1 className="text-4xl font-bold mb-4">{t('contacts.title')}</h1>
-        <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           {t('contacts.subtitle')}
         </p>
       </motion.div>
@@ -90,21 +88,21 @@ export default function ContactsPage() {
                     rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                     className="flex items-center gap-4 hover:text-primary-text transition-colors"
                   >
-                    <div className="h-12 w-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
-                      <item.icon className="h-6 w-6 text-primary-500" />
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <item.icon className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <div className="text-sm text-slate-500 dark:text-slate-400">{item.title}</div>
+                      <div className="text-sm text-muted-foreground">{item.title}</div>
                       <div className="font-semibold">{item.value}</div>
                     </div>
                   </a>
                 ) : (
                   <div className="flex items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
-                      <item.icon className="h-6 w-6 text-primary-500" />
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <item.icon className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <div className="text-sm text-slate-500 dark:text-slate-400">{item.title}</div>
+                      <div className="text-sm text-muted-foreground">{item.title}</div>
                       <div className="font-semibold">{item.value}</div>
                     </div>
                   </div>
@@ -121,11 +119,11 @@ export default function ContactsPage() {
           >
             <Card className="p-4">
               <div className="flex items-start gap-4">
-                <div className="h-12 w-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
-                  <MapPin className="h-6 w-6 text-primary-500" />
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <MapPin className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                  <div className="text-sm text-muted-foreground">
                     {t('contacts.address_label')}
                   </div>
                   <div className="font-semibold">
@@ -150,18 +148,21 @@ export default function ContactsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <Input
                 label={t('contacts.form_name')}
+                autoComplete="name"
                 placeholder={t('contacts.form_name_placeholder')}
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               />
               <Input
                 label={t('contacts.form_phone')}
+                type="tel"
+                autoComplete="tel"
                 placeholder={t('contacts.form_phone_placeholder')}
                 value={formData.phone}
                 onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
               />
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-900 dark:text-slate-100">
+                <label className="mb-2 block text-sm font-medium text-foreground">
                   {t('contacts.form_message')}
                 </label>
                 <textarea
@@ -169,19 +170,13 @@ export default function ContactsPage() {
                   value={formData.message}
                   onChange={(e) => setFormData((prev) => ({ ...prev, message: e.target.value }))}
                   rows={4}
-                  className="flex w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base transition-all duration-200 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 resize-none"
+                  className="flex w-full rounded-xl border border-input bg-card px-4 py-3 text-base transition-all duration-200 placeholder:text-muted-foreground/70 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/12 resize-none"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={sending}>
-                {sending ? (
-                  t('contacts.form_sending')
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    {t('contacts.form_send')}
-                  </>
-                )}
+              <Button type="submit" className="w-full" leftIcon={<Send className="h-4 w-4" />}>
+                {t('contacts.form_send')}
               </Button>
+              <p className="text-center text-xs text-muted-foreground">{t('contacts.form_via_email')}</p>
             </form>
           </Card>
         </motion.div>

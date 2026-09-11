@@ -2,6 +2,18 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+
+/**
+ * Where to send the visitor after a successful login. The cart and the
+ * middleware both arrive here with ?redirect=/checkout — landing them on the
+ * home page instead threw away the flow they were in the middle of. Only
+ * same-origin paths are honoured.
+ */
+function getRedirectTarget(): string {
+  if (typeof window === 'undefined') return '/';
+  const target = new URLSearchParams(window.location.search).get('redirect');
+  return target && target.startsWith('/') && !target.startsWith('//') ? target : '/';
+}
 import { motion, AnimatePresence } from 'framer-motion';
 import { Phone, ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -29,7 +41,7 @@ export default function AuthPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace('/');
+      router.replace(getRedirectTarget());
     }
   }, [isAuthenticated, router]);
 
@@ -119,7 +131,7 @@ export default function AuthPage() {
       const { token, user } = await authApi.verifyOtp(`+998${digits}`, code, getDeviceId());
       login(token, user);
       toast.success(t('auth.welcome'));
-      router.replace('/');
+      router.replace(getRedirectTarget());
     } catch (error) {
       toast.error(t('auth.error_invalid_code'));
       setOtpCode(['', '', '', '', '', '']);
@@ -175,6 +187,8 @@ export default function AuthPage() {
                     </span>
                     <input
                       type="tel"
+                      autoComplete="tel-national"
+                      aria-label={t('auth.login_description')}
                       value={phoneNumber}
                       onChange={handlePhoneChange}
                       placeholder={t('auth.phone_placeholder')}
@@ -239,6 +253,8 @@ export default function AuthPage() {
                       ref={(el) => { otpInputRefs.current[index] = el }}
                       type="text"
                       inputMode="numeric"
+                      autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                      aria-label={`${t('auth.enter_code')} ${index + 1}/6`}
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}

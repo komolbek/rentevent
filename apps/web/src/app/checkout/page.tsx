@@ -14,7 +14,9 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { Button, Card, Modal } from '@/components/ui';
+import { format } from 'date-fns';
+import { ru as ruLocale } from 'date-fns/locale';
+import { Button, Card, Modal, Input } from '@/components/ui';
 import { AddressForm } from '@/components/profile/AddressForm';
 import { AuthGuard } from '@/components/auth-guard';
 import { useCartStore } from '@/stores/cart-store';
@@ -24,10 +26,10 @@ import { formatPrice, formatDateForAPI, cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { DeliveryType, PaymentMethod } from '@/types';
 
-const paymentMethods: { value: PaymentMethod; labelKey: string; Icon: LucideIcon }[] = [
-  { value: 'RAHMAT', labelKey: 'checkout.method_rahmat', Icon: CreditCard },
-  { value: 'CASH', labelKey: 'checkout.method_cash', Icon: Banknote },
-  { value: 'BANK_TRANSFER', labelKey: 'checkout.method_bank_transfer', Icon: FileText },
+const paymentMethods: { value: PaymentMethod; labelKey: string; descKey: string; Icon: LucideIcon }[] = [
+  { value: 'RAHMAT', labelKey: 'checkout.method_rahmat', descKey: 'checkout.method_rahmat_desc', Icon: CreditCard },
+  { value: 'CASH', labelKey: 'checkout.method_cash', descKey: 'checkout.method_cash_desc', Icon: Banknote },
+  { value: 'BANK_TRANSFER', labelKey: 'checkout.method_bank_transfer', descKey: 'checkout.method_bank_transfer_desc', Icon: FileText },
 ];
 
 function CheckoutPageContent() {
@@ -261,8 +263,11 @@ function CheckoutPageContent() {
                     >
                       <Icon className="h-5 w-5" />
                     </span>
-                    <span className="font-medium">{t(method.labelKey)}</span>
-                    {isActive && <Check className="h-5 w-5 text-primary ml-auto" />}
+                    <span className="min-w-0 text-left">
+                      <span className="block font-medium">{t(method.labelKey)}</span>
+                      <span className="block text-xs text-muted-foreground">{t(method.descKey)}</span>
+                    </span>
+                    {isActive && <Check className="h-5 w-5 text-primary ml-auto shrink-0" />}
                   </button>
                 );
               })}
@@ -273,32 +278,22 @@ function CheckoutPageContent() {
                 <p className="text-sm text-muted-foreground">
                   {t('checkout.bank_transfer_hint')}
                 </p>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">
-                    {t('checkout.company_name')}
-                  </label>
-                  <input
-                    type="text"
-                    value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
-                    placeholder={t('checkout.company_name_placeholder')}
-                    className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-medium">
-                    {t('checkout.company_inn')}
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={9}
-                    value={companyInn}
-                    onChange={(e) => setCompanyInn(e.target.value.replace(/\D/g, ''))}
-                    placeholder="123456789"
-                    className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
+                <Input
+                  label={t('checkout.company_name')}
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder={t('checkout.company_name_placeholder')}
+                />
+                <Input
+                  label={t('checkout.company_inn')}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={9}
+                  value={companyInn}
+                  onChange={(e) => setCompanyInn(e.target.value.replace(/\D/g, ''))}
+                  placeholder="123456789"
+                />
               </div>
             )}
           </motion.div>
@@ -356,6 +351,15 @@ function CheckoutPageContent() {
             </div>
 
             <div className="border-t border-border pt-4 space-y-3 mb-6">
+              {/* The dates the order will be placed for — they were chosen on
+                  the product page and were nowhere on this screen. */}
+              <div className="flex justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">{t('checkout.rental_period')}</span>
+                <span className="text-right">
+                  {format(new Date(items[0].rentalStartDate), 'd MMM', { locale: ruLocale })} —{' '}
+                  {format(new Date(items[0].rentalEndDate), 'd MMM yyyy', { locale: ruLocale })}
+                </span>
+              </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t('checkout.items')}</span>
                 <span>{formatPrice(subtotal)} UZS</span>
@@ -389,6 +393,12 @@ function CheckoutPageContent() {
             >
               {t('checkout.place_order')}
             </Button>
+
+            {!selectedAddressId && (
+              <p className="mt-3 text-center text-sm text-primary-text" role="status">
+                {t('checkout.address_required_hint')}
+              </p>
+            )}
 
             <p className="mt-4 text-xs text-center text-muted-foreground">
               {t('checkout.terms_agreement')}

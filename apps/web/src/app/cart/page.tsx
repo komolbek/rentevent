@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -7,7 +8,7 @@ import { ShoppingCart, Trash2, ArrowRight, ShoppingBag } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
-import { Button, Card, EmptyState, QuantitySelector } from '@/components/ui';
+import { Button, Card, EmptyState, QuantitySelector, ConfirmModal } from '@/components/ui';
 import { useCartStore } from '@/stores/cart-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatPrice } from '@/lib/utils';
@@ -19,6 +20,7 @@ export default function CartPage() {
   const { isAuthenticated } = useAuthStore();
   const { items, subtotal, totalSavings, deliveryFee, total, removeItem, updateItem, clearCart } =
     useCartStore();
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const handleQuantityChange = (productId: string, quantity: number) => {
     updateItem(productId, { quantity });
@@ -43,7 +45,8 @@ export default function CartPage() {
     }
     if (!authed) {
       toast.error(t('cart.login_for_checkout'));
-      router.push('/auth');
+      // Come back to checkout after login instead of landing on the home page.
+      router.push('/auth?redirect=/checkout');
       return;
     }
     router.push('/checkout');
@@ -138,9 +141,12 @@ export default function CartPage() {
                         {/* Remove */}
                         <button
                           onClick={() => handleRemoveItem(item.productId, item.product.name)}
-                          className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                          aria-label={`${t('cart.remove_item')}: ${item.product.name}`}
+                          title={t('cart.remove_item')}
+                          className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-sm text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
+                          <span className="hidden sm:inline">{t('common.delete')}</span>
                         </button>
                       </div>
                     </div>
@@ -165,12 +171,24 @@ export default function CartPage() {
           {/* Clear Cart */}
           <div className="flex justify-end">
             <button
-              onClick={clearCart}
+              onClick={() => setConfirmClear(true)}
               className="text-sm text-muted-foreground hover:text-destructive transition-colors"
             >
               {t('cart.clear')}
             </button>
           </div>
+          <ConfirmModal
+            isOpen={confirmClear}
+            onClose={() => setConfirmClear(false)}
+            onConfirm={() => {
+              clearCart();
+              setConfirmClear(false);
+            }}
+            title={t('cart.clear_confirm_title')}
+            message={t('cart.clear_confirm_message')}
+            confirmText={t('cart.clear')}
+            variant="destructive"
+          />
         </div>
 
         {/* Order Summary */}
