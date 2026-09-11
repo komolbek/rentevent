@@ -89,7 +89,7 @@ export function CategoryCard({ category, className }: CategoryCardProps) {
               </div>
 
               <div className="relative">
-                <h3 className="font-display text-xl leading-tight transition-colors duration-300 line-clamp-2 group-hover:text-primary sm:text-2xl">
+                <h3 className="font-display text-xl leading-tight transition-colors duration-300 line-clamp-2 group-hover:text-primary-text sm:text-2xl">
                   {category.name}
                 </h3>
                 <span className="mt-3 block h-0.5 w-8 rounded-full bg-primary/40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-16 group-hover:bg-primary" />

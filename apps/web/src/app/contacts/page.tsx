@@ -88,7 +88,7 @@ export default function ContactsPage() {
                     href={item.href}
                     target={item.href.startsWith('http') ? '_blank' : undefined}
                     rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                    className="flex items-center gap-4 hover:text-primary-500 transition-colors"
+                    className="flex items-center gap-4 hover:text-primary-text transition-colors"
                   >
                     <div className="h-12 w-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
                       <item.icon className="h-6 w-6 text-primary-500" />

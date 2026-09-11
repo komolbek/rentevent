@@ -126,7 +126,7 @@ export default function HomePage() {
 
           <div className="relative z-10 grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
             <div>
-              <p className="eyebrow mb-5 inline-flex items-center gap-2 text-primary">
+              <p className="eyebrow mb-5 inline-flex items-center gap-2 text-primary-text">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
                 {t('home.hero_badge')}
               </p>
@@ -183,7 +183,7 @@ export default function HomePage() {
         <section className="container mx-auto px-4 pt-12 sm:pt-16">
           <div className="mb-8 flex items-end justify-between gap-4">
             <div>
-              <p className="eyebrow mb-3 text-primary">{t('nav.catalog')}</p>
+              <p className="eyebrow mb-3 text-primary-text">{t('nav.catalog')}</p>
               <h2 className="font-display text-3xl font-semibold sm:text-4xl">
                 {t('footer.all_categories')}
               </h2>
@@ -225,7 +225,7 @@ export default function HomePage() {
 
       {/* ================= WHY (concrete terms, not adjectives) ================= */}
       <section className="container mx-auto px-4 pt-12 sm:pt-16">
-        <p className="eyebrow mb-3 text-primary">{t('home.why_eyebrow')}</p>
+        <p className="eyebrow mb-3 text-primary-text">{t('home.why_eyebrow')}</p>
         <h2 className="font-display mb-10 max-w-2xl text-3xl font-semibold sm:text-4xl">
           {t('home.why_title')}
         </h2>

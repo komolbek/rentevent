@@ -72,7 +72,7 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-between">
               <div>
-                <h3 className="font-medium line-clamp-1 group-hover:text-primary transition-colors">{name}</h3>
+                <h3 className="font-medium line-clamp-1 group-hover:text-primary-text transition-colors">{name}</h3>
                 <div className="flex items-center gap-2 mt-1">
                   {hasDiscount && <Badge variant="success" size="sm">{t('product_card.discount')}</Badge>}
                   {product.totalStock <= 3 && product.totalStock > 0 && (
@@ -191,7 +191,7 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
 
           {/* Content */}
           <div className="p-4">
-            <h3 className="font-medium leading-snug line-clamp-2 mb-3 min-h-[2.6em] group-hover:text-primary transition-colors">
+            <h3 className="font-medium leading-snug line-clamp-2 mb-3 min-h-[2.6em] group-hover:text-primary-text transition-colors">
               {name}
             </h3>
 

@@ -243,7 +243,7 @@ export function DateRangePicker({
                     range_start: 'bg-primary text-primary-foreground rounded-l-lg',
                     range_end: 'bg-primary text-primary-foreground rounded-r-lg',
                     range_middle: 'bg-primary/20 text-foreground rounded-none',
-                    today: 'font-bold text-primary',
+                    today: 'font-bold text-primary-text',
                     outside: 'text-muted-foreground/30 opacity-30',
                     disabled: 'text-muted-foreground/20 opacity-30 cursor-not-allowed line-through',
                     hidden: 'invisible',

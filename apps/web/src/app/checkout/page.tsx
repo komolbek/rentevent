@@ -375,7 +375,7 @@ function CheckoutPageContent() {
 
               <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
                 <span>{t('cart.total')}</span>
-                <span className="text-primary">{formatPrice(total)} UZS</span>
+                <span className="text-primary-text">{formatPrice(total)} UZS</span>
               </div>
             </div>
 

@@ -246,7 +246,7 @@ export function Header() {
                 {showPhone ? (
                   <a
                     href={CONTACT_PHONE_HREF}
-                    className="inline-flex items-center gap-1.5 text-primary"
+                    className="inline-flex items-center gap-1.5 text-primary-text"
                     aria-label={`Phone: ${CONTACT_PHONE_LABEL}`}
                   >
                     <Phone className="h-3.5 w-3.5" /> {CONTACT_PHONE_LABEL}
@@ -255,7 +255,7 @@ export function Header() {
                   <button
                     type="button"
                     onClick={() => setShowPhone(true)}
-                    className="inline-flex items-center gap-1.5 transition-colors hover:text-primary"
+                    className="inline-flex items-center gap-1.5 transition-colors hover:text-primary-text"
                     aria-label={t('header.phone')}
                   >
                     <Phone className="h-3.5 w-3.5" /> {t('header.phone')} <ChevronRight className="h-3 w-3" />
@@ -285,7 +285,7 @@ export function Header() {
                     onClick={() => setIsMenuOpen(false)}
                     className={cn(
                       'block rounded-xl px-4 py-3 text-sm font-semibold uppercase tracking-wide transition-colors',
-                      pathname === link.href ? 'bg-primary/10 text-primary' : 'hover:bg-muted',
+                      pathname === link.href ? 'bg-primary/10 text-primary-text' : 'hover:bg-muted',
                     )}
                   >
                     {link.label}
@@ -293,7 +293,7 @@ export function Header() {
                 ))}
               </nav>
               <div className="flex items-center gap-4 border-t border-border px-4 pt-3 text-xs font-semibold uppercase tracking-wide text-foreground/70">
-                <a href={CONTACT_PHONE_HREF} className="inline-flex items-center gap-1.5 hover:text-primary">
+                <a href={CONTACT_PHONE_HREF} className="inline-flex items-center gap-1.5 hover:text-primary-text">
                   <Phone className="h-3.5 w-3.5" /> {CONTACT_PHONE_LABEL}
                 </a>
               </div>

@@ -114,7 +114,7 @@ export default function CartPage() {
                     <div className="flex-1 min-w-0">
                       <Link
                         href={`/product/${item.productId}`}
-                        className="font-medium hover:text-primary transition-colors line-clamp-2"
+                        className="font-medium hover:text-primary-text transition-colors line-clamp-2"
                       >
                         {item.product.name}
                       </Link>
@@ -203,7 +203,7 @@ export default function CartPage() {
 
               <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
                 <span>{t('cart.total')}</span>
-                <span className="text-primary">{formatPrice(total)} UZS</span>
+                <span className="text-primary-text">{formatPrice(total)} UZS</span>
               </div>
             </div>
 

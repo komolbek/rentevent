@@ -110,7 +110,7 @@ export default function DeliveryPage() {
               <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4">
                 <step.icon className="h-6 w-6 text-primary-500" />
               </div>
-              <div className="text-sm font-medium text-primary-500 mb-2">
+              <div className="text-sm font-medium text-primary-text mb-2">
                 {t('delivery_page.step')} {index + 1}
               </div>
               <h3 className="font-semibold mb-2">{step.title}</h3>

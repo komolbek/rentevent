@@ -14,7 +14,7 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
       'inline-flex items-center font-medium rounded-full uppercase tracking-[0.08em] transition-colors backdrop-blur-sm';
 
     const variants = {
-      default: 'bg-primary/12 text-primary ring-1 ring-inset ring-primary/20',
+      default: 'bg-primary/12 text-primary-text ring-1 ring-inset ring-primary/20',
       secondary: 'bg-foreground/8 text-foreground ring-1 ring-inset ring-foreground/10',
       success: 'bg-emerald-500/12 text-emerald-700 ring-1 ring-inset ring-emerald-500/25 dark:text-emerald-400',
       warning: 'bg-amber-500/14 text-amber-700 ring-1 ring-inset ring-amber-500/25 dark:text-amber-400',

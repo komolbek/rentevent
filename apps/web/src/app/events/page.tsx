@@ -43,7 +43,7 @@ export default function EventsPage() {
   return (
     <div className="container mx-auto px-4 py-10">
       <div className="mb-8 max-w-2xl">
-        <p className="text-sm font-semibold uppercase tracking-wide text-primary mb-2">
+        <p className="text-sm font-semibold uppercase tracking-wide text-primary-text mb-2">
           {t('events.eyebrow')}
         </p>
         <h1 className="text-3xl lg:text-4xl font-bold mb-3">{t('events.title')}</h1>
@@ -96,7 +96,7 @@ export default function EventsPage() {
                     <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{description}</p>
                   )}
                   {e.website_url && (
-                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary">
+                    <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-text">
                       {t('events.learn_more')} <ArrowUpRight className="h-4 w-4" />
                     </span>
                   )}

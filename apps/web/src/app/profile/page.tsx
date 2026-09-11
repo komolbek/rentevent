@@ -218,7 +218,7 @@ function ProfilePageContent() {
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{address.title}</p>
                           {address.isDefault && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary-text">
                               {t('profile.default')}
                             </span>
                           )}
@@ -302,7 +302,7 @@ function ProfilePageContent() {
                         </p>
                       </div>
                       {card.isDefault && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary-text">
                           {t('profile.default')}
                         </span>
                       )}

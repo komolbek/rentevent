@@ -173,7 +173,7 @@ export default function ProductDetailPage() {
         animate={{ opacity: 1, y: 0 }}
         className="flex items-center gap-2 text-sm text-muted-foreground mb-6"
       >
-        <Link href="/catalog" className="hover:text-primary transition-colors">
+        <Link href="/catalog" className="hover:text-primary-text transition-colors">
           {t('product.catalog')}
         </Link>
         <span>/</span>
@@ -181,7 +181,7 @@ export default function ProductDetailPage() {
           <>
             <Link
               href={`/catalog?category=${product.categoryId}`}
-              className="hover:text-primary transition-colors"
+              className="hover:text-primary-text transition-colors"
             >
               {product.category.name}
             </Link>
@@ -287,7 +287,7 @@ export default function ProductDetailPage() {
               {product.category && (
                 <Link
                   href={`/catalog?category=${product.categoryId}`}
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-muted-foreground hover:text-primary-text transition-colors"
                 >
                   {product.category.name}
                 </Link>

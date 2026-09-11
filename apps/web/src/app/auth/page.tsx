@@ -197,7 +197,7 @@ export default function AuthPage() {
                 {/* Terms */}
                 <p className="text-center text-xs text-muted-foreground">
                   {t('auth.terms_agreement')}{' '}
-                  <a href="/terms" className="text-primary hover:underline">
+                  <a href="/terms" className="text-primary-text hover:underline">
                     {t('auth.terms_link')}
                   </a>
                 </p>
@@ -274,7 +274,7 @@ export default function AuthPage() {
                     <button
                       onClick={handleResendOTP}
                       disabled={isLoading}
-                      className="text-primary hover:underline font-medium"
+                      className="text-primary-text hover:underline font-medium"
                     >
                       {t('auth.resend')}
                     </button>

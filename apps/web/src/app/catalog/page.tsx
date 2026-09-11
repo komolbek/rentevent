@@ -215,7 +215,7 @@ function CatalogPageContent() {
             <button
               onClick={() => updateParams({ q: undefined })}
               aria-label={t('catalog.clear_search')}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary-text text-sm"
             >
               &laquo;{search}&raquo;
               <X className="h-3 w-3" />
@@ -224,7 +224,7 @@ function CatalogPageContent() {
           {selectedCategory && (
             <button
               onClick={() => updateParams({ category: undefined })}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary-text text-sm"
             >
               {getCategoryName(selectedCategory.name, t)}
               <X className="h-3 w-3" />

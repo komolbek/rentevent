@@ -15,23 +15,30 @@
   --font-mono: "SFMono-Regular", ui-monospace, "JetBrains Mono", "Menlo", monospace;
 
   /* ---------------------------------------------------------------------
-     Brand — Graphite Black #171717, Fire Orange #F25629. The accent ramp is
+     Brand — Graphite Black #171717, Fire Orange #F2562B. The accent ramp is
      a warm amber so gradients read as "fire", never off-brand purple.
+
+     #F2562B on white is 3.42:1 and fails WCAG AA for body text. Use
+     --color-primary-text (#CF4A25, 4.51:1) for orange *text* below 24px /
+     19px bold on light surfaces; the base orange is fine on dark ones, so
+     the token flips back in .dark.
   --------------------------------------------------------------------- */
   --color-brand-graphite: #171717;
-  --color-brand-orange: #F25629;
+  --color-brand-orange: #F2562B;
+  --color-brand-orange-text: #CF4A25;
   --color-brand-ember: #C2431D;
   --color-brand-amber: #F59E0B;
   --color-brand-light-gray: #D0D0D0;
   --color-brand-dark-gray: #404040;
 
-  --color-primary: #F25629;
+  --color-primary: #F2562B;
+  --color-primary-text: #CF4A25;
   --color-primary-50: #fff6f2;
   --color-primary-100: #ffe9e0;
   --color-primary-200: #fecab7;
   --color-primary-300: #fba883;
   --color-primary-400: #f77d4f;
-  --color-primary-500: #F25629;
+  --color-primary-500: #F2562B;
   --color-primary-600: #d94a24;
   --color-primary-700: #b83c1c;
   --color-primary-800: #932f16;
@@ -86,6 +93,12 @@
   --color-secondary-foreground: #f6f4f0;
   --color-accent-foreground: #f6f4f0;
   --color-primary-foreground: #ffffff;
+  --color-primary-text: #F2562B; /* 5.52:1 on the dark ground — no need to darken */
+}
+
+:root {
+  --re-orange: #F2562B;      /* surfaces, buttons, borders, large type */
+  --re-orange-text: #CF4A25; /* orange text on white — 4.51:1, passes AA */
 }
 
 /* =======================================================================

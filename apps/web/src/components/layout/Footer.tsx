@@ -33,7 +33,7 @@ export function Footer() {
     <footer className="relative mt-24 border-t border-border bg-card" role="contentinfo">
       {/* Editorial closing band */}
       <div className="container mx-auto px-4 pt-14 pb-2">
-        <p className="eyebrow text-primary mb-4">{t('footer.company')}</p>
+        <p className="eyebrow text-primary-text mb-4">{t('footer.company')}</p>
         <p className="font-display text-3xl sm:text-4xl md:text-5xl leading-[1.05] max-w-3xl text-foreground">
           {t('footer.description')}
         </p>
@@ -95,7 +95,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                    className="text-muted-foreground hover:text-primary-text transition-colors text-sm"
                   >
                     {link.label}
                   </Link>
@@ -112,7 +112,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-muted-foreground hover:text-primary transition-colors text-sm"
+                    className="text-muted-foreground hover:text-primary-text transition-colors text-sm"
                   >
                     {link.label}
                   </Link>
@@ -128,7 +128,7 @@ export function Footer() {
               <li>
                 <a
                   href="tel:+998901234567"
-                  className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors text-sm"
+                  className="flex items-center gap-3 text-muted-foreground hover:text-primary-text transition-colors text-sm"
                   aria-label="Phone: +998 90 123 45 67"
                 >
                   <Phone className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -138,7 +138,7 @@ export function Footer() {
               <li>
                 <a
                   href="mailto:info@rentevent.uz"
-                  className="flex items-center gap-3 text-muted-foreground hover:text-primary transition-colors text-sm"
+                  className="flex items-center gap-3 text-muted-foreground hover:text-primary-text transition-colors text-sm"
                   aria-label="Email: info@rentevent.uz"
                 >
                   <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -164,7 +164,7 @@ export function Footer() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  className="text-sm text-muted-foreground hover:text-primary-text transition-colors"
                 >
                   {link.label}
                 </Link>

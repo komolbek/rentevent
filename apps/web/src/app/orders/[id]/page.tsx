@@ -147,7 +147,7 @@ function OrderDetailPageContent() {
                         <span
                           className={cn(
                             'text-xs mt-2 text-center',
-                            isCurrent ? 'font-medium text-primary' : 'text-muted-foreground'
+                            isCurrent ? 'font-medium text-primary-text' : 'text-muted-foreground'
                           )}
                         >
                           {step.label}
@@ -319,7 +319,7 @@ function OrderDetailPageContent() {
 
               <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
                 <span>{t('cart.total')}</span>
-                <span className="text-primary">{formatPrice(order.totalAmount)} UZS</span>
+                <span className="text-primary-text">{formatPrice(order.totalAmount)} UZS</span>
               </div>
             </div>
 

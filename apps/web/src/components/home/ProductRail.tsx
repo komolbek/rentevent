@@ -36,7 +36,7 @@ export function ProductRail({
     <section className="container mx-auto px-4 pt-16">
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
-          <p className="eyebrow mb-3 text-primary">{eyebrow}</p>
+          <p className="eyebrow mb-3 text-primary-text">{eyebrow}</p>
           <h2 className="font-display text-3xl font-semibold sm:text-4xl">{title}</h2>
         </div>
         <Link
