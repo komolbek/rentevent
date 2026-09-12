@@ -271,6 +271,17 @@
   background-size: 22px 22px;
 }
 
+/* Horizontal rows that fade at the edges instead of showing a scrollbar
+   (category chips, thumbnails). Referenced as `scrollbar-hide` in markup
+   since before this rule existed — it was never actually defined. */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Marquee track */
 @keyframes marquee {
   from { transform: translateX(0); }

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -91,6 +91,24 @@ function CatalogPageContent() {
 
   const selectedCategory = categories?.find((c) => c.id === categoryId);
 
+  // Which edges of the category chip row have more content beyond them.
+  const chipRowRef = useRef<HTMLDivElement>(null);
+  const [chipFade, setChipFade] = useState({ left: false, right: false });
+  const updateChipFade = useCallback(() => {
+    const el = chipRowRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setChipFade({ left: el.scrollLeft > 4, right: max - el.scrollLeft > 4 });
+  }, []);
+  useEffect(() => {
+    updateChipFade();
+    const el = chipRowRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(updateChipFade);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [updateChipFade, categories, search]);
+
   const periodLabel =
     range?.from && range?.to
       ? `${format(range.from, 'd MMM', { locale: ruLocale })} — ${format(range.to, 'd MMM yyyy', { locale: ruLocale })}`
@@ -143,9 +161,29 @@ function CatalogPageContent() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-8 -mx-4 px-4"
+          className="relative mb-8 -mx-4 px-4"
         >
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          {/* Edge fades tell the eye the row keeps going: right while chips
+              are still hidden, left once scrolled, neither at the ends. */}
+          <div
+            aria-hidden="true"
+            className={cn(
+              'pointer-events-none absolute inset-y-0 left-4 z-10 w-10 bg-gradient-to-r from-background to-transparent transition-opacity duration-200',
+              chipFade.left ? 'opacity-100' : 'opacity-0',
+            )}
+          />
+          <div
+            aria-hidden="true"
+            className={cn(
+              'pointer-events-none absolute inset-y-0 right-4 z-10 w-10 bg-gradient-to-l from-background to-transparent transition-opacity duration-200',
+              chipFade.right ? 'opacity-100' : 'opacity-0',
+            )}
+          />
+          <div
+            ref={chipRowRef}
+            onScroll={updateChipFade}
+            className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide"
+          >
             <button
               onClick={() => updateParams({ category: undefined })}
               className={cn(
