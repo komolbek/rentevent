@@ -104,9 +104,9 @@
       <span>Locales <b>RU · UZ · EN</b></span>
     </div>
     <div class="tally">
-      <div><div class="n">38</div><div class="l">findings</div></div>
-      <div><div class="n">35</div><div class="l">fixed and deployed to rentevent.uz</div></div>
-      <div><div class="n">3</div><div class="l">open — need content or a product call</div></div>
+      <div><div class="n">32</div><div class="l">findings</div></div>
+      <div><div class="n">29</div><div class="l">fixed and deployed to rentevent.uz</div></div>
+      <div><div class="n">3</div><div class="l">open — need content from the client</div></div>
     </div>
   </header>
 
@@ -163,7 +163,7 @@
         <li class="item"><span class="chip fixed">fixed</span><div><div class="k">obvious clickables</div><div class="t">Grid / list toggle was two unlabeled icons with no pressed state.</div><div class="d">Labels, tooltips and <code>aria-pressed</code>; 36 px targets.</div></div></li>
         <li class="item"><span class="chip fixed">fixed</span><div><div class="k">you are here</div><div class="t">Pagination was a bare row of numbers with no current-page semantics.</div><div class="d">Marked up as a nav with <code>aria-current</code>; wraps on narrow screens.</div></div></li>
         <li class="item"><span class="chip fixed">fixed</span><div><div class="k">honest controls</div><div class="t">Dates were shown on the catalog as a passive chip that filtered nothing, because the API had no date parameters.</div><div class="d">The products endpoint now takes a rental period and drops anything without a free unit on every day of it; the catalog has a real date filter, the count reads “N товаров свободно на …”, and cards show remaining units for those dates.</div></div></li>
-        <li class="item"><span class="chip open">open</span><div><div class="k">scrolling affordance</div><div class="t">With 11 categories the chip row overflows sideways with no hint that it scrolls (desktop).</div><div class="d">Minor; a fade at the right edge would do it.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">scrolling affordance</div><div class="t">With 11 categories the chip row overflowed sideways with no hint that it scrolls.</div><div class="d">Edge fades: right while chips are hidden, left once scrolled, neither at the ends; the scrollbar is hidden.</div></div></li>
       </ul>
     </div>
 
