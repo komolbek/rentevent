@@ -155,6 +155,8 @@ const en: Record<TranslationKey, string> = {
   'catalog.loading': 'Loading...',
   'catalog.all': 'All',
   'catalog.clear_search': 'Clear search',
+  'catalog.products_available_count': '{count} items free for {dates}',
+  'catalog.nothing_found_for_dates': 'Nothing is free for the chosen dates. Try other dates or reset the filters.',
   'catalog.period_label': 'Rental period',
   'catalog.period_clear': 'Clear dates',
   'catalog.sort_newest': 'Newest first',

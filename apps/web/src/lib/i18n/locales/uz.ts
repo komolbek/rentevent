@@ -155,6 +155,8 @@ const uz: Record<TranslationKey, string> = {
   'catalog.loading': 'Yuklanmoqda...',
   'catalog.all': 'Barchasi',
   'catalog.clear_search': 'Qidiruvni tozalash',
+  'catalog.products_available_count': '{dates} uchun {count} ta mahsulot boʻsh',
+  'catalog.nothing_found_for_dates': 'Tanlangan sanalarga hech narsa boʻsh emas. Boshqa sanalarni sinab koʻring yoki filtrlarni tozalang.',
   'catalog.period_label': 'Ijara muddati',
   'catalog.period_clear': 'Sanalarni tozalash',
   'catalog.sort_newest': 'Avval yangilari',

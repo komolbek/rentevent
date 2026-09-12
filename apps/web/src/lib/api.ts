@@ -150,6 +150,9 @@ export const productsApi = {
     category_id?: string;
     search?: string;
     sort?: 'newest' | 'popular' | 'price_asc' | 'price_desc';
+    /** YYYY-MM-DD; with end_date, filters to products free for the whole period. */
+    start_date?: string;
+    end_date?: string;
   }) {
     return api.get<PaginatedResponse<IProduct>>('/products', { params });
   },

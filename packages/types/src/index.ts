@@ -160,6 +160,12 @@ export interface IProduct {
   photos: string[];
   dailyPrice: number;
   totalStock: number;
+  /**
+   * Units free for the requested rental period. Present only when the
+   * product list was asked for a date range (start_date / end_date);
+   * otherwise fall back to totalStock.
+   */
+  availableStock?: number;
   isActive: boolean;
   specWidth: string | null;
   specHeight: string | null;

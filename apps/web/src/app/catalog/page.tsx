@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { Search, X, ChevronDown, Grid3X3, LayoutList, CalendarDays } from 'lucide-react';
+import { Search, ChevronDown, Grid3X3, LayoutList } from 'lucide-react';
+import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { ru as ruLocale } from 'date-fns/locale';
 import { categoriesApi, productsApi } from '@/lib/api';
-import { useRentalPeriodStore } from '@/stores/rental-period-store';
-import { Button, ProductCardSkeleton, EmptyState } from '@/components/ui';
+import { useRentalPeriodStore, getStoredPeriod } from '@/stores/rental-period-store';
+import { Button, ProductCardSkeleton, EmptyState, DateRangePicker } from '@/components/ui';
+import { formatDateForAPI, getTomorrow } from '@/lib/utils';
 import { ProductCard } from '@/components/catalog/ProductCard';
 import { CategoryIcon } from '@/lib/categoryIcon';
 import { cn } from '@/lib/utils';
@@ -48,8 +50,32 @@ function CatalogPageContent() {
     queryFn: categoriesApi.getAll,
   });
 
+  // Rental period — a real filter: the API drops products with no free unit
+  // on any day of the range and reports free units for the rest. Shared with
+  // the product page and the sets dialog through the rental-period store, so
+  // dates picked here follow the visitor around the site. The persisted
+  // store is empty during SSR, so it is read after mount.
+  const setPeriod = useRentalPeriodStore((s) => s.setPeriod);
+  const [range, setRange] = useState<DateRange | undefined>(undefined);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const stored = getStoredPeriod();
+    if (stored.from) setRange({ from: stored.from, to: stored.to ?? stored.from });
+    setMounted(true);
+  }, []);
+
+  const handleRangeChange = (next: DateRange | undefined) => {
+    setRange(next);
+    setPeriod(next?.from, next?.to);
+  };
+
+  const periodParams =
+    range?.from && range?.to
+      ? { start_date: formatDateForAPI(range.from), end_date: formatDateForAPI(range.to) }
+      : {};
+
   const { data: products, isLoading: productsLoading } = useQuery({
-    queryKey: ['products', categoryId, search, sort, page],
+    queryKey: ['products', categoryId, search, sort, page, periodParams.start_date, periodParams.end_date],
     queryFn: () =>
       productsApi.getAll({
         category_id: categoryId,
@@ -57,29 +83,18 @@ function CatalogPageContent() {
         sort: sort as 'newest' | 'popular' | 'price_asc' | 'price_desc',
         page,
         limit: 12,
+        ...periodParams,
       }),
+    // Wait for the stored period so the first fetch is already the right one.
+    enabled: mounted,
   });
 
   const selectedCategory = categories?.find((c) => c.id === categoryId);
 
-  const periodFrom = useRentalPeriodStore((s) => s.from);
-  const periodTo = useRentalPeriodStore((s) => s.to);
-  const clearPeriod = useRentalPeriodStore((s) => s.clearPeriod);
-
-  // The persisted store is empty during SSR, so only render the chip once
-  // mounted — otherwise the server and client markup disagree.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const periodLabel = (() => {
-    if (!mounted || !periodFrom) return null;
-    const from = new Date(periodFrom);
-    if (Number.isNaN(from.getTime())) return null;
-    const to = periodTo ? new Date(periodTo) : null;
-    const start = format(from, 'd MMM', { locale: ruLocale });
-    if (!to || Number.isNaN(to.getTime())) return start;
-    return `${start} — ${format(to, 'd MMM yyyy', { locale: ruLocale })}`;
-  })();
+  const periodLabel =
+    range?.from && range?.to
+      ? `${format(range.from, 'd MMM', { locale: ruLocale })} — ${format(range.to, 'd MMM yyyy', { locale: ruLocale })}`
+      : null;
 
   const updateParams = (updates: Record<string, string | undefined>) => {
     const newParams = new URLSearchParams(searchParams.toString());
@@ -114,33 +129,12 @@ function CatalogPageContent() {
           transition={{ delay: 0.1 }}
           className="text-muted-foreground"
         >
-          {products?.meta.total
-            ? t('catalog.products_count', { count: products.meta.total })
+          {products?.meta.total !== undefined && !productsLoading
+            ? periodLabel
+              ? t('catalog.products_available_count', { count: products.meta.total, dates: periodLabel })
+              : t('catalog.products_count', { count: products.meta.total })
             : t('catalog.loading')}
         </motion.p>
-
-        {/* The period picked on the home page. It does not filter the list —
-            the products endpoint has no date parameters — but it carries into
-            every product page, so showing it back keeps that honest. */}
-        {periodLabel && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="mt-4 inline-flex items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 text-sm"
-          >
-            <CalendarDays className="h-4 w-4 text-primary" />
-            <span className="text-muted-foreground">{t('catalog.period_label')}:</span>
-            <span className="font-medium">{periodLabel}</span>
-            <button
-              onClick={clearPeriod}
-              className="ml-1 rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              aria-label={t('catalog.period_clear')}
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </motion.div>
-        )}
       </div>
 
       {/* Categories Horizontal Scroll */}
@@ -193,7 +187,13 @@ function CatalogPageContent() {
         transition={{ delay: 0.3 }}
         className="flex flex-wrap items-center justify-between gap-4 mb-6"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Rental period filter */}
+          <div className="w-full sm:w-72">
+            <span className="sr-only">{t('catalog.period_label')}</span>
+            <DateRangePicker value={range} onChange={handleRangeChange} minDate={getTomorrow()} />
+          </div>
+
           {/* Sort Dropdown */}
           <div className="relative">
             <select
@@ -218,7 +218,7 @@ function CatalogPageContent() {
               className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary-text text-sm"
             >
               &laquo;{search}&raquo;
-              <X className="h-3 w-3" />
+              <span aria-hidden="true">×</span>
             </button>
           )}
           {selectedCategory && (
@@ -228,7 +228,7 @@ function CatalogPageContent() {
               className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary-text text-sm"
             >
               {getCategoryName(selectedCategory.name, t)}
-              <X className="h-3 w-3" />
+              <span aria-hidden="true">×</span>
             </button>
           )}
         </div>
@@ -280,9 +280,14 @@ function CatalogPageContent() {
         <EmptyState
           icon={<Search className="h-12 w-12" />}
           title={t('catalog.nothing_found')}
-          description={t('catalog.nothing_found_desc')}
+          description={periodLabel ? t('catalog.nothing_found_for_dates') : t('catalog.nothing_found_desc')}
           action={
-            <Button onClick={() => router.replace('/catalog')}>
+            <Button
+              onClick={() => {
+                handleRangeChange(undefined);
+                router.replace('/catalog');
+              }}
+            >
               {t('catalog.reset_filters')}
             </Button>
           }

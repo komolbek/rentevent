@@ -18,14 +18,32 @@ export class ProductsController {
     required: false,
     enum: ['newest', 'popular', 'price_asc', 'price_desc'],
   })
+  @ApiQuery({
+    name: 'start_date',
+    required: false,
+    type: String,
+    example: '2026-09-13',
+    description: 'With end_date: only products with a free unit on every day of the range; adds availableStock to each item',
+  })
+  @ApiQuery({ name: 'end_date', required: false, type: String, example: '2026-09-16' })
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('category_id') categoryId?: string,
     @Query('search') search?: string,
     @Query('sort') sort?: 'newest' | 'popular' | 'price_asc' | 'price_desc',
+    @Query('start_date') startDate?: string,
+    @Query('end_date') endDate?: string,
   ) {
-    return this.productsService.findAll({ page, limit, category_id: categoryId, search, sort });
+    return this.productsService.findAll({
+      page,
+      limit,
+      category_id: categoryId,
+      search,
+      sort,
+      start_date: startDate,
+      end_date: endDate,
+    });
   }
 
   @Get(':id')

@@ -154,6 +154,8 @@ const ru = {
   'catalog.all': 'Все',
   'catalog.clear_search': 'Сбросить поиск',
   'catalog.period_label': 'Период аренды',
+  'catalog.products_available_count': '{count} товаров свободно на {dates}',
+  'catalog.nothing_found_for_dates': 'На выбранные даты ничего не свободно. Попробуйте другие даты или сбросьте фильтры.',
   'catalog.period_clear': 'Сбросить даты',
   'catalog.sort_newest': 'Сначала новые',
   'catalog.sort_popular': 'По популярности',

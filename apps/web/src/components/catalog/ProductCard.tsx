@@ -26,6 +26,9 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
   const { isFavorite, addFavorite, removeFavorite } = useFavoritesStore();
   const { t, locale } = useTranslation();
   const name = localizedName(product, locale);
+  // When the catalog was asked for a rental period the API reports units free
+  // for that period; otherwise fall back to the total stock.
+  const stock = product.availableStock ?? product.totalStock;
 
   const isFav = isFavorite(product.id);
   const hasDiscount = (product.pricingTiers?.length ?? 0) > 0 || (product.quantityPricing?.length ?? 0) > 0;
@@ -64,7 +67,7 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
                   <span className="text-xl font-bold text-muted-foreground/30">{name.charAt(0)}</span>
                 </div>
               )}
-              {product.totalStock === 0 && (
+              {stock === 0 && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                   <Badge variant="destructive" size="sm">{t('product_card.out_of_stock')}</Badge>
                 </div>
@@ -75,8 +78,8 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
                 <h3 className="font-medium line-clamp-1 group-hover:text-primary-text transition-colors">{name}</h3>
                 <div className="flex items-center gap-2 mt-1">
                   {hasDiscount && <Badge variant="success" size="sm">{t('product_card.discount')}</Badge>}
-                  {product.totalStock <= 3 && product.totalStock > 0 && (
-                    <span className="text-xs text-amber-600 dark:text-amber-400">{t('product_card.remaining', { count: product.totalStock })}</span>
+                  {stock <= 3 && stock > 0 && (
+                    <span className="text-xs text-amber-600 dark:text-amber-400">{t('product_card.remaining', { count: stock })}</span>
                   )}
                 </div>
               </div>
@@ -141,12 +144,12 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
                   {t('product_card.discount')}
                 </Badge>
               )}
-              {product.totalStock <= 3 && product.totalStock > 0 && (
+              {stock <= 3 && stock > 0 && (
                 <Badge variant="warning" size="sm">
-                  {t('product_card.remaining', { count: product.totalStock })}
+                  {t('product_card.remaining', { count: stock })}
                 </Badge>
               )}
-              {product.totalStock === 0 && (
+              {stock === 0 && (
                 <Badge variant="destructive" size="sm">
                   {t('product_card.out_of_stock')}
                 </Badge>

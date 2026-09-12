@@ -2,6 +2,21 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { Prisma } from '@rentevent/db';
 
+function startOfDay(value: Date | string): Date {
+  const d = new Date(value);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/** Both dates valid and in order, else no period filter at all. */
+function parsePeriod(start?: string, end?: string): { start: Date; end: Date } | null {
+  if (!start || !end) return null;
+  const s = startOfDay(start);
+  const e = startOfDay(end);
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || s > e) return null;
+  return { start: s, end: e };
+}
+
 @Injectable()
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -12,8 +27,10 @@ export class ProductsService {
     category_id?: string;
     search?: string;
     sort?: 'newest' | 'popular' | 'price_asc' | 'price_desc';
+    start_date?: string;
+    end_date?: string;
   }) {
-    const { page, limit, category_id, search, sort } = params;
+    const { page, limit, category_id, search, sort, start_date, end_date } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.ProductWhereInput = {
@@ -23,6 +40,20 @@ export class ProductsService {
 
     if (category_id) {
       where.categoryId = category_id;
+    }
+
+    // Optional rental period: drop products with no free unit on at least one
+    // day of the range, and report how many units are free for the rest.
+    const period = parsePeriod(start_date, end_date);
+    let availableById: Map<string, number> | null = null;
+    if (period) {
+      availableById = await this.availableStockForPeriod(period.start, period.end);
+      const soldOut = [...availableById.entries()]
+        .filter(([, free]) => free <= 0)
+        .map(([id]) => id);
+      if (soldOut.length > 0) {
+        where.id = { notIn: soldOut };
+      }
     }
 
     if (search) {
@@ -79,7 +110,12 @@ export class ProductsService {
     ]);
 
     return {
-      items,
+      items: availableById
+        ? items.map((p) => ({
+            ...p,
+            availableStock: Math.max(0, availableById.get(p.id) ?? p.totalStock),
+          }))
+        : items,
       meta: {
         page,
         limit,
@@ -87,6 +123,61 @@ export class ProductsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  /**
+   * Free units per product over [start, end], counting only products that have
+   * at least one overlapping reservation — everything else is fully free and
+   * simply absent from the map. "Free" is the worst day in the range, the same
+   * day-by-day rule checkAvailability applies to a single product.
+   */
+  private async availableStockForPeriod(start: Date, end: Date): Promise<Map<string, number>> {
+    const reservations = await this.prisma.orderItem.findMany({
+      where: {
+        order: {
+          status: { in: ['CONFIRMED', 'PREPARING', 'DELIVERED'] },
+          deletedAt: null,
+          rentalStartDate: { lte: end },
+          rentalEndDate: { gte: start },
+        },
+      },
+      select: {
+        productId: true,
+        quantity: true,
+        order: { select: { rentalStartDate: true, rentalEndDate: true } },
+      },
+    });
+
+    const result = new Map<string, number>();
+    if (reservations.length === 0) return result;
+
+    const productIds = [...new Set(reservations.map((r) => r.productId))];
+    const stocks = await this.prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, totalStock: true },
+    });
+    const stockById = new Map(stocks.map((s) => [s.id, s.totalStock]));
+
+    // Peak reserved quantity per product across the days of the range.
+    const peakById = new Map<string, number>();
+    for (let day = startOfDay(start); day <= end; day.setDate(day.getDate() + 1)) {
+      const reservedToday = new Map<string, number>();
+      for (const r of reservations) {
+        const from = startOfDay(r.order.rentalStartDate);
+        const to = startOfDay(r.order.rentalEndDate);
+        if (day >= from && day <= to) {
+          reservedToday.set(r.productId, (reservedToday.get(r.productId) ?? 0) + r.quantity);
+        }
+      }
+      for (const [id, qty] of reservedToday) {
+        if (qty > (peakById.get(id) ?? 0)) peakById.set(id, qty);
+      }
+    }
+
+    for (const id of productIds) {
+      result.set(id, (stockById.get(id) ?? 0) - (peakById.get(id) ?? 0));
+    }
+    return result;
   }
 
   async findOne(id: string) {
