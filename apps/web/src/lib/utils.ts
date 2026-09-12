@@ -191,10 +191,14 @@ export function isToday(date: Date): boolean {
   );
 }
 
-// Get tomorrow's date
+// Get tomorrow's date, at local midnight. Rental dates are whole days;
+// carrying the current time-of-day made the picker's day count
+// (differenceInDays) disagree with the cart's (ceil) — "3 дня" vs "4 дней"
+// for the same range.
 export function getTomorrow(): Date {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
   return tomorrow;
 }
 

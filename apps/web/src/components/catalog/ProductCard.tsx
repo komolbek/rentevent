@@ -198,10 +198,13 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
                   chip leaves the price ~87px and clips it. Below md the card
                   itself (image + name + price) is the affordance. */}
               <span
-                className="hidden h-9 shrink-0 items-center gap-1 rounded-full bg-muted pl-3 pr-2 text-xs font-medium text-foreground/80 transition-colors group-hover:bg-primary group-hover:text-white md:inline-flex"
+                className="hidden h-9 shrink-0 items-center gap-1 rounded-full bg-muted px-2.5 text-xs font-medium text-foreground/80 transition-colors group-hover:bg-primary group-hover:text-white md:inline-flex xl:pl-3 xl:pr-2"
                 aria-hidden="true"
               >
-                {t('product_card.view')}
+                {/* Four columns at 1024px leave ~200px per card: the word
+                    would push the price into an ellipsis, so it only appears
+                    from xl; between md and xl the arrow alone is the cue. */}
+                <span className="hidden xl:inline">{t('product_card.view')}</span>
                 <ArrowUpRight className="h-4 w-4" />
               </span>
             </div>

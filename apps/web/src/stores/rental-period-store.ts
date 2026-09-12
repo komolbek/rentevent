@@ -18,15 +18,24 @@ interface RentalPeriodState {
   clearPeriod: () => void;
 }
 
+function atMidnight(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 export const useRentalPeriodStore = create<RentalPeriodState>()(
   persist(
     (set) => ({
       from: null,
       to: null,
+      // Stored at local midnight: rental dates are whole days, and a
+      // time-of-day here made day counts differ between the picker and the
+      // cart for the same range.
       setPeriod: (from, to) =>
         set({
-          from: from ? from.toISOString() : null,
-          to: to ? to.toISOString() : null,
+          from: from ? atMidnight(from).toISOString() : null,
+          to: to ? atMidnight(to).toISOString() : null,
         }),
       clearPeriod: () => set({ from: null, to: null }),
     }),

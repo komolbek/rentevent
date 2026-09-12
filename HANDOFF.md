@@ -73,6 +73,16 @@ blank fields → this mismatch is the first suspect.
 - **Sets** (bundles): `sets`/`set_items` tables + `/admin/sets` (product picker + qty) + storefront `/sets`; add‑to‑cart **expands** a set into its component products (reuses existing cart/checkout — no order‑schema change).
 - Fixes: customers page crash, image upload, and the **orders 500** (cleared by the prod DB sync).
 
+## Sep 2026 storefront UX pass (see `docs/ux-audit-2026-09-11.html`)
+- Header rebuilt to the client's reference (fair.rent): one ~80px bar, red fixed
+  "Арендовать" side tab opens the catalog (desktop), no Catalog in the top nav.
+- `GET /products` accepts `start_date` / `end_date`; with both it drops products with
+  no free unit on any day of the range and adds `availableStock` to each item. The
+  catalog date filter, product page and sets dialog share the `rental-period` store.
+- Currency word comes from `t('common.currency')` (сум / so‘m / sum) — never hardcode "UZS".
+- zustand gotcha: never reference the exported store inside `onRehydrateStorage`
+  (it runs synchronously inside `create()`, before the const exists); use `merge()`.
+
 ## Open items / next steps
 1. **Decide go‑live:** flip `SITE_GATE_ENABLED` to `false` when ready for public.
 2. **Populate content:** create Sets in admin (Сеты); add UZ/EN translations to products/sets/events. Events already seeded (15).

@@ -105,8 +105,8 @@
     </div>
     <div class="tally">
       <div><div class="n">38</div><div class="l">findings</div></div>
-      <div><div class="n">34</div><div class="l">fixed and deployed to rentevent.uz</div></div>
-      <div><div class="n">4</div><div class="l">open — need content or a product call</div></div>
+      <div><div class="n">35</div><div class="l">fixed and deployed to rentevent.uz</div></div>
+      <div><div class="n">3</div><div class="l">open — need content or a product call</div></div>
     </div>
   </header>
 
@@ -162,6 +162,7 @@
       <ul class="items">
         <li class="item"><span class="chip fixed">fixed</span><div><div class="k">obvious clickables</div><div class="t">Grid / list toggle was two unlabeled icons with no pressed state.</div><div class="d">Labels, tooltips and <code>aria-pressed</code>; 36 px targets.</div></div></li>
         <li class="item"><span class="chip fixed">fixed</span><div><div class="k">you are here</div><div class="t">Pagination was a bare row of numbers with no current-page semantics.</div><div class="d">Marked up as a nav with <code>aria-current</code>; wraps on narrow screens.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">honest controls</div><div class="t">Dates were shown on the catalog as a passive chip that filtered nothing, because the API had no date parameters.</div><div class="d">The products endpoint now takes a rental period and drops anything without a free unit on every day of it; the catalog has a real date filter, the count reads “N товаров свободно на …”, and cards show remaining units for those dates.</div></div></li>
         <li class="item"><span class="chip open">open</span><div><div class="k">scrolling affordance</div><div class="t">With 11 categories the chip row overflows sideways with no hint that it scrolls (desktop).</div><div class="d">Minor; a fade at the right edge would do it.</div></div></li>
       </ul>
     </div>
@@ -244,7 +245,6 @@
     <ol class="steps">
       <li>Open the site locally (or deploy to a preview) and look at the header against fair.rent — that is the change the client will judge first.</li>
       <li>Send the real Instagram / Facebook URLs, the real phone number, and the About-page figures.</li>
-      <li>One product call left: date filtering in the catalog (the API has no date parameters yet).</li>
       <li>Both commits are on <code>main</code> and deployed; the production check covered home, catalog, product, cart, sets, events and the phone layout. Checkout was not exercised (needs an SMS login).</li>
     </ol>
     <p class="sub" style="margin-top:22px">Files touched</p>
