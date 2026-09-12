@@ -199,9 +199,9 @@ const uz: Record<TranslationKey, string> = {
   'product.kg': 'kg',
   'product.discount_tiers': 'Uzoq muddatli ijara chegirmalari',
   'product.days_plus': '{count}+ kun',
-  'product.per_day': 'UZS/kun',
-  'product.savings': 'Tejash: {amount} UZS',
-  'product.price_breakdown': '{price} UZS/kun \u00D7 {days} kun \u00D7 {qty} dona',
+  'product.per_day': 'so\'m/kun',
+  'product.savings': 'Tejash: {amount} so\'m',
+  'product.price_breakdown': '{price} so\'m/kun \u00D7 {days} kun \u00D7 {qty} dona',
   'product.related': 'O\'xshash mahsulotlar',
   'product.share': 'Ulashish',
   'product.link_copied': 'Havola nusxalandi',
@@ -376,6 +376,7 @@ const uz: Record<TranslationKey, string> = {
   'address_form.address_required': 'To\'liq manzilni kiriting',
 
   // Common / UI
+  'common.currency': 'so\'m',
   'common.loading': 'Yuklanmoqda...',
   'common.confirm': 'Tasdiqlash',
   'common.cancel': 'Bekor qilish',

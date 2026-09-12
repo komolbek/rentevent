@@ -115,7 +115,7 @@ export default function SetsPage() {
 
                   <div className="mt-auto flex items-center justify-between pt-4">
                     <div>
-                      <span className="text-lg font-bold text-primary">{formatPrice(s.daily_price)} UZS</span>
+                      <span className="text-lg font-bold text-primary">{formatPrice(s.daily_price)} {t('common.currency')}</span>
                       <span className="ml-1 text-xs text-muted-foreground">/ {t('product_card.per_day')}</span>
                     </div>
                     <button

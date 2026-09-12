@@ -197,9 +197,9 @@ const ru = {
   'product.kg': 'кг',
   'product.discount_tiers': 'Скидки за длительную аренду',
   'product.days_plus': '{count}+ дней',
-  'product.per_day': 'UZS/день',
-  'product.savings': 'Экономия: {amount} UZS',
-  'product.price_breakdown': '{price} UZS/день × {days} дней × {qty} шт.',
+  'product.per_day': 'сум/день',
+  'product.savings': 'Экономия: {amount} сум',
+  'product.price_breakdown': '{price} сум/день × {days} дней × {qty} шт.',
   'product.related': 'Похожие товары',
   'product.share': 'Поделиться',
   'product.link_copied': 'Ссылка скопирована',
@@ -374,6 +374,7 @@ const ru = {
   'address_form.address_required': 'Введите полный адрес',
 
   // Common / UI
+  'common.currency': 'сум',
   'common.loading': 'Загрузка...',
   'common.confirm': 'Подтвердить',
   'common.cancel': 'Отмена',

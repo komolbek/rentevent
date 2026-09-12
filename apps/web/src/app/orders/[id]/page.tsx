@@ -217,7 +217,7 @@ function OrderDetailPageContent() {
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-bold">{formatPrice(item.totalPrice)} UZS</p>
+                      <p className="font-bold">{formatPrice(item.totalPrice)} {t('common.currency')}</p>
                     </div>
                   </Link>
                 ))}
@@ -302,26 +302,26 @@ function OrderDetailPageContent() {
             <div className="space-y-3 mb-6">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t('checkout.items')}</span>
-                <span>{formatPrice(order.subtotal)} UZS</span>
+                <span>{formatPrice(order.subtotal)} {t('common.currency')}</span>
               </div>
 
               {order.totalSavings > 0 && (
                 <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
                   <span>{t('cart.discount')}</span>
-                  <span>-{formatPrice(order.totalSavings)} UZS</span>
+                  <span>-{formatPrice(order.totalSavings)} {t('common.currency')}</span>
                 </div>
               )}
 
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">{t('cart.delivery')}</span>
                 <span>
-                  {order.deliveryFee > 0 ? `${formatPrice(order.deliveryFee)} UZS` : t('cart.free')}
+                  {order.deliveryFee > 0 ? `${formatPrice(order.deliveryFee)} ${t('common.currency')}` : t('cart.free')}
                 </span>
               </div>
 
               <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
                 <span>{t('cart.total')}</span>
-                <span className="text-primary-text">{formatPrice(order.totalAmount)} UZS</span>
+                <span className="text-primary-text">{formatPrice(order.totalAmount)} {t('common.currency')}</span>
               </div>
             </div>
 

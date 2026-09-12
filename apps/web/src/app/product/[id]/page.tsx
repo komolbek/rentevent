@@ -337,11 +337,11 @@ export default function ProductDetailPage() {
           <Card className="p-4">
             <div className="flex items-baseline gap-2 mb-2">
               <span className="text-3xl font-bold text-primary">
-                {formatPrice(priceInfo.totalPrice)} UZS
+                {formatPrice(priceInfo.totalPrice)} {t('common.currency')}
               </span>
               {priceInfo.savings > 0 && (
                 <span className="text-lg text-muted-foreground line-through">
-                  {formatPrice(product.dailyPrice * rentalDays * quantity)} UZS
+                  {formatPrice(product.dailyPrice * rentalDays * quantity)} {t('common.currency')}
                 </span>
               )}
             </div>

@@ -5,18 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Format price in UZS with space separators
+// Format a price in sum with space separators (the currency word itself comes from t('common.currency'))
 export function formatPrice(price: number): string {
   return new Intl.NumberFormat('uz-UZ', {
     style: 'decimal',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price).replace(/,/g, ' ');
-}
-
-// Format price with currency
-export function formatPriceWithCurrency(price: number): string {
-  return `${formatPrice(price)} UZS`;
 }
 
 // Format phone number for display (+998 XX XXX XX XX)

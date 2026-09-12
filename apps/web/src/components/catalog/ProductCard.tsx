@@ -82,7 +82,7 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
               </div>
               <div className="flex items-center justify-between mt-2">
                 <div>
-                  <span className="text-lg font-bold text-primary">{formatPrice(product.dailyPrice)} UZS</span>
+                  <span className="text-lg font-bold text-primary">{formatPrice(product.dailyPrice)} {t('common.currency')}</span>
                   <span className="text-xs text-muted-foreground ml-1">/ {t('product_card.per_day')}</span>
                 </div>
                 <motion.button
@@ -105,7 +105,7 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
   return (
     <Link
       href={`/product/${product.id}`}
-      aria-label={`${name} - ${formatPrice(product.dailyPrice)} UZS ${t('product_card.per_day')}`}
+      aria-label={`${name} - ${formatPrice(product.dailyPrice)} ${t('common.currency')} ${t('product_card.per_day')}`}
     >
       <motion.div
         whileHover={{ y: -5 }}
@@ -183,7 +183,7 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
                 <p className="eyebrow whitespace-nowrap text-muted-foreground mb-1.5">{t('product_card.per_day')}</p>
                 <p className="text-lg font-semibold text-foreground truncate">
                   {formatPrice(product.dailyPrice)}
-                  <span className="ml-1 text-xs font-normal text-muted-foreground">UZS</span>
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">{t('common.currency')}</span>
                 </p>
               </div>
 

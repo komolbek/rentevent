@@ -154,11 +154,11 @@ export default function CartPage() {
                     {/* Price */}
                     <div className="text-right shrink-0">
                       <p className="font-bold text-lg">
-                        {formatPrice(item.totalPrice)} UZS
+                        {formatPrice(item.totalPrice)} {t('common.currency')}
                       </p>
                       {item.savings > 0 && (
                         <p className="text-sm text-green-600 dark:text-green-400">
-                          -{formatPrice(item.savings)} UZS
+                          -{formatPrice(item.savings)} {t('common.currency')}
                         </p>
                       )}
                     </div>
@@ -204,24 +204,24 @@ export default function CartPage() {
             <div className="space-y-3 mb-6">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('cart.items_count', { count: items.length })}</span>
-                <span>{formatPrice(subtotal)} UZS</span>
+                <span>{formatPrice(subtotal)} {t('common.currency')}</span>
               </div>
 
               {totalSavings > 0 && (
                 <div className="flex justify-between text-green-600 dark:text-green-400">
                   <span>{t('cart.discount')}</span>
-                  <span>-{formatPrice(totalSavings)} UZS</span>
+                  <span>-{formatPrice(totalSavings)} {t('common.currency')}</span>
                 </div>
               )}
 
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('cart.delivery')}</span>
-                <span>{deliveryFee > 0 ? `${formatPrice(deliveryFee)} UZS` : t('cart.free')}</span>
+                <span>{deliveryFee > 0 ? `${formatPrice(deliveryFee)} ${t('common.currency')}` : t('cart.free')}</span>
               </div>
 
               <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
                 <span>{t('cart.total')}</span>
-                <span className="text-primary-text">{formatPrice(total)} UZS</span>
+                <span className="text-primary-text">{formatPrice(total)} {t('common.currency')}</span>
               </div>
             </div>
 

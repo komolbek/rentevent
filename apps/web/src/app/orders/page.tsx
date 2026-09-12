@@ -149,7 +149,7 @@ function OrdersPageContent() {
                       {t('orders.items_count', { count: order.items.length })}
                     </span>
                     <span className="text-lg font-bold text-primary">
-                      {formatPrice(order.totalAmount)} UZS
+                      {formatPrice(order.totalAmount)} {t('common.currency')}
                     </span>
                   </div>
                 </Card>
