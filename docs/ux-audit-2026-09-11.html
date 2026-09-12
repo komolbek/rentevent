@@ -105,8 +105,8 @@
     </div>
     <div class="tally">
       <div><div class="n">38</div><div class="l">findings</div></div>
-      <div><div class="n">32</div><div class="l">fixed and deployed to rentevent.uz</div></div>
-      <div><div class="n">6</div><div class="l">open — need content or a product call</div></div>
+      <div><div class="n">34</div><div class="l">fixed and deployed to rentevent.uz</div></div>
+      <div><div class="n">4</div><div class="l">open — need content or a product call</div></div>
     </div>
   </header>
 
@@ -219,8 +219,8 @@
     <div class="page">
       <div><h3>Sets &amp; Events</h3><div class="route">/sets · /events</div></div>
       <ul class="items">
-        <li class="item"><span class="chip open">open</span><div><div class="k">surprise</div><div class="t">“В корзину” on a set adds every item for tomorrow only, without asking for dates.</div><div class="d">Cart shows the dates, so it is recoverable, but a date prompt before adding would remove the surprise.</div></div></li>
-        <li class="item"><span class="chip open">open</span><div><div class="k">wording</div><div class="t">Prices mix “UZS” (cards, cart, checkout) and “сум” (hero collage, terms text).</div><div class="d">Pick one. “сум” is what Russian-speaking customers say; “UZS” is what the code uses.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">surprise</div><div class="t">“В корзину” on a set added every item for tomorrow only, without asking for dates.</div><div class="d">It now opens a dialog with a calendar (pre-filled with dates already chosen on the site), shows the total for the period, and adds the items with those dates.</div></div></li>
+        <li class="item"><span class="chip fixed">fixed</span><div><div class="k">wording</div><div class="t">Prices mixed “UZS” (cards, cart, checkout) and “сум” (hero collage, terms text).</div><div class="d">One translation key now supplies the currency word everywhere: сум / so‘m / sum.</div></div></li>
       </ul>
     </div>
 
@@ -244,7 +244,7 @@
     <ol class="steps">
       <li>Open the site locally (or deploy to a preview) and look at the header against fair.rent — that is the change the client will judge first.</li>
       <li>Send the real Instagram / Facebook URLs, the real phone number, and the About-page figures.</li>
-      <li>Decide the two product calls: date filtering in the catalog, and a date prompt on “add set to cart”.</li>
+      <li>One product call left: date filtering in the catalog (the API has no date parameters yet).</li>
       <li>Both commits are on <code>main</code> and deployed; the production check covered home, catalog, product, cart, sets, events and the phone layout. Checkout was not exercised (needs an SMS login).</li>
     </ol>
     <p class="sub" style="margin-top:22px">Files touched</p>
