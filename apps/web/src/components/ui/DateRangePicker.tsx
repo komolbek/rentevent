@@ -10,6 +10,67 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 
+interface RangeCalendarProps {
+  value: DateRange | undefined;
+  onChange: (range: DateRange | undefined) => void;
+  minDate?: Date;
+  maxDate?: Date;
+  months?: number;
+}
+
+/**
+ * The bare range calendar — the body of the picker popover, also usable
+ * inline (the "pick dates for this set" dialog renders it directly, since a
+ * popover inside a modal would be clipped by the panel).
+ */
+export function RangeCalendar({ value, onChange, minDate, maxDate, months = 1 }: RangeCalendarProps) {
+  return (
+    <DayPicker
+      mode="range"
+      selected={value}
+      onSelect={onChange}
+      locale={ru}
+      disabled={{ before: minDate ?? new Date(), after: maxDate }}
+      numberOfMonths={months}
+      showOutsideDays
+      classNames={{
+        months: 'flex gap-6',
+        month: 'space-y-4',
+        month_caption: 'flex justify-center pt-1 relative items-center mb-4',
+        caption_label: 'text-sm font-semibold',
+        nav: 'absolute inset-x-0 top-0 flex items-center justify-between px-1',
+        button_previous:
+          'h-8 w-8 bg-transparent p-0 hover:bg-muted rounded-lg flex items-center justify-center transition-colors',
+        button_next:
+          'h-8 w-8 bg-transparent p-0 hover:bg-muted rounded-lg flex items-center justify-center transition-colors',
+        weekday: 'text-muted-foreground w-10 font-medium text-xs uppercase',
+        day: 'text-center text-sm p-0',
+        day_button: cn(
+          'h-10 w-10 p-0 font-medium rounded-lg transition-all duration-200',
+          'hover:bg-primary/10',
+          'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2'
+        ),
+        selected: 'bg-primary text-primary-foreground hover:bg-primary',
+        range_start: 'bg-primary text-primary-foreground rounded-l-lg',
+        range_end: 'bg-primary text-primary-foreground rounded-r-lg',
+        range_middle: 'bg-primary/20 text-foreground rounded-none',
+        today: 'font-bold text-primary-text',
+        outside: 'text-muted-foreground/30 opacity-30',
+        disabled: 'text-muted-foreground/20 opacity-30 cursor-not-allowed line-through',
+        hidden: 'invisible',
+      }}
+      components={{
+        Chevron: ({ orientation }) =>
+          orientation === 'left' ? (
+            <ChevronLeft className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          ),
+      }}
+    />
+  );
+}
+
 interface DateRangePickerProps {
   value: DateRange | undefined;
   onChange: (range: DateRange | undefined) => void;
@@ -214,48 +275,12 @@ export function DateRangePicker({
 
               {/* Calendar */}
               <div className="p-4 sm:p-6">
-                <DayPicker
-                  mode="range"
-                  selected={value}
-                  onSelect={handleSelect}
-                  locale={ru}
-                  disabled={{ before: minDate, after: maxDate }}
-                  numberOfMonths={monthsToShow}
-                  showOutsideDays
-                  classNames={{
-                    months: 'flex gap-6',
-                    month: 'space-y-4',
-                    month_caption: 'flex justify-center pt-1 relative items-center mb-4',
-                    caption_label: 'text-sm font-semibold',
-                    nav: 'absolute inset-x-0 top-0 flex items-center justify-between px-1',
-                    button_previous:
-                      'h-8 w-8 bg-transparent p-0 hover:bg-muted rounded-lg flex items-center justify-center transition-colors',
-                    button_next:
-                      'h-8 w-8 bg-transparent p-0 hover:bg-muted rounded-lg flex items-center justify-center transition-colors',
-                    weekday: 'text-muted-foreground w-10 font-medium text-xs uppercase',
-                    day: 'text-center text-sm p-0',
-                    day_button: cn(
-                      'h-10 w-10 p-0 font-medium rounded-lg transition-all duration-200',
-                      'hover:bg-primary/10',
-                      'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2'
-                    ),
-                    selected: 'bg-primary text-primary-foreground hover:bg-primary',
-                    range_start: 'bg-primary text-primary-foreground rounded-l-lg',
-                    range_end: 'bg-primary text-primary-foreground rounded-r-lg',
-                    range_middle: 'bg-primary/20 text-foreground rounded-none',
-                    today: 'font-bold text-primary-text',
-                    outside: 'text-muted-foreground/30 opacity-30',
-                    disabled: 'text-muted-foreground/20 opacity-30 cursor-not-allowed line-through',
-                    hidden: 'invisible',
-                  }}
-                  components={{
-                    Chevron: ({ orientation }) =>
-                      orientation === 'left' ? (
-                        <ChevronLeft className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      ),
-                  }}
+                <RangeCalendar
+                  value={value}
+                  onChange={handleSelect}
+                  minDate={minDate}
+                  maxDate={maxDate}
+                  months={monthsToShow}
                 />
               </div>
 

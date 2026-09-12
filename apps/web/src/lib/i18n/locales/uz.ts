@@ -32,6 +32,9 @@ const uz: Record<TranslationKey, string> = {
   'sets.add': 'Savatga',
   'sets.added_to_cart': 'Toʻplam savatga qoʻshildi',
   'sets.items_count': '{count} ta mahsulot',
+  'sets.pick_dates_title': 'Ijara sanalari',
+  'sets.pick_dates_hint': 'Toʻplam qaysi kunlarga kerakligini tanlang — barcha mahsulotlari shu sanalar bilan savatga tushadi.',
+  'sets.total_for_period': '{price} {currency}/kun × {days} kun = {total} {currency}',
 
   // Header / User Menu
   'header.login': 'Kirish',

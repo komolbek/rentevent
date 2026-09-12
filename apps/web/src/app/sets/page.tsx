@@ -1,14 +1,20 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import { Layers, ShoppingCart, Package } from 'lucide-react';
+import { Layers, ShoppingCart, Package, CalendarDays } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import type { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
+import { ru as ruLocale } from 'date-fns/locale';
 import type { IProduct } from '@rentevent/types';
 import { setsApi, type SetPublic } from '@/lib/api';
 import { useCartStore } from '@/stores/cart-store';
+import { useRentalPeriodStore, getStoredPeriod } from '@/stores/rental-period-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { formatPrice, getTomorrow, addDays } from '@/lib/utils';
+import { formatPrice, getTomorrow, calculateRentalDays } from '@/lib/utils';
+import { Button, Modal, RangeCalendar } from '@/components/ui';
 import type { Locale } from '@/lib/i18n';
 
 function localize(s: SetPublic, locale: Locale, field: 'name' | 'description'): string {
@@ -27,6 +33,7 @@ function itemName(p: NonNullable<SetPublic['items'][number]['product']>, locale:
 export default function SetsPage() {
   const { t, locale } = useTranslation();
   const { addItem } = useCartStore();
+  const setPeriod = useRentalPeriodStore((s) => s.setPeriod);
   const { data, isLoading } = useQuery({
     queryKey: ['sets'],
     queryFn: () => setsApi.getAll(),
@@ -34,11 +41,31 @@ export default function SetsPage() {
 
   const sets = data?.items ?? [];
 
-  const addSetToCart = (s: SetPublic) => {
-    const from = getTomorrow();
-    const to = addDays(getTomorrow(), 0);
+  // The set waiting for its dates. "Add to cart" used to add every item for
+  // tomorrow only, without asking — the dates are the one thing a rental
+  // cannot guess, so they are asked for here, pre-filled with the period the
+  // visitor already chose elsewhere on the site.
+  const [pendingSet, setPendingSet] = useState<SetPublic | null>(null);
+  const [range, setRange] = useState<DateRange | undefined>(undefined);
+
+  const openDatePrompt = (s: SetPublic) => {
+    const stored = getStoredPeriod();
+    const from = stored.from ?? getTomorrow();
+    setRange({ from, to: stored.to ?? from });
+    setPendingSet(s);
+  };
+
+  const closeDatePrompt = () => setPendingSet(null);
+
+  const rentalDays = range?.from && range?.to ? calculateRentalDays(range.from, range.to) : 0;
+  const canConfirm = !!(pendingSet && range?.from && range?.to);
+
+  const confirmAddToCart = () => {
+    if (!pendingSet || !range?.from || !range?.to) return;
+    const from = range.from;
+    const to = range.to;
     let added = 0;
-    for (const it of s.items) {
+    for (const it of pendingSet.items) {
       if (!it.product) continue;
       const product = {
         id: it.product.id,
@@ -54,8 +81,13 @@ export default function SetsPage() {
       addItem(product, it.quantity, from, to);
       added += 1;
     }
+    setPeriod(from, to);
     if (added > 0) toast.success(t('sets.added_to_cart'));
+    closeDatePrompt();
   };
+
+  const pendingName = pendingSet ? localize(pendingSet, locale, 'name') : '';
+  const pendingTotal = pendingSet ? pendingSet.daily_price * rentalDays : 0;
 
   return (
     <div className="container mx-auto px-4 py-10">
@@ -119,7 +151,7 @@ export default function SetsPage() {
                       <span className="ml-1 text-xs text-muted-foreground">/ {t('product_card.per_day')}</span>
                     </div>
                     <button
-                      onClick={() => addSetToCart(s)}
+                      onClick={() => openDatePrompt(s)}
                       className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                     >
                       <ShoppingCart className="h-4 w-4" /> {t('sets.add')}
@@ -131,6 +163,61 @@ export default function SetsPage() {
           })}
         </div>
       )}
+
+      {/* Date prompt */}
+      <Modal
+        isOpen={!!pendingSet}
+        onClose={closeDatePrompt}
+        title={t('sets.pick_dates_title')}
+        description={pendingName}
+        size="md"
+      >
+        <p className="mb-4 text-sm text-muted-foreground">{t('sets.pick_dates_hint')}</p>
+
+        <div className="flex justify-center rounded-xl border border-border bg-background p-3">
+          <RangeCalendar value={range} onChange={setRange} minDate={getTomorrow()} months={1} />
+        </div>
+
+        <div className="mt-4 flex items-center gap-3 rounded-xl bg-muted px-4 py-3 text-sm">
+          <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
+          {range?.from && range?.to ? (
+            <div className="flex-1">
+              <p className="font-medium">
+                {format(range.from, 'd MMM', { locale: ruLocale })} — {format(range.to, 'd MMM yyyy', { locale: ruLocale })}
+                <span className="ml-2 text-muted-foreground">
+                  · {t('date_picker.selected_days', { count: rentalDays })}
+                </span>
+              </p>
+              <p className="text-muted-foreground">
+                {t('sets.total_for_period', {
+                  price: formatPrice(pendingSet?.daily_price ?? 0),
+                  days: rentalDays,
+                  total: formatPrice(pendingTotal),
+                  currency: t('common.currency'),
+                })}
+              </p>
+            </div>
+          ) : (
+            <p className="flex-1 text-muted-foreground">{t('date_picker.select_dates')}</p>
+          )}
+        </div>
+
+        <div className="mt-5 flex gap-3">
+          <Button type="button" variant="outline" className="flex-1" onClick={closeDatePrompt}>
+            {t('common.cancel')}
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            className="flex-1"
+            disabled={!canConfirm}
+            onClick={confirmAddToCart}
+            leftIcon={<ShoppingCart className="h-4 w-4" />}
+          >
+            {t('sets.add')}
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

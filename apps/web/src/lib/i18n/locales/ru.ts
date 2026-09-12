@@ -30,6 +30,9 @@ const ru = {
   'sets.add': 'В корзину',
   'sets.added_to_cart': 'Сет добавлен в корзину',
   'sets.items_count': '{count} товаров',
+  'sets.pick_dates_title': 'Даты аренды',
+  'sets.pick_dates_hint': 'Выберите, на какие дни нужен сет — все его товары попадут в корзину с этими датами.',
+  'sets.total_for_period': '{price} {currency}/день × {days} дн. = {total} {currency}',
 
   // Header / User Menu
   'header.login': 'Войти',

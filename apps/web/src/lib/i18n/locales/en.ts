@@ -32,6 +32,9 @@ const en: Record<TranslationKey, string> = {
   'sets.add': 'Add to cart',
   'sets.added_to_cart': 'Set added to cart',
   'sets.items_count': '{count} items',
+  'sets.pick_dates_title': 'Rental dates',
+  'sets.pick_dates_hint': 'Choose the days you need the set for — all of its items go into the cart with these dates.',
+  'sets.total_for_period': '{price} {currency}/day × {days} days = {total} {currency}',
 
   // Header / User Menu
   'header.login': 'Sign in',
