@@ -67,14 +67,17 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state) => {
-        // After rehydrating from localStorage, ensure the cookie mirrors the token
-        // (handles the case where the user logged in before this change shipped,
-        // or the cookie expired while the localStorage entry is still valid).
-        if (state?.token) {
-          setAuthCookie(state.token);
-        }
-        useAuthStore.setState({ _hasHydrated: true });
+      // Rehydration runs synchronously inside create(), so this cannot
+      // reference useAuthStore (it is not initialised yet — the old
+      // onRehydrateStorage callback threw here and zustand swallowed it,
+      // which left _hasHydrated permanently false). merge() has everything
+      // it needs without touching the store.
+      merge: (persisted, current) => {
+        const stored = (persisted as Partial<AuthState> | undefined) ?? {};
+        // Ensure the cookie mirrors the token (handles a login that predates
+        // the cookie, or a cookie that expired while localStorage is valid).
+        if (stored.token) setAuthCookie(stored.token);
+        return { ...current, ...stored, _hasHydrated: true };
       },
     },
   ),

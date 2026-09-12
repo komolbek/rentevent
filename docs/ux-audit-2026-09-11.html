@@ -235,7 +235,7 @@
   <section>
     <h2>What I could not verify</h2>
     <div class="callout">
-      <b>Checkout and account pages.</b> They need an SMS login, so they were checked in code only. Everything else was verified on production after deploy. One console error remains on production: a React hydration mismatch (#418) on first load that does not reproduce in the dev build in either theme — it predates this work as far as I can tell and does not affect rendering, but it is worth a look. <code>next.config.ts</code> now has an inert <code>/api-proxy</code> rewrite; start the server with <code>DEV_API_PROXY_TARGET=https://api.rentevent.uz/api NEXT_PUBLIC_API_URL=/api-proxy</code> to see real data locally.
+      <b>Checkout and account pages.</b> They need an SMS login, so they were checked in code only. Everything else was verified on production after deploy. A React hydration error (#418) was seen on production in the minutes right after the first deploy and never again — the home page is prerendered and served from Next's cache, so during the rollout a stale HTML document met the new JS. Chasing it did turn up a real bug: the theme and auth stores called their own hook inside <code>onRehydrateStorage</code>, which runs before the store exists, so the callback threw silently — a dark-theme visitor saw the Moon icon on a dark page. Both stores now derive that state in <code>merge()</code>. <code>next.config.ts</code> now has an inert <code>/api-proxy</code> rewrite; start the server with <code>DEV_API_PROXY_TARGET=https://api.rentevent.uz/api NEXT_PUBLIC_API_URL=/api-proxy</code> to see real data locally.
     </div>
   </section>
 

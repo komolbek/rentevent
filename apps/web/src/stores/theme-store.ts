@@ -14,6 +14,10 @@ function getSystemTheme(): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
+function resolve(theme: Theme): 'light' | 'dark' {
+  return theme === 'system' ? getSystemTheme() : theme;
+}
+
 function applyTheme(resolved: 'light' | 'dark') {
   if (typeof document === 'undefined') return;
   document.documentElement.classList.remove('light', 'dark');
@@ -26,19 +30,29 @@ export const useThemeStore = create<ThemeState>()(
       theme: 'system',
       resolvedTheme: 'light',
       setTheme: (theme) => {
-        const resolved = theme === 'system' ? getSystemTheme() : theme;
+        const resolved = resolve(theme);
         applyTheme(resolved);
         set({ theme, resolvedTheme: resolved });
       },
     }),
     {
       name: 'theme-storage',
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          const resolved = state.theme === 'system' ? getSystemTheme() : state.theme;
-          applyTheme(resolved);
-          useThemeStore.setState({ resolvedTheme: resolved });
-        }
+      partialize: (state) => ({ theme: state.theme }),
+      // Rehydration runs synchronously inside create(), before the exported
+      // const exists — the old onRehydrateStorage callback referenced
+      // useThemeStore there, threw (silently swallowed by zustand), and the
+      // resolved theme never synced from storage: a dark-theme visitor saw
+      // the Moon ("switch to dark") icon on a dark page. Deriving it in
+      // merge() needs no reference to the store.
+      merge: (persisted, current) => {
+        const theme = (persisted as Partial<ThemeState> | undefined)?.theme;
+        // Nothing stored = the visitor never chose: stay light, as the SSR
+        // markup and the inline <head> script already do, so there is no
+        // flash to dark for OS-dark visitors who never asked for it.
+        if (!theme) return current;
+        const resolved = resolve(theme);
+        applyTheme(resolved);
+        return { ...current, theme, resolvedTheme: resolved };
       },
     },
   ),
