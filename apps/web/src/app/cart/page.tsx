@@ -8,19 +8,22 @@ import { ShoppingCart, Trash2, ArrowRight, ShoppingBag } from 'lucide-react';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
-import { Button, Card, EmptyState, QuantitySelector, ConfirmModal } from '@/components/ui';
-import { useCartStore } from '@/stores/cart-store';
+import { Button, Card, EmptyState, QuantitySelector, ConfirmModal, CartSkeleton } from '@/components/ui';
+import { useCartStore, useCartHydrated, getDeliveryStatus } from '@/stores/cart-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatPrice } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { countLabel } from '@/lib/i18n';
 import { Reveal } from '@/components/home/Reveal';
 
 export default function CartPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const { items, subtotal, totalSavings, deliveryFee, total, removeItem, updateItem, clearCart } =
     useCartStore();
+  const hydrated = useCartHydrated();
+  const delivery = getDeliveryStatus(subtotal);
   const [confirmClear, setConfirmClear] = useState(false);
 
   const handleQuantityChange = (productId: string, quantity: number) => {
@@ -52,6 +55,17 @@ export default function CartPage() {
     }
     router.push('/checkout');
   };
+
+  // The cart lives in localStorage, so the server (and the first client
+  // frame) know nothing about it — a skeleton instead of a flash of "empty".
+  if (!hydrated) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-8">{t('cart.title')}</h1>
+        <CartSkeleton />
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -122,7 +136,7 @@ export default function CartPage() {
                       <div className="mt-1 text-sm text-muted-foreground">
                         {format(new Date(item.rentalStartDate), 'd MMM', { locale: ru })} —{' '}
                         {format(new Date(item.rentalEndDate), 'd MMM', { locale: ru })} •{' '}
-                        {item.rentalDays} {t('cart.days')}
+                        {countLabel(item.rentalDays, locale, 'days')}
                       </div>
 
                       <div className="mt-3 flex flex-wrap items-center gap-4">
@@ -206,10 +220,21 @@ export default function CartPage() {
                 </div>
               )}
 
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-3">
                 <span className="text-muted-foreground">{t('cart.delivery')}</span>
-                <span>{deliveryFee > 0 ? `${formatPrice(deliveryFee)} ${t('common.currency')}` : t('cart.free')}</span>
+                <span className="text-right">
+                  {deliveryFee > 0
+                    ? `${formatPrice(deliveryFee)} ${t('common.currency')}`
+                    : delivery.free
+                      ? t('cart.free')
+                      : t('cart.delivery_on_confirmation')}
+                </span>
               </div>
+              {!delivery.free && deliveryFee === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {t('cart.free_delivery_remaining', { amount: formatPrice(delivery.remaining) })}
+                </p>
+              )}
 
               <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">
                 <span>{t('cart.total')}</span>

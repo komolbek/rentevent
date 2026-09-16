@@ -19,11 +19,12 @@ import { ru as ruLocale } from 'date-fns/locale';
 import { Button, Card, Modal, Input } from '@/components/ui';
 import { AddressForm } from '@/components/profile/AddressForm';
 import { AuthGuard } from '@/components/auth-guard';
-import { useCartStore } from '@/stores/cart-store';
+import { useCartStore, getDeliveryStatus } from '@/stores/cart-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { userApi, ordersApi, paymentsApi, settingsApi } from '@/lib/api';
 import { formatPrice, formatDateForAPI, cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { countLabel } from '@/lib/i18n';
 import type { DeliveryType, PaymentMethod } from '@/types';
 import { Reveal } from '@/components/home/Reveal';
 
@@ -34,7 +35,7 @@ const paymentMethods: { value: PaymentMethod; labelKey: string; descKey: string;
 ];
 
 function CheckoutPageContent() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const { items, subtotal, totalSavings, deliveryFee, total, setDeliveryFee, clearCart } =
@@ -78,10 +79,12 @@ function CheckoutPageContent() {
     }
   }, [addresses, selectedAddressId]);
 
-  // Delivery fee — free in Tashkent for now; keep zone calc as a follow-up.
+  // No fee is charged online: delivery is free from FREE_DELIVERY_THRESHOLD,
+  // and below it the district fee is agreed when the order is confirmed.
   useEffect(() => {
     setDeliveryFee(0);
   }, [setDeliveryFee]);
+  const delivery = getDeliveryStatus(subtotal);
 
   // Create order mutation
   const createOrderMutation = useMutation({
@@ -324,7 +327,7 @@ function CheckoutPageContent() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate">{item.product.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {item.quantity} × {item.rentalDays} {t('cart.days')}
+                      {item.quantity} × {countLabel(item.rentalDays, locale, 'days')}
                     </p>
                   </div>
                   <span className="text-sm font-medium shrink-0">
@@ -356,9 +359,15 @@ function CheckoutPageContent() {
                 </div>
               )}
 
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between gap-3 text-sm">
                 <span className="text-muted-foreground">{t('cart.delivery')}</span>
-                <span>{deliveryFee > 0 ? `${formatPrice(deliveryFee)} ${t('common.currency')}` : t('cart.free')}</span>
+                <span className="text-right">
+                  {deliveryFee > 0
+                    ? `${formatPrice(deliveryFee)} ${t('common.currency')}`
+                    : delivery.free
+                      ? t('cart.free')
+                      : t('cart.delivery_on_confirmation')}
+                </span>
               </div>
 
               <div className="border-t border-border pt-3 flex justify-between text-lg font-bold">

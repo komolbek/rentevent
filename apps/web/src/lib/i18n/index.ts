@@ -39,7 +39,7 @@ export { translations };
  * "1 item". `countLabel` picks the right form per locale so callers can stay
  * one line: countLabel(3, locale, 'products').
  */
-const COUNT_FORMS: Record<'products' | 'items', Record<Locale, [string, string, string]>> = {
+const COUNT_FORMS: Record<'products' | 'items' | 'days', Record<Locale, [string, string, string]>> = {
   products: {
     ru: ['товар', 'товара', 'товаров'],
     uz: ['mahsulot', 'mahsulot', 'mahsulot'],
@@ -49,6 +49,11 @@ const COUNT_FORMS: Record<'products' | 'items', Record<Locale, [string, string, 
     ru: ['товар', 'товара', 'товаров'],
     uz: ['ta mahsulot', 'ta mahsulot', 'ta mahsulot'],
     en: ['item', 'items', 'items'],
+  },
+  days: {
+    ru: ['день', 'дня', 'дней'],
+    uz: ['kun', 'kun', 'kun'],
+    en: ['day', 'days', 'days'],
   },
 };
 

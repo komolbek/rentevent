@@ -1,9 +1,30 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { IProduct } from '@rentevent/types';
 import { calculatePrice, calculateRentalDays } from '@/lib/utils';
+
+/**
+ * Delivery in Tashkent is free from this order subtotal (the /delivery page
+ * and FAQ both say so). Below it the fee depends on the district and is
+ * agreed when the order is confirmed, so the cart never guesses a number —
+ * it says "calculated on confirmation" and how far the free threshold is.
+ */
+export const FREE_DELIVERY_THRESHOLD = 500_000;
+
+export interface DeliveryStatus {
+  /** Subtotal has reached the free-delivery threshold. */
+  free: boolean;
+  /** Сум still missing to reach it (0 when free). */
+  remaining: number;
+}
+
+export function getDeliveryStatus(subtotal: number): DeliveryStatus {
+  const remaining = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
+  return { free: remaining === 0, remaining };
+}
 
 export interface CartItem {
   productId: string;
@@ -201,3 +222,18 @@ export const useCartStore = create<CartState>()(
     },
   ),
 );
+
+/**
+ * True once the persisted cart has been read from localStorage. Starts false
+ * on both server and client so the first paint matches; pages show a
+ * skeleton instead of an empty cart (or nothing) for that one frame.
+ */
+export function useCartHydrated(): boolean {
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    const unsub = useCartStore.persist.onFinishHydration(() => setHydrated(true));
+    if (useCartStore.persist.hasHydrated()) setHydrated(true);
+    return unsub;
+  }, []);
+  return hydrated;
+}
