@@ -24,6 +24,7 @@ import { useLanguageStore } from '@/stores/language-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
+import { OPEN_SEARCH_EVENT } from './BottomTabBar';
 import type { Locale } from '@/lib/i18n';
 
 const LOCALES: { code: Locale; label: string; full: string }[] = [
@@ -98,6 +99,16 @@ export function Header() {
       setQuery('');
     }
   }, [pathname]);
+
+  // The mobile tab bar's "Поиск" opens the menu with the search field focused.
+  useEffect(() => {
+    const open = () => {
+      setIsMenuOpen(true);
+      setTimeout(() => mobileSearchRef.current?.focus(), 150);
+    };
+    window.addEventListener(OPEN_SEARCH_EVENT, open);
+    return () => window.removeEventListener(OPEN_SEARCH_EVENT, open);
+  }, []);
 
   const handleLogout = useCallback(async () => {
     await logout();

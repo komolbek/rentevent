@@ -18,6 +18,8 @@ const en: Record<TranslationKey, string> = {
   // Navigation
   'nav.home': 'Home',
   'nav.catalog': 'Catalog',
+  'nav.search': 'Search',
+  'nav.mobile_tabs': 'Quick navigation',
   'events.eyebrow': 'Calendar',
   'events.title': 'Events & Exhibitions',
   'events.subtitle': 'Pick the event you are renting equipment for — we will prepare everything for the venue.',

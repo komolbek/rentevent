@@ -16,6 +16,8 @@ const ru = {
   // Navigation
   'nav.home': 'Главная',
   'nav.catalog': 'Каталог',
+  'nav.search': 'Поиск',
+  'nav.mobile_tabs': 'Быстрая навигация',
   'events.eyebrow': 'Календарь',
   'events.title': 'Мероприятия и выставки',
   'events.subtitle': 'Выберите событие, для которого арендуете оборудование — мы подготовим всё под площадку.',

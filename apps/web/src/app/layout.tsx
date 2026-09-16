@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
-import { Header, Footer } from '@/components/layout';
+import { Header, Footer, BottomTabBar } from '@/components/layout';
 import './globals.css';
 
 const SITE_URL = 'https://rentevent.uz';
@@ -39,6 +39,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  // Lets the bottom tab bar pad itself with env(safe-area-inset-bottom).
+  viewportFit: 'cover',
   themeColor: '#F2562B',
 };
 
@@ -68,7 +70,8 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-screen bg-background text-foreground antialiased font-sans">
+      {/* Bottom padding reserves the mobile tab bar's height (56 px + safe area). */}
+      <body className="min-h-screen bg-background pb-[calc(3.5rem+env(safe-area-inset-bottom))] font-sans text-foreground antialiased md:pb-0">
         <Providers>
           <a
             href="#main"
@@ -79,6 +82,7 @@ export default function RootLayout({
           <Header />
           <main id="main">{children}</main>
           <Footer />
+          <BottomTabBar />
         </Providers>
       </body>
     </html>
