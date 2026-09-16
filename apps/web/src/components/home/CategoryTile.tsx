@@ -10,9 +10,8 @@ import { categoryIconMap } from '@/lib/categoryIcon';
 interface CategoryTileProps {
   id: string;
   name: string;
-  count?: number;
   countLabel?: string | null;
-  /** A representative product photo — categories carry no image of their own. */
+  /** The category's own image, or a representative product photo when it has none. */
   photo?: string | null;
   icon?: string | null;
   className?: string;
@@ -20,9 +19,9 @@ interface CategoryTileProps {
 
 /**
  * Home-page category tile in the fair.rent shape: picture on top, label under
- * it. Categories have no artwork in the DB, so the tile borrows the first
- * photo of a product in that category; when even that is missing it falls
- * back to a line icon so the grid never shows a blank box.
+ * it. The caller passes the category's own `imageUrl` when it has one, else
+ * the first photo of a product in that category; when even that is missing
+ * the tile falls back to a line icon so the grid never shows a blank box.
  */
 export function CategoryTile({ id, name, countLabel, photo, icon, className }: CategoryTileProps) {
   const Icon: LucideIcon = (icon && categoryIconMap[icon]) || Package;

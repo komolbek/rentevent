@@ -98,6 +98,9 @@ export class ProductsService {
           dailyPrice: true,
           totalStock: true,
           createdAt: true,
+          // Flat id alongside the nested ref: `IProduct.categoryId` is
+          // required, and the storefront filters by it.
+          categoryId: true,
           category: {
             select: { id: true, name: true },
           },

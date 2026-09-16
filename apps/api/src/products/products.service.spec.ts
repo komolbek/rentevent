@@ -95,3 +95,15 @@ describe('ProductsService.findAll with a rental period', () => {
     }
   });
 });
+
+describe('ProductsService.findAll public shape', () => {
+  it('selects a flat categoryId alongside the nested category ref', async () => {
+    const { service, productFindMany } = makeService({ reservations: [], stocks: {}, products: [] });
+    await service.findAll(base);
+
+    const select = productFindMany.mock.calls[0][0].select;
+    expect(select.categoryId).toBe(true);
+    expect(select.category).toEqual({ select: { id: true, name: true } });
+  });
+});
+

@@ -35,8 +35,9 @@ export default function HomePage() {
     queryFn: () => productsApi.getAll({ sort: 'popular', limit: 8 }),
   });
 
-  // The whole catalogue is small (≈40 items), so one request gives every
-  // category a real photo — the categories table has no artwork of its own.
+  // Fallback artwork for categories without an image of their own: the
+  // catalogue is small (≈40 items), so one request gives every category the
+  // first photo of one of its products.
   const { data: allProducts } = useQuery({
     queryKey: ['products', 'home-all'],
     queryFn: () => productsApi.getAll({ limit: 100 }),
@@ -56,18 +57,15 @@ export default function HomePage() {
   const categoryPhotos = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of allProducts?.items ?? []) {
-      // The list endpoint nests `category: {id}` instead of a flat categoryId.
-      const categoryId = p.category?.id ?? p.categoryId;
-      if (categoryId && p.photos?.[0] && !map.has(categoryId)) map.set(categoryId, p.photos[0]);
+      if (p.photos?.[0] && !map.has(p.categoryId)) map.set(p.categoryId, p.photos[0]);
     }
     return map;
   }, [allProducts]);
 
-  // `productCount` is what the public endpoint actually sends; `_count` is
-  // the shape the shared type promises. Accept both, hide empty categories.
-  const productCount = (c: ICategory) =>
-    (c as ICategory & { productCount?: number }).productCount ?? c._count?.products;
+  const productCount = (c: ICategory) => c._count?.products;
 
+  // `!== false` only so the page survives the minutes between a web and an
+  // API deploy; the API always sends the flag.
   const rootCategories = (categories ?? [])
     .filter((c) => !c.parentCategoryId && c.isActive !== false)
     .filter((c) => (productCount(c) ?? 1) > 0);
@@ -114,7 +112,7 @@ export default function HomePage() {
                       ? countLabel(productCount(category)!, locale, 'products')
                       : null
                   }
-                  photo={categoryPhotos.get(category.id)}
+                  photo={category.imageUrl ?? categoryPhotos.get(category.id)}
                   icon={category.iconName}
                 />
               </Reveal>
