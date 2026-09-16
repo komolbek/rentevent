@@ -17,7 +17,9 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
       default: 'bg-primary/12 text-primary-text ring-1 ring-inset ring-primary/20',
       secondary: 'bg-foreground/8 text-foreground ring-1 ring-inset ring-foreground/10',
       success: 'bg-emerald-500/12 text-emerald-700 ring-1 ring-inset ring-emerald-500/25 dark:text-emerald-400',
-      warning: 'bg-amber-500/14 text-amber-700 ring-1 ring-inset ring-amber-500/25 dark:text-amber-400',
+      // Solid amber-100 / amber-900 reads at ≥ 7:1 on a photo; the old
+      // translucent amber-on-white was ≈ 2.6:1.
+      warning: 'bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-300/60 dark:bg-amber-500/20 dark:text-amber-200 dark:ring-amber-400/30',
       destructive: 'bg-destructive/12 text-destructive ring-1 ring-inset ring-destructive/25',
       outline: 'border border-border text-muted-foreground',
     };

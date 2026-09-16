@@ -63,7 +63,6 @@ const en: Record<TranslationKey, string> = {
   'nav.contacts': 'Contacts',
   'footer.social': 'Follow us',
   'home.hero_subtitle': 'Furniture, decor, lighting and sound — from 1 day, delivered across Tashkent.',
-  'product_card.view': 'View',
   'cart.clear_confirm_title': 'Clear the cart?',
   'cart.clear_confirm_message': 'All items will be removed from the cart. This cannot be undone.',
   'checkout.rental_period': 'Rental period',

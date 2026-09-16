@@ -61,7 +61,6 @@ const ru = {
   'nav.contacts': 'Контакты',
   'footer.social': 'Мы в соцсетях',
   'home.hero_subtitle': 'Мебель, декор, свет и звук — от 1 дня, с доставкой по Ташкенту.',
-  'product_card.view': 'Подробнее',
   'cart.clear_confirm_title': 'Очистить корзину?',
   'cart.clear_confirm_message': 'Все товары будут удалены из корзины. Это действие нельзя отменить.',
   'checkout.rental_period': 'Период аренды',

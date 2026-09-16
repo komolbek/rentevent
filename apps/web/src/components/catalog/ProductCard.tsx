@@ -181,30 +181,22 @@ export const ProductCard = memo(function ProductCard({ product, className, varia
               {name}
             </h3>
 
-            <div className="flex items-end justify-between gap-2">
-              <div className="min-w-0">
-                <p className="eyebrow whitespace-nowrap text-muted-foreground mb-1.5">{t('product_card.per_day')}</p>
-                <p className="text-lg font-semibold text-foreground truncate">
-                  {formatPrice(product.dailyPrice)}
-                  <span className="ml-1 text-xs font-normal text-muted-foreground">{t('common.currency')}</span>
-                </p>
-              </div>
+            {/* One line, no eyebrow: "300 000 сум / день" (spec §3.5). */}
+            <div className="flex items-center justify-between gap-2">
+              <p className="min-w-0 truncate text-base font-semibold text-foreground">
+                {formatPrice(product.dailyPrice)}
+                <span className="ml-1 text-sm font-normal text-muted-foreground">
+                  {t('common.currency')} / {t('product_card.per_day')}
+                </span>
+              </p>
 
-              {/* The whole card is the link; this is the "go" affordance,
-                  not a cart button — a cart icon here promised a one-click
-                  add that the card never did (dates are chosen on the
-                  product page). Same arrow chip as the category tiles. */}
-              {/* Two cards share a 375px phone screen, and even an arrow-only
-                  chip leaves the price ~87px and clips it. Below md the card
-                  itself (image + name + price) is the affordance. */}
+              {/* The whole card is the link, so no "Подробнее" button (Krug:
+                  needless choice). A quiet arrow appears on hover, desktop
+                  only — phones have no hover and no room. */}
               <span
-                className="hidden h-9 shrink-0 items-center gap-1 rounded-full bg-muted px-2.5 text-xs font-medium text-foreground/80 transition-colors group-hover:bg-primary group-hover:text-white md:inline-flex xl:pl-3 xl:pr-2"
+                className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-foreground/70 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 md:inline-flex"
                 aria-hidden="true"
               >
-                {/* Four columns at 1024px leave ~200px per card: the word
-                    would push the price into an ellipsis, so it only appears
-                    from xl; between md and xl the arrow alone is the cue. */}
-                <span className="hidden xl:inline">{t('product_card.view')}</span>
                 <ArrowUpRight className="h-4 w-4" />
               </span>
             </div>

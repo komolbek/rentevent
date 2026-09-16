@@ -63,7 +63,6 @@ const uz: Record<TranslationKey, string> = {
   'nav.contacts': 'Kontaktlar',
   'footer.social': 'Ijtimoiy tarmoqlarda',
   'home.hero_subtitle': 'Mebel, dekor, yorug\'lik va ovoz — 1 kundan boshlab, Toshkent bo\'ylab yetkazib berish bilan.',
-  'product_card.view': 'Batafsil',
   'cart.clear_confirm_title': 'Savatchani tozalaymizmi?',
   'cart.clear_confirm_message': 'Barcha mahsulotlar savatchadan o\'chiriladi. Buni bekor qilib bo\'lmaydi.',
   'checkout.rental_period': 'Ijara muddati',
