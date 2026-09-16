@@ -2,7 +2,7 @@ const ru = {
   // Coming Soon Gate
   'coming_soon.brand': 'Rent Event',
   'coming_soon.title': 'Скоро запуск',
-  'coming_soon.description': 'Мы готовим что-то особенное. Если у вас есть код раннего доступа — введите его ниже.',
+  'coming_soon.description': 'Сайт открывается по коду раннего доступа. Введите его ниже.',
   'coming_soon.code_label': 'Код доступа',
   'coming_soon.code_placeholder': 'Введите код',
   'coming_soon.submit': 'Войти',

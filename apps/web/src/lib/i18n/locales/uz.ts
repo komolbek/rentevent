@@ -4,7 +4,7 @@ const uz: Record<TranslationKey, string> = {
   // Coming Soon Gate
   'coming_soon.brand': 'Rent Event',
   'coming_soon.title': 'Tez orada',
-  'coming_soon.description': 'Biz alohida nimadir tayyorlayapmiz. Agar sizda erta kirish kodi bo\'lsa, uni quyida kiriting.',
+  'coming_soon.description': 'Sayt erta kirish kodi bilan ochiladi. Kodni quyida kiriting.',
   'coming_soon.code_label': 'Kirish kodi',
   'coming_soon.code_placeholder': 'Kodni kiriting',
   'coming_soon.submit': 'Kirish',

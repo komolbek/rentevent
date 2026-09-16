@@ -4,7 +4,7 @@ const en: Record<TranslationKey, string> = {
   // Coming Soon Gate
   'coming_soon.brand': 'Rent Event',
   'coming_soon.title': 'Coming soon',
-  'coming_soon.description': 'We\'re preparing something special. If you have an early-access code, enter it below.',
+  'coming_soon.description': 'The site opens with an early-access code. Enter it below.',
   'coming_soon.code_label': 'Access code',
   'coming_soon.code_placeholder': 'Enter code',
   'coming_soon.submit': 'Enter',
