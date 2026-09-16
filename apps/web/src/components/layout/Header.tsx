@@ -24,6 +24,7 @@ import { useLanguageStore } from '@/stores/language-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useBusinessContacts } from '@/lib/business';
 import { cn } from '@/lib/utils';
+import { Button, Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui';
 import { Logo } from './Logo';
 import { OPEN_SEARCH_EVENT } from './BottomTabBar';
 import type { Locale } from '@/lib/i18n';
@@ -257,9 +258,14 @@ export function Header() {
           {/* Right column — icon cluster over contact row (desktop) */}
           <div className="ml-auto flex items-center gap-1 lg:flex-col lg:items-end lg:justify-center lg:gap-1 lg:pt-6">
             <div className="flex items-center">
-              <Link href="/favorites" className={cn(iconBtn, 'hidden sm:inline-flex')} aria-label={t('header.favorites')}>
-                <Heart className="h-[18px] w-[18px]" />
-              </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/favorites" className={cn(iconBtn, 'hidden sm:inline-flex')} aria-label={t('header.favorites')}>
+                    <Heart className="h-[18px] w-[18px]" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>{t('header.favorites')}</TooltipContent>
+              </Tooltip>
 
               {isAuthenticated ? (
                 <div className="relative">
@@ -314,20 +320,22 @@ export function Header() {
                 </Link>
               )}
 
-              <Link href="/cart" className={cn(iconBtn, 'relative')} aria-label={t('header.cart')}>
-                <ShoppingCart className="h-[18px] w-[18px]" />
-                {itemCount > 0 && (
-                  <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
-                    {itemCount > 9 ? '9+' : itemCount}
-                  </span>
-                )}
-              </Link>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/cart" className={cn(iconBtn, 'relative')} aria-label={t('header.cart')}>
+                    <ShoppingCart className="h-[18px] w-[18px]" />
+                    {itemCount > 0 && (
+                      <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">
+                        {itemCount > 9 ? '9+' : itemCount}
+                      </span>
+                    )}
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>{t('header.cart')}</TooltipContent>
+              </Tooltip>
 
               <button
-                onClick={() => {
-                  setIsMenuOpen((v) => !v);
-                  setTimeout(() => mobileSearchRef.current?.focus(), 150);
-                }}
+                onClick={() => setIsMenuOpen((v) => !v)}
                 className={cn(iconBtn, 'lg:hidden')}
                 aria-expanded={isMenuOpen}
                 aria-label={isMenuOpen ? t('header.close_menu') : t('header.open_menu')}
@@ -386,83 +394,77 @@ export function Header() {
         )}
       </AnimatePresence>
 
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden border-t border-border lg:hidden"
-          >
-            <div className="container mx-auto space-y-4 px-4 py-4">
-              <form onSubmit={submitSearch} role="search">
-                <label className="flex h-11 items-center gap-3 rounded-xl border border-border bg-card px-3">
-                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="sr-only">{t('header.search_label')}</span>
-                  <input
-                    ref={mobileSearchRef}
-                    type="search"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder={t('header.search_placeholder')}
-                    className="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                  />
-                </label>
-              </form>
+      {/* Mobile menu — a right-hand Sheet (spec §6). Radix handles focus,
+          Escape and the scrim; the search field is the first tabbable, so it
+          gets focus on open — which is what the tab bar's "Поиск" wants. */}
+      <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+        <SheetContent side="right" className="lg:hidden" aria-describedby={undefined}>
+          <SheetHeader>
+            <SheetTitle className="sr-only">{t('header.open_menu')}</SheetTitle>
+            <form onSubmit={submitSearch} role="search" className="mt-8">
+              <label className="flex h-11 items-center gap-3 rounded-xl border border-border bg-card px-3 focus-within:border-primary">
+                <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="sr-only">{t('header.search_label')}</span>
+                <input
+                  ref={mobileSearchRef}
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t('header.search_placeholder')}
+                  className="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                />
+              </label>
+            </form>
+          </SheetHeader>
 
-              <nav className="space-y-0.5" aria-label="Mobile navigation">
-                {mobileNavLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={cn(
-                      'flex min-h-11 items-center justify-between rounded-xl px-3 text-sm font-semibold uppercase tracking-[0.08em] transition-colors',
-                      isActive(link.href) ? 'bg-primary/10 text-primary-text' : 'hover:bg-muted',
-                    )}
-                    aria-current={isActive(link.href) ? 'page' : undefined}
-                  >
-                    {link.label}
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </Link>
-                ))}
-                <Link
-                  href="/favorites"
-                  className="flex min-h-11 items-center justify-between rounded-xl px-3 text-sm font-semibold uppercase tracking-[0.08em] transition-colors hover:bg-muted sm:hidden"
-                >
-                  {t('header.favorites')}
-                  <Heart className="h-4 w-4 text-muted-foreground" />
-                </Link>
-              </nav>
-
-              <div className="grid grid-cols-2 gap-2 border-t border-border pt-4">
-                {contacts.phone && (
-                  <a href={contacts.phoneHref} className="flex min-h-11 items-center gap-2 rounded-xl bg-muted px-3 text-sm font-medium">
-                    <Phone className="h-4 w-4 text-primary" /> {contacts.phone}
-                  </a>
+          <nav className="space-y-0.5 px-4" aria-label="Mobile navigation">
+            {mobileNavLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  'flex min-h-11 items-center justify-between rounded-xl px-3 text-sm font-semibold uppercase tracking-[0.08em] transition-colors',
+                  isActive(link.href) ? 'bg-primary/10 text-primary-text' : 'hover:bg-muted',
                 )}
-                <a href={`mailto:${contacts.email}`} className="flex min-h-11 items-center gap-2 truncate rounded-xl bg-muted px-3 text-sm font-medium">
-                  <Mail className="h-4 w-4 shrink-0 text-primary" /> <span className="truncate">{contacts.email}</span>
+                aria-current={isActive(link.href) ? 'page' : undefined}
+              >
+                {link.label}
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </Link>
+            ))}
+            <Link
+              href="/favorites"
+              className="flex min-h-11 items-center justify-between rounded-xl px-3 text-sm font-semibold uppercase tracking-[0.08em] transition-colors hover:bg-muted sm:hidden"
+            >
+              {t('header.favorites')}
+              <Heart className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </nav>
+
+          <SheetFooter>
+            <div className="grid gap-2 border-t border-border pt-4">
+              {contacts.phone && (
+                <a href={contacts.phoneHref} className="flex min-h-11 items-center gap-2 rounded-xl bg-muted px-3 text-sm font-medium">
+                  <Phone className="h-4 w-4 text-primary" /> {contacts.phone}
                 </a>
-              </div>
-
-              <div className="flex items-center justify-between gap-3">
-                <div className="inline-flex h-10 items-center rounded-full border border-border px-2">
-                  {localeSelect()}
-                </div>
-                {!isAuthenticated && (
-                  <Link
-                    href="/auth"
-                    className="inline-flex h-9 items-center rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground"
-                  >
-                    {t('header.login')}
-                  </Link>
-                )}
-              </div>
+              )}
+              <a href={`mailto:${contacts.email}`} className="flex min-h-11 items-center gap-2 truncate rounded-xl bg-muted px-3 text-sm font-medium">
+                <Mail className="h-4 w-4 shrink-0 text-primary" /> <span className="truncate">{contacts.email}</span>
+              </a>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <div className="flex items-center justify-between gap-3">
+              <div className="inline-flex h-10 items-center rounded-full border border-border px-2">
+                {localeSelect()}
+              </div>
+              {!isAuthenticated && (
+                <Button asChild size="sm">
+                  <Link href="/auth">{t('header.login')}</Link>
+                </Button>
+              )}
+            </div>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 }

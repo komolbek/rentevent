@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Enter/exit keyframes for the shadcn/ui primitives (animate-in, fade-in-0, …). */
+@import "tw-animate-css";
 
 /* Tailwind v4: class-based dark variant. The inline <head> script in
    app/layout.tsx sets `class="dark"` on <html> from the OS preference. */
@@ -69,6 +71,12 @@
   --color-background: #fbfaf7;
   --color-foreground: #171717;
   --color-card: #ffffff;
+  --color-card-foreground: #171717;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #171717;
+  --color-ring: #F2562B;
+  /* shadcn's `--radius`; our components mostly use the explicit scale below. */
+  --radius: 0.875rem;
 
   /* Editorial radius scale — slightly tighter than stock so corners look
      deliberate rather than default-rounded. */
@@ -91,6 +99,9 @@
   --color-background: #0e0e11;
   --color-foreground: #f6f4f0;
   --color-card: #17171a;
+  --color-card-foreground: #f6f4f0;
+  --color-popover: #17171a;
+  --color-popover-foreground: #f6f4f0;
   --color-border: #2a2a2f;
   --color-input: #2a2a2f;
   --color-muted: #1c1c20;
@@ -105,6 +116,30 @@
 :root {
   --re-orange: #F2562B;      /* surfaces, buttons, borders, large type */
   --re-orange-text: #CF4A25; /* orange text on white — 4.51:1, passes AA */
+
+  /* shadcn/ui variable names, aliased to our tokens so code generated from
+     a "shadcn" prompt (var(--primary), bg-[var(--card)] …) lands in-style
+     with no edits. The tokens themselves live in @theme above; these follow
+     them through .dark automatically. See apps/web/DESIGN.md. */
+  --background: var(--color-background);
+  --foreground: var(--color-foreground);
+  --card: var(--color-card);
+  --card-foreground: var(--color-card-foreground);
+  --popover: var(--color-popover);
+  --popover-foreground: var(--color-popover-foreground);
+  --primary: var(--color-primary);
+  --primary-foreground: var(--color-primary-foreground);
+  --secondary: var(--color-secondary);
+  --secondary-foreground: var(--color-secondary-foreground);
+  --muted: var(--color-muted);
+  --muted-foreground: var(--color-muted-foreground);
+  --accent: var(--color-muted);            /* shadcn "accent" = hover surface, not our amber */
+  --accent-foreground: var(--color-foreground);
+  --destructive: var(--color-destructive);
+  --destructive-foreground: var(--color-destructive-foreground);
+  --border: var(--color-border);
+  --input: var(--color-input);
+  --ring: var(--color-ring);
 }
 
 /* =======================================================================
