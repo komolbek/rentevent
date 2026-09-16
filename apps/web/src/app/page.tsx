@@ -12,7 +12,8 @@ import { EventsRail } from '@/components/home/EventsRail';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { SectionHeader } from '@/components/home/SectionHeader';
 import { Reveal } from '@/components/home/Reveal';
-import { settingsApi, categoriesApi, productsApi } from '@/lib/api';
+import { categoriesApi, productsApi } from '@/lib/api';
+import { useBusinessContacts } from '@/lib/business';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { ICategory } from '@rentevent/types';
 import { countLabel } from '@/lib/i18n';
@@ -20,10 +21,7 @@ import { countLabel } from '@/lib/i18n';
 export default function HomePage() {
   const { t, locale } = useTranslation();
 
-  const { data: settings } = useQuery({
-    queryKey: ['businessSettings'],
-    queryFn: () => settingsApi.getBusinessInfo(),
-  });
+  const contacts = useBusinessContacts();
 
   const { data: categories } = useQuery({
     queryKey: ['categories', 'home'],
@@ -44,8 +42,6 @@ export default function HomePage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const phoneNumber = settings?.phone || '+998901234567';
-  const telegramUrl = settings?.telegramUrl || 'https://t.me/rentevent_uz';
   const productTotal = popular?.meta.total;
 
   // Category names are localized the same way the catalog does it.
@@ -89,7 +85,7 @@ export default function HomePage() {
       <HomeHero
         products={popular?.items ?? []}
         productTotal={productTotal}
-        phoneNumber={phoneNumber}
+        phoneHref={contacts.phoneHref}
       />
 
       {/* ================= CATEGORIES ================= */}
@@ -176,21 +172,34 @@ export default function HomePage() {
                   {t('home.closing_description')}
                 </p>
               </div>
+              {/* Contact channels come from Business Settings; a channel
+                  that is not set is simply absent, never a placeholder. */}
               <div className="flex shrink-0 flex-wrap gap-3">
-                <a href={`tel:${phoneNumber}`}>
-                  <Button size="lg" variant="primary" leftIcon={<Phone className="h-5 w-5" />}>
-                    {t('home.call')}
-                  </Button>
-                </a>
-                <a href={telegramUrl} target="_blank" rel="noopener noreferrer">
-                  <Button
-                    size="lg"
-                    className="border border-white/25 bg-white/10 text-white hover:bg-white/20"
-                    leftIcon={<Send className="h-5 w-5" />}
-                  >
-                    {t('home.closing_telegram')}
-                  </Button>
-                </a>
+                {contacts.phone && (
+                  <a href={contacts.phoneHref}>
+                    <Button size="lg" variant="primary" leftIcon={<Phone className="h-5 w-5" />}>
+                      {t('home.call')}
+                    </Button>
+                  </a>
+                )}
+                {contacts.telegramUrl && (
+                  <a href={contacts.telegramUrl} target="_blank" rel="noopener noreferrer">
+                    <Button
+                      size="lg"
+                      className="border border-white/25 bg-white/10 text-white hover:bg-white/20"
+                      leftIcon={<Send className="h-5 w-5" />}
+                    >
+                      {t('home.closing_telegram')}
+                    </Button>
+                  </a>
+                )}
+                {!contacts.phone && !contacts.telegramUrl && (
+                  <a href={`mailto:${contacts.email}`}>
+                    <Button size="lg" variant="primary" leftIcon={<Send className="h-5 w-5" />}>
+                      {contacts.email}
+                    </Button>
+                  </a>
+                )}
               </div>
             </div>
           </div>

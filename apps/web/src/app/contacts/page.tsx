@@ -6,9 +6,11 @@ import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { Reveal } from '@/components/home/Reveal';
+import { useBusinessContacts } from '@/lib/business';
 
 export default function ContactsPage() {
   const { t } = useTranslation();
+  const contacts = useBusinessContacts();
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -26,35 +28,37 @@ export default function ContactsPage() {
 
     const subject = `RentEvent — ${formData.name.trim()}`;
     const body = `${formData.message.trim()}\n\n${formData.name.trim()}\n${formData.phone.trim()}`;
-    window.location.href = `mailto:info@rentevent.uz?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = `mailto:${contacts.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
+  // Every value comes from Business Settings (see lib/business.ts) — a row
+  // whose value is not set is left out rather than shown as a placeholder.
   const contactInfo = [
-    {
+    contacts.phone && {
       icon: Phone,
       title: t('contacts.phone'),
-      value: '+998 90 123 45 67',
-      href: 'tel:+998901234567',
+      value: contacts.phone,
+      href: contacts.phoneHref,
     },
     {
       icon: Mail,
       title: t('contacts.email'),
-      value: 'info@rentevent.uz',
-      href: 'mailto:info@rentevent.uz',
+      value: contacts.email,
+      href: `mailto:${contacts.email}`,
     },
-    {
+    contacts.telegramUrl && {
       icon: MessageCircle,
       title: t('contacts.telegram'),
-      value: '@rentevent_uz',
-      href: 'https://t.me/rentevent_uz',
+      value: contacts.telegramLabel,
+      href: contacts.telegramUrl,
     },
-    {
+    contacts.workingHours && {
       icon: Clock,
       title: t('contacts.hours'),
-      value: t('contacts.hours_value'),
+      value: contacts.workingHours,
       href: null,
     },
-  ];
+  ].filter((row): row is Exclude<(typeof row), '' | false> => Boolean(row));
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -103,23 +107,23 @@ export default function ContactsPage() {
           ))}
 
           {/* Address */}
-          <Reveal>
-            <Card className="p-4">
-              <div className="flex items-start gap-4">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <MapPin className="h-6 w-6 text-primary" />
-                </div>
-                <div>
-                  <div className="text-sm text-muted-foreground">
-                    {t('contacts.address_label')}
+          {contacts.address && (
+            <Reveal>
+              <Card className="p-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <MapPin className="h-6 w-6 text-primary" />
                   </div>
-                  <div className="font-semibold">
-                    {t('contacts.address_value')}
+                  <div>
+                    <div className="text-sm text-muted-foreground">
+                      {t('contacts.address_label')}
+                    </div>
+                    <div className="font-semibold">{contacts.address}</div>
                   </div>
                 </div>
-              </div>
-            </Card>
-          </Reveal>
+              </Card>
+            </Reveal>
+          )}
         </div>
 
         {/* Contact Form */}

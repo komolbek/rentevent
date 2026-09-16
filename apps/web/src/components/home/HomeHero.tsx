@@ -12,7 +12,8 @@ import { localizedName } from '@/lib/i18n/product';
 interface HomeHeroProps {
   products: Product[];
   productTotal?: number;
-  phoneNumber: string;
+  /** `tel:` href from Business Settings; empty hides the call button. */
+  phoneHref: string;
 }
 
 /**
@@ -21,7 +22,7 @@ interface HomeHeroProps {
  * Catalogue photos are white/grey studio cutouts, so they sit on white cards
  * that pop against the orange instead of fighting it.
  */
-export function HomeHero({ products, productTotal, phoneNumber }: HomeHeroProps) {
+export function HomeHero({ products, productTotal, phoneHref }: HomeHeroProps) {
   const { t, locale } = useTranslation();
   const reduceMotion = useReducedMotion();
 
@@ -86,15 +87,17 @@ export function HomeHero({ products, productTotal, phoneNumber }: HomeHeroProps)
                   {t('home.view_catalog')}
                 </Button>
               </Link>
-              <a href={`tel:${phoneNumber}`}>
-                <Button
-                  size="lg"
-                  className="border border-white/35 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
-                  leftIcon={<Phone className="h-5 w-5" />}
-                >
-                  {t('home.call')}
-                </Button>
-              </a>
+              {phoneHref && (
+                <a href={phoneHref}>
+                  <Button
+                    size="lg"
+                    className="border border-white/35 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+                    leftIcon={<Phone className="h-5 w-5" />}
+                  >
+                    {t('home.call')}
+                  </Button>
+                </a>
+              )}
             </div>
 
             {/* Concrete facts, not adjectives — each one is sourced from the FAQ / delivery pages. */}

@@ -75,12 +75,12 @@ const ru = {
   'contacts.form_via_email': 'Сообщение откроется в вашей почте — отправьте его на info@rentevent.uz.',
 
   // Footer
-  'footer.description': 'Аренда оборудования для мероприятий в Ташкенте. Широкий выбор, доступные цены, быстрая доставка.',
   'footer.catalog': 'Каталог',
   'footer.all_categories': 'Все категории',
   'footer.popular': 'Популярное',
   'footer.new_arrivals': 'Новинки',
   'footer.company': 'Компания',
+  'footer.help_strip': 'Нужна помощь с подбором? Мы на связи.',
   'footer.about': 'О нас',
   'footer.delivery': 'Доставка',
   'footer.payment': 'Оплата',
@@ -90,7 +90,6 @@ const ru = {
   'footer.rental_terms': 'Условия аренды',
   'footer.privacy_policy': 'Политика конфиденциальности',
   'footer.copyright': '© {year} RentEvent. Все права защищены.',
-  'footer.address': 'г. Ташкент, ул. Амир Темур, 1',
 
   // Home Page
   'home.hero_badge': 'Аренда для мероприятий',
@@ -474,9 +473,7 @@ const ru = {
   'contacts.email': 'Email',
   'contacts.telegram': 'Telegram',
   'contacts.hours': 'Режим работы',
-  'contacts.hours_value': '09:00 - 21:00',
   'contacts.address_label': 'Адрес',
-  'contacts.address_value': 'Ташкент, ул. Амира Темура, 1',
   'contacts.write_to_us': 'Напишите нам',
   'contacts.form_name': 'Ваше имя',
   'contacts.form_name_placeholder': 'Введите имя',

@@ -77,12 +77,12 @@ const en: Record<TranslationKey, string> = {
   'contacts.form_via_email': 'The message opens in your email app — send it to info@rentevent.uz.',
 
   // Footer
-  'footer.description': 'Event equipment rental in Tashkent. Wide selection, affordable prices, fast delivery.',
   'footer.catalog': 'Catalog',
   'footer.all_categories': 'All categories',
   'footer.popular': 'Popular',
   'footer.new_arrivals': 'New arrivals',
   'footer.company': 'Company',
+  'footer.help_strip': 'Need help choosing? We are one message away.',
   'footer.about': 'About us',
   'footer.delivery': 'Delivery',
   'footer.payment': 'Payment',
@@ -92,7 +92,6 @@ const en: Record<TranslationKey, string> = {
   'footer.rental_terms': 'Rental terms',
   'footer.privacy_policy': 'Privacy policy',
   'footer.copyright': '\u00A9 {year} RentEvent. All rights reserved.',
-  'footer.address': 'Tashkent, Amir Temur st., 1',
 
   // Home Page
   'home.hero_badge': 'Event rental',
@@ -476,9 +475,7 @@ const en: Record<TranslationKey, string> = {
   'contacts.email': 'Email',
   'contacts.telegram': 'Telegram',
   'contacts.hours': 'Working hours',
-  'contacts.hours_value': '09:00 - 21:00',
   'contacts.address_label': 'Address',
-  'contacts.address_value': 'Tashkent, Amir Temur St., 1',
   'contacts.write_to_us': 'Write to us',
   'contacts.form_name': 'Your name',
   'contacts.form_name_placeholder': 'Enter your name',

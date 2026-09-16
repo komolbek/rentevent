@@ -77,12 +77,12 @@ const uz: Record<TranslationKey, string> = {
   'contacts.form_via_email': 'Xabar pochta dasturingizda ochiladi — uni info@rentevent.uz manziliga yuboring.',
 
   // Footer
-  'footer.description': 'Toshkentda tadbirlar uchun jihozlar ijarasi. Keng tanlov, arzon narxlar, tez yetkazib berish.',
   'footer.catalog': 'Katalog',
   'footer.all_categories': 'Barcha kategoriyalar',
   'footer.popular': 'Ommabop',
   'footer.new_arrivals': 'Yangiliklar',
   'footer.company': 'Kompaniya',
+  'footer.help_strip': 'Tanlashda yordam kerakmi? Biz aloqadamiz.',
   'footer.about': 'Biz haqimizda',
   'footer.delivery': 'Yetkazib berish',
   'footer.payment': 'To\'lov',
@@ -92,7 +92,6 @@ const uz: Record<TranslationKey, string> = {
   'footer.rental_terms': 'Ijara shartlari',
   'footer.privacy_policy': 'Maxfiylik siyosati',
   'footer.copyright': '\u00A9 {year} RentEvent. Barcha huquqlar himoyalangan.',
-  'footer.address': 'Toshkent sh., Amir Temur ko\'chasi, 1',
 
   // Home Page
   'home.hero_badge': 'Tadbirlar uchun ijara',
@@ -476,9 +475,7 @@ const uz: Record<TranslationKey, string> = {
   'contacts.email': 'Email',
   'contacts.telegram': 'Telegram',
   'contacts.hours': 'Ish vaqti',
-  'contacts.hours_value': '09:00 - 21:00',
   'contacts.address_label': 'Manzil',
-  'contacts.address_value': 'Toshkent, Amir Temur ko\'chasi, 1',
   'contacts.write_to_us': 'Bizga yozing',
   'contacts.form_name': 'Ismingiz',
   'contacts.form_name_placeholder': 'Ismni kiriting',

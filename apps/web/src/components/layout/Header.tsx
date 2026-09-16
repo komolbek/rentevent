@@ -22,6 +22,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore } from '@/stores/cart-store';
 import { useLanguageStore } from '@/stores/language-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { useBusinessContacts } from '@/lib/business';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
 import { OPEN_SEARCH_EVENT } from './BottomTabBar';
@@ -32,10 +33,6 @@ const LOCALES: { code: Locale; label: string; full: string }[] = [
   { code: 'uz', label: 'UZ', full: 'O‘zbekcha' },
   { code: 'en', label: 'EN', full: 'English' },
 ];
-
-export const CONTACT_PHONE_HREF = 'tel:+998901234567';
-export const CONTACT_PHONE_LABEL = '+998 90 123 45 67';
-export const CONTACT_EMAIL = 'info@rentevent.uz';
 
 /**
  * Site header, proportioned after the Fair.Rent reference the client sent:
@@ -57,6 +54,7 @@ export function Header() {
 
   const { isAuthenticated, user, logout } = useAuthStore();
   const itemCount = useCartStore((s) => s.itemCount);
+  const contacts = useBusinessContacts();
   const { locale, setLocale } = useLanguageStore();
 
   useEffect(() => {
@@ -340,11 +338,15 @@ export function Header() {
 
             {/* Contact row — direct links, no reveal step */}
             <div className="hidden items-center gap-1.5 lg:flex">
-              <a href={CONTACT_PHONE_HREF} className={contactLink} aria-label={`${t('header.phone')}: ${CONTACT_PHONE_LABEL}`}>
-                <Phone className="h-3.5 w-3.5" /> {t('header.phone')} <ChevronRight className="h-3.5 w-3.5" />
-              </a>
-              <span className="text-xs text-muted-foreground">{t('header.or')}</span>
-              <a href={`mailto:${CONTACT_EMAIL}`} className={contactLink} aria-label={`${t('header.email')}: ${CONTACT_EMAIL}`}>
+              {contacts.phone && (
+                <>
+                  <a href={contacts.phoneHref} className={contactLink} aria-label={`${t('header.phone')}: ${contacts.phone}`}>
+                    <Phone className="h-3.5 w-3.5" /> {t('header.phone')} <ChevronRight className="h-3.5 w-3.5" />
+                  </a>
+                  <span className="text-xs text-muted-foreground">{t('header.or')}</span>
+                </>
+              )}
+              <a href={`mailto:${contacts.email}`} className={contactLink} aria-label={`${t('header.email')}: ${contacts.email}`}>
                 <Mail className="h-3.5 w-3.5" /> {t('header.email')} <ChevronRight className="h-3.5 w-3.5" />
               </a>
             </div>
@@ -434,11 +436,13 @@ export function Header() {
               </nav>
 
               <div className="grid grid-cols-2 gap-2 border-t border-border pt-4">
-                <a href={CONTACT_PHONE_HREF} className="flex min-h-11 items-center gap-2 rounded-xl bg-muted px-3 text-sm font-medium">
-                  <Phone className="h-4 w-4 text-primary" /> {CONTACT_PHONE_LABEL}
-                </a>
-                <a href={`mailto:${CONTACT_EMAIL}`} className="flex min-h-11 items-center gap-2 truncate rounded-xl bg-muted px-3 text-sm font-medium">
-                  <Mail className="h-4 w-4 shrink-0 text-primary" /> <span className="truncate">{CONTACT_EMAIL}</span>
+                {contacts.phone && (
+                  <a href={contacts.phoneHref} className="flex min-h-11 items-center gap-2 rounded-xl bg-muted px-3 text-sm font-medium">
+                    <Phone className="h-4 w-4 text-primary" /> {contacts.phone}
+                  </a>
+                )}
+                <a href={`mailto:${contacts.email}`} className="flex min-h-11 items-center gap-2 truncate rounded-xl bg-muted px-3 text-sm font-medium">
+                  <Mail className="h-4 w-4 shrink-0 text-primary" /> <span className="truncate">{contacts.email}</span>
                 </a>
               </div>
 
