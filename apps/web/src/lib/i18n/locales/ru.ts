@@ -170,12 +170,12 @@ const ru = {
   // Catalog Page
   'catalog.title': 'Каталог',
   'catalog.search_prefix': 'Поиск: "{query}"',
-  'catalog.products_count': '{count} товаров',
+  'catalog.products_count': '{count}',
   'catalog.loading': 'Загрузка...',
   'catalog.all': 'Все',
   'catalog.clear_search': 'Сбросить поиск',
   'catalog.period_label': 'Период аренды',
-  'catalog.products_available_count': '{count} товаров свободно на {dates}',
+  'catalog.products_available_count': '{count} свободно на {dates}',
   'catalog.nothing_found_for_dates': 'На выбранные даты ничего не свободно. Попробуйте другие даты или сбросьте фильтры.',
   'catalog.period_clear': 'Сбросить даты',
   'catalog.sort_newest': 'Сначала новые',
@@ -185,8 +185,10 @@ const ru = {
   'catalog.nothing_found': 'Ничего не найдено',
   'catalog.nothing_found_desc': 'Попробуйте изменить параметры поиска или выбрать другую категорию',
   'catalog.reset_filters': 'Сбросить фильтры',
-  'catalog.grid_view': 'Сетка',
-  'catalog.list_view': 'Список',
+  'catalog.date_bar_title': 'На какие даты?',
+  'catalog.date_bar_hint': 'Покажем только то, что свободно на ваши даты.',
+  'catalog.showing_free_on': 'Показано только свободное {dates}',
+  'catalog.sort_label': 'Сортировка',
 
   // Product Card
   'product_card.discount': 'Скидка',

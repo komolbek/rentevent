@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Search, ChevronDown, Grid3X3, LayoutList } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, CalendarDays, X } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { ru as ruLocale } from 'date-fns/locale';
@@ -17,11 +17,16 @@ import { Reveal } from '@/components/home/Reveal';
 import { CategoryIcon } from '@/lib/categoryIcon';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { countLabel } from '@/lib/i18n';
+
+// Popular first: rental shoppers want the proven items; "new" means
+// nothing to them (spec §3.6).
+const DEFAULT_SORT = 'popular';
 
 function getSortOptions(t: (key: string) => string) {
   return [
-    { value: 'newest', label: t('catalog.sort_newest') },
     { value: 'popular', label: t('catalog.sort_popular') },
+    { value: 'newest', label: t('catalog.sort_newest') },
     { value: 'price_asc', label: t('catalog.sort_price_asc') },
     { value: 'price_desc', label: t('catalog.sort_price_desc') },
   ];
@@ -38,11 +43,10 @@ function CatalogPageContent() {
   const searchParams = useSearchParams();
   const { t, locale } = useTranslation();
   const sortOptions = getSortOptions(t);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const categoryId = searchParams.get('category') || undefined;
   const search = searchParams.get('q') || undefined;
-  const sort = searchParams.get('sort') || 'newest';
+  const sort = searchParams.get('sort') || DEFAULT_SORT;
   const page = parseInt(searchParams.get('page') || '1');
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
@@ -74,7 +78,9 @@ function CatalogPageContent() {
       ? { start_date: formatDateForAPI(range.from), end_date: formatDateForAPI(range.to) }
       : {};
 
-  const { data: products, isLoading: productsLoading } = useQuery({
+  // `isPending`, not `isLoading`: the query is disabled until the stored
+  // period is read, and during that frame there is still nothing to show.
+  const { data: products, isPending: productsLoading } = useQuery({
     queryKey: ['products', categoryId, search, sort, page, periodParams.start_date, periodParams.end_date],
     queryFn: () =>
       productsApi.getAll({
@@ -140,8 +146,11 @@ function CatalogPageContent() {
         <p className="text-muted-foreground">
           {products?.meta.total !== undefined && !productsLoading
             ? periodLabel
-              ? t('catalog.products_available_count', { count: products.meta.total, dates: periodLabel })
-              : t('catalog.products_count', { count: products.meta.total })
+              ? t('catalog.products_available_count', {
+                  count: countLabel(products.meta.total, locale, 'products'),
+                  dates: periodLabel,
+                })
+              : countLabel(products.meta.total, locale, 'products')
             : t('catalog.loading')}
         </p>
       </div>
@@ -161,10 +170,15 @@ function CatalogPageContent() {
           <div
             aria-hidden="true"
             className={cn(
-              'pointer-events-none absolute inset-y-0 right-4 z-10 w-10 bg-gradient-to-l from-background to-transparent transition-opacity duration-200',
+              'pointer-events-none absolute inset-y-0 right-4 z-10 flex w-12 items-start justify-end bg-gradient-to-l from-background via-background/80 to-transparent transition-opacity duration-200',
               chipFade.right ? 'opacity-100' : 'opacity-0',
             )}
-          />
+          >
+            {/* A "›" so the fade reads as "more chips this way", not as a cut. */}
+            <span className="mt-2 flex h-5 w-5 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <ChevronRight className="h-3.5 w-3.5" />
+            </span>
+          </div>
           <div
             ref={chipRowRef}
             onScroll={updateChipFade}
@@ -204,93 +218,91 @@ function CatalogPageContent() {
         </div>
       )}
 
-      {/* Filters Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Rental period filter */}
-          <div className="w-full sm:w-72">
-            <span className="sr-only">{t('catalog.period_label')}</span>
-            <DateRangePicker value={range} onChange={handleRangeChange} minDate={getTomorrow()} />
+      {/* Date bar — the filter that makes this catalog different from a
+          furniture shop, so it gets a sentence and a full row, not a small
+          grey input. Pre-filled from the rental-period store. */}
+      <div className="mb-6 rounded-2xl border border-border bg-card p-4 sm:p-5">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary-text">
+              <CalendarDays className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="font-semibold leading-tight">{t('catalog.date_bar_title')}</p>
+              <p className="text-sm text-muted-foreground">{t('catalog.date_bar_hint')}</p>
+            </div>
           </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="w-full sm:w-72">
+              <span className="sr-only">{t('catalog.period_label')}</span>
+              <DateRangePicker value={range} onChange={handleRangeChange} minDate={getTomorrow()} />
+            </div>
 
-          {/* Sort Dropdown */}
-          <div className="relative">
-            <select
-              value={sort}
-              onChange={(e) => updateParams({ sort: e.target.value })}
-              className="appearance-none h-10 pl-4 pr-10 rounded-xl border border-border bg-card text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
-            >
-              {sortOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            {/* Sort */}
+            <div className="relative">
+              <label className="sr-only" htmlFor="catalog-sort">
+                {t('catalog.sort_label')}
+              </label>
+              <select
+                id="catalog-sort"
+                value={sort}
+                onChange={(e) => updateParams({ sort: e.target.value })}
+                className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-border bg-card pl-4 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:w-auto"
+              >
+                {sortOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            </div>
           </div>
+        </div>
+      </div>
 
-          {/* Active Filters */}
+      {/* What the grid is filtered by right now */}
+      {(periodLabel || search || selectedCategory) && (
+        <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
+          {periodLabel && (
+            <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 font-medium text-primary-text">
+              {t('catalog.showing_free_on', { dates: periodLabel })}
+              <button
+                type="button"
+                onClick={() => handleRangeChange(undefined)}
+                aria-label={t('catalog.period_clear')}
+                className="-mr-1 inline-flex h-6 w-6 items-center justify-center rounded-full hover:bg-primary/15"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </span>
+          )}
           {search && (
             <button
               onClick={() => updateParams({ q: undefined })}
               aria-label={t('catalog.clear_search')}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary-text text-sm"
+              className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5"
             >
               &laquo;{search}&raquo;
-              <span aria-hidden="true">×</span>
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           )}
           {selectedCategory && (
             <button
               onClick={() => updateParams({ category: undefined })}
               aria-label={`${t('catalog.reset_filters')}: ${getCategoryName(selectedCategory.name, t)}`}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-primary/10 text-primary-text text-sm"
+              className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5"
             >
               {getCategoryName(selectedCategory.name, t)}
-              <span aria-hidden="true">×</span>
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
             </button>
           )}
         </div>
-
-        {/* View Mode Toggle */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-muted" role="group" aria-label={`${t('catalog.grid_view')} / ${t('catalog.list_view')}`}>
-          <button
-            onClick={() => setViewMode('grid')}
-            title={t('catalog.grid_view')}
-            aria-label={t('catalog.grid_view')}
-            aria-pressed={viewMode === 'grid'}
-            className={cn(
-              'h-9 w-9 flex items-center justify-center rounded-lg transition-colors',
-              viewMode === 'grid' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:bg-card/50'
-            )}
-          >
-            <Grid3X3 className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            title={t('catalog.list_view')}
-            aria-label={t('catalog.list_view')}
-            aria-pressed={viewMode === 'list'}
-            className={cn(
-              'h-9 w-9 flex items-center justify-center rounded-lg transition-colors',
-              viewMode === 'list' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:bg-card/50'
-            )}
-          >
-            <LayoutList className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Products Grid */}
       {productsLoading ? (
-        <div
-          className={cn(
-            'grid gap-4',
-            viewMode === 'grid'
-              ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-              : 'grid-cols-1'
-          )}
-        >
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {[...Array(12)].map((_, i) => (
             <ProductCardSkeleton key={i} />
           ))}
@@ -313,17 +325,10 @@ function CatalogPageContent() {
         />
       ) : (
         <>
-          <div
-            className={cn(
-              'grid gap-4',
-              viewMode === 'grid'
-                ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-                : 'grid-cols-1'
-            )}
-          >
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
             {products?.items.map((product, index) => (
               <Reveal key={product.id} delay={(index % 4) * 0.05}>
-                <ProductCard product={product} variant={viewMode} />
+                <ProductCard product={product} />
               </Reveal>
             ))}
           </div>

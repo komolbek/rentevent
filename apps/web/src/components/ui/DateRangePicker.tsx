@@ -159,11 +159,12 @@ export function DateRangePicker({
         </label>
       )}
 
+      <div className="group relative">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'group flex w-full items-center text-left transition-all duration-200',
+          'flex w-full items-center text-left transition-all duration-200',
           variant === 'default'
             ? [
                 'gap-3 rounded-xl border-2 border-input bg-card px-4 py-3',
@@ -185,24 +186,26 @@ export function DateRangePicker({
             </span>
           )}
         </div>
-        {/* Hover-revealed, so it never appears on touch — and in the compact
-            `bare` trigger it was still reserving 36px that the date label
-            needed. Keep it only where there is room; the popover's "clear"
-            action covers both variants. */}
-        {variant === 'default' && value?.from && (
-          <motion.button
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={handleClearDates}
-            className="h-6 w-6 rounded-lg bg-muted hover:bg-destructive/10 hover:text-destructive flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100"
-          >
-            <X className="h-4 w-4" />
-          </motion.button>
-        )}
       </button>
+      {/* A sibling of the trigger, not a child: a <button> inside a <button>
+          is invalid HTML and made React re-hydrate the product page. Hover-
+          revealed, so it never appears on touch; the popover's own "clear"
+          covers both variants. */}
+      {variant === 'default' && value?.from && (
+        <motion.button
+          type="button"
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={handleClearDates}
+          aria-label={t('date_picker.clear')}
+          className="absolute right-4 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-lg bg-muted opacity-0 transition-colors hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
+        >
+          <X className="h-4 w-4" />
+        </motion.button>
+      )}
+      </div>
 
       <AnimatePresence>
         {isOpen && (

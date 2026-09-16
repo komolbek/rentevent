@@ -172,11 +172,11 @@ const en: Record<TranslationKey, string> = {
   // Catalog Page
   'catalog.title': 'Catalog',
   'catalog.search_prefix': 'Search: "{query}"',
-  'catalog.products_count': '{count} products',
+  'catalog.products_count': '{count}',
   'catalog.loading': 'Loading...',
   'catalog.all': 'All',
   'catalog.clear_search': 'Clear search',
-  'catalog.products_available_count': '{count} items free for {dates}',
+  'catalog.products_available_count': '{count} free for {dates}',
   'catalog.nothing_found_for_dates': 'Nothing is free for the chosen dates. Try other dates or reset the filters.',
   'catalog.period_label': 'Rental period',
   'catalog.period_clear': 'Clear dates',
@@ -187,8 +187,10 @@ const en: Record<TranslationKey, string> = {
   'catalog.nothing_found': 'Nothing found',
   'catalog.nothing_found_desc': 'Try changing search parameters or selecting another category',
   'catalog.reset_filters': 'Reset filters',
-  'catalog.grid_view': 'Grid',
-  'catalog.list_view': 'List',
+  'catalog.date_bar_title': 'Which dates?',
+  'catalog.date_bar_hint': 'We only show what is free on your dates.',
+  'catalog.showing_free_on': 'Showing only items free on {dates}',
+  'catalog.sort_label': 'Sort',
 
   // Product Card
   'product_card.discount': 'Discount',

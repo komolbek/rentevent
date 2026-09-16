@@ -172,11 +172,11 @@ const uz: Record<TranslationKey, string> = {
   // Catalog Page
   'catalog.title': 'Katalog',
   'catalog.search_prefix': 'Qidirish: "{query}"',
-  'catalog.products_count': '{count} mahsulot',
+  'catalog.products_count': '{count}',
   'catalog.loading': 'Yuklanmoqda...',
   'catalog.all': 'Barchasi',
   'catalog.clear_search': 'Qidiruvni tozalash',
-  'catalog.products_available_count': '{dates} uchun {count} ta mahsulot boʻsh',
+  'catalog.products_available_count': '{dates} uchun {count} boʻsh',
   'catalog.nothing_found_for_dates': 'Tanlangan sanalarga hech narsa boʻsh emas. Boshqa sanalarni sinab koʻring yoki filtrlarni tozalang.',
   'catalog.period_label': 'Ijara muddati',
   'catalog.period_clear': 'Sanalarni tozalash',
@@ -187,8 +187,10 @@ const uz: Record<TranslationKey, string> = {
   'catalog.nothing_found': 'Hech narsa topilmadi',
   'catalog.nothing_found_desc': 'Qidiruv parametrlarini o\'zgartiring yoki boshqa kategoriya tanlang',
   'catalog.reset_filters': 'Filtrlarni tiklash',
-  'catalog.grid_view': 'Katakcha',
-  'catalog.list_view': 'Ro\'yxat',
+  'catalog.date_bar_title': 'Qaysi kunlarga?',
+  'catalog.date_bar_hint': 'Faqat sizning kunlaringizda bo\'sh bo\'lganini ko\'rsatamiz.',
+  'catalog.showing_free_on': 'Faqat {dates} kunlarida bo\'sh bo\'lganlar ko\'rsatilgan',
+  'catalog.sort_label': 'Saralash',
 
   // Product Card
   'product_card.discount': 'Chegirma',
