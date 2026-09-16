@@ -3,7 +3,6 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Search, ChevronDown, Grid3X3, LayoutList } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
@@ -14,6 +13,7 @@ import { useRentalPeriodStore, getStoredPeriod } from '@/stores/rental-period-st
 import { Button, ProductCardSkeleton, EmptyState, DateRangePicker } from '@/components/ui';
 import { formatDateForAPI, getTomorrow } from '@/lib/utils';
 import { ProductCard } from '@/components/catalog/ProductCard';
+import { Reveal } from '@/components/home/Reveal';
 import { CategoryIcon } from '@/lib/categoryIcon';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -134,35 +134,21 @@ function CatalogPageContent() {
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-3xl font-bold mb-2"
-        >
+        <h1 className="text-3xl font-bold mb-2">
           {selectedCategory ? getCategoryName(selectedCategory.name, t) : search ? t('catalog.search_prefix', { query: search }) : t('catalog.title')}
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-muted-foreground"
-        >
+        </h1>
+        <p className="text-muted-foreground">
           {products?.meta.total !== undefined && !productsLoading
             ? periodLabel
               ? t('catalog.products_available_count', { count: products.meta.total, dates: periodLabel })
               : t('catalog.products_count', { count: products.meta.total })
             : t('catalog.loading')}
-        </motion.p>
+        </p>
       </div>
 
       {/* Categories Horizontal Scroll */}
       {!search && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="relative mb-8 -mx-4 px-4"
-        >
+        <div className="relative mb-8 -mx-4 px-4">
           {/* Edge fades tell the eye the row keeps going: right while chips
               are still hidden, left once scrolled, neither at the ends. */}
           <div
@@ -215,16 +201,11 @@ function CatalogPageContent() {
                   </button>
                 ))}
           </div>
-        </motion.div>
+        </div>
       )}
 
       {/* Filters Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="flex flex-wrap items-center justify-between gap-4 mb-6"
-      >
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex flex-wrap items-center gap-3">
           {/* Rental period filter */}
           <div className="w-full sm:w-72">
@@ -298,7 +279,7 @@ function CatalogPageContent() {
             <LayoutList className="h-4 w-4" />
           </button>
         </div>
-      </motion.div>
+      </div>
 
       {/* Products Grid */}
       {productsLoading ? (
@@ -332,9 +313,7 @@ function CatalogPageContent() {
         />
       ) : (
         <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+          <div
             className={cn(
               'grid gap-4',
               viewMode === 'grid'
@@ -342,29 +321,16 @@ function CatalogPageContent() {
                 : 'grid-cols-1'
             )}
           >
-            <AnimatePresence mode="popLayout">
-              {products?.items.map((product, index) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <ProductCard product={product} variant={viewMode} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
+            {products?.items.map((product, index) => (
+              <Reveal key={product.id} delay={(index % 4) * 0.05}>
+                <ProductCard product={product} variant={viewMode} />
+              </Reveal>
+            ))}
+          </div>
 
           {/* Pagination */}
           {products && products.meta.totalPages > 1 && (
-            <motion.nav
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-wrap justify-center gap-2 mt-12"
-              aria-label="Pagination"
-            >
+            <nav className="flex flex-wrap justify-center gap-2 mt-12" aria-label="Pagination">
               {[...Array(products.meta.totalPages)].map((_, i) => (
                 <button
                   key={i}
@@ -380,7 +346,7 @@ function CatalogPageContent() {
                   {i + 1}
                 </button>
               ))}
-            </motion.nav>
+            </nav>
           )}
         </>
       )}

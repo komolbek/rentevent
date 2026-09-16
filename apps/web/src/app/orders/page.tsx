@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { Package, ArrowLeft, ChevronRight, Calendar, MapPin, Truck } from 'lucide-react';
 import { format } from 'date-fns';
@@ -13,6 +12,7 @@ import { ordersApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor, getDeliveryTypeLabel } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { Reveal } from '@/components/home/Reveal';
 
 function OrdersPageContent() {
   const { t } = useTranslation();
@@ -28,11 +28,7 @@ function OrdersPageContent() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-4 mb-8"
-      >
+      <Reveal className="flex items-center gap-4 mb-8">
         <button
           onClick={() => router.back()}
           aria-label={t('orders.back')}
@@ -47,7 +43,7 @@ function OrdersPageContent() {
             {t('orders.count', { count: ordersData?.meta.total || 0 })}
           </p>
         </div>
-      </motion.div>
+      </Reveal>
 
       {isLoading ? (
         <div className="space-y-4">
@@ -71,12 +67,7 @@ function OrdersPageContent() {
       ) : (
         <div className="space-y-4">
           {ordersData.items.map((order, index) => (
-            <motion.div
-              key={order.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-            >
+            <Reveal key={order.id}>
               <Link href={`/orders/${order.id}`}>
                 <Card hover className="p-6">
                   {/* Header */}
@@ -154,7 +145,7 @@ function OrdersPageContent() {
                   </div>
                 </Card>
               </Link>
-            </motion.div>
+            </Reveal>
           ))}
         </div>
       )}

@@ -26,6 +26,7 @@ import {
   DateRangePicker,
 } from '@/components/ui';
 import { ProductCard } from '@/components/catalog/ProductCard';
+import { Reveal } from '@/components/home/Reveal';
 import {
   formatPrice,
   calculatePrice,
@@ -174,11 +175,7 @@ export default function ProductDetailPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
-      <motion.nav
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-2 text-sm text-muted-foreground mb-6"
-      >
+      <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Link href="/catalog" className="hover:text-primary-text transition-colors">
           {t('product.catalog')}
         </Link>
@@ -195,15 +192,11 @@ export default function ProductDetailPage() {
           </>
         )}
         <span className="text-foreground truncate">{name}</span>
-      </motion.nav>
+      </nav>
 
       <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
         {/* Image Gallery */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="space-y-4"
-        >
+        <div className="space-y-4">
           {/* Main Image */}
           <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted">
             <AnimatePresence mode="wait">
@@ -282,14 +275,10 @@ export default function ProductDetailPage() {
               ))}
             </div>
           )}
-        </motion.div>
+        </div>
 
         {/* Product Info */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="space-y-6"
-        >
+        <div className="space-y-6">
           {/* Title & Actions */}
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -472,27 +461,24 @@ export default function ProductDetailPage() {
               </Card>
             </div>
           )}
-        </motion.div>
+        </div>
       </div>
 
       {/* Related Products */}
       {relatedProducts && relatedProducts.items.length > 1 && (
-        <motion.section
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mt-16"
-        >
-          <h2 className="text-2xl font-bold mb-6">{t('product.related')}</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {relatedProducts.items
-              .filter((p) => p.id !== product.id)
-              .slice(0, 4)
-              .map((relatedProduct) => (
-                <ProductCard key={relatedProduct.id} product={relatedProduct} />
-              ))}
-          </div>
-        </motion.section>
+        <Reveal className="mt-16">
+          <section>
+            <h2 className="text-2xl font-bold mb-6">{t('product.related')}</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {relatedProducts.items
+                .filter((p) => p.id !== product.id)
+                .slice(0, 4)
+                .map((relatedProduct) => (
+                  <ProductCard key={relatedProduct.id} product={relatedProduct} />
+                ))}
+            </div>
+          </section>
+        </Reveal>
       )}
     </div>
   );

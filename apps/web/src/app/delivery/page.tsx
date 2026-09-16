@@ -1,9 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Truck, Clock, MapPin, Package, CheckCircle } from 'lucide-react';
 import { Card } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { Reveal } from '@/components/home/Reveal';
 
 export default function DeliveryPage() {
   const { t } = useTranslation();
@@ -34,24 +34,16 @@ export default function DeliveryPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-      >
+      <Reveal className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">{t('delivery_page.title')}</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           {t('delivery_page.subtitle')}
         </p>
-      </motion.div>
+      </Reveal>
 
       {/* Delivery Info */}
       <div className="grid md:grid-cols-2 gap-8 mb-12">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-        >
+        <Reveal>
           <Card className="p-6 h-full">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -68,13 +60,9 @@ export default function DeliveryPage() {
               <li>{t('delivery_page.zone_3')}</li>
             </ul>
           </Card>
-        </motion.div>
+        </Reveal>
 
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-        >
+        <Reveal>
           <Card className="p-6 h-full">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -91,7 +79,7 @@ export default function DeliveryPage() {
               <li>{t('delivery_page.time_3')}</li>
             </ul>
           </Card>
-        </motion.div>
+        </Reveal>
       </div>
 
       {/* Process Steps */}
@@ -100,12 +88,7 @@ export default function DeliveryPage() {
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {deliverySteps.map((step, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
+          <Reveal key={index}>
             <Card className="p-6 text-center h-full">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <step.icon className="h-6 w-6 text-primary" />
@@ -116,7 +99,7 @@ export default function DeliveryPage() {
               <h3 className="font-semibold mb-2">{step.title}</h3>
               <p className="text-sm text-muted-foreground">{step.description}</p>
             </Card>
-          </motion.div>
+          </Reveal>
         ))}
       </div>
     </div>

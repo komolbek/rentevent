@@ -2,7 +2,6 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import {
   Package,
@@ -34,6 +33,7 @@ import {
 } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { OrderStatus } from '@/types';
+import { Reveal } from '@/components/home/Reveal';
 
 function OrderDetailPageContent() {
   const { t } = useTranslation();
@@ -82,11 +82,7 @@ function OrderDetailPageContent() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-4 mb-8"
-      >
+      <Reveal className="flex items-center gap-4 mb-8">
         <button
           onClick={() => router.push('/orders')}
           aria-label={t('order_detail.back_to_orders')}
@@ -106,17 +102,13 @@ function OrderDetailPageContent() {
             {format(new Date(order.createdAt), 'd MMMM yyyy, HH:mm', { locale: ru })}
           </p>
         </div>
-      </motion.div>
+      </Reveal>
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           {/* Status Timeline */}
           {!isCancelled && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
+            <Reveal>
               <Card className="p-6">
                 <h2 className="font-semibold mb-6">{t('order_detail.order_status')}</h2>
                 <div className="flex items-center justify-between relative">
@@ -159,30 +151,22 @@ function OrderDetailPageContent() {
                   })}
                 </div>
               </Card>
-            </motion.div>
+            </Reveal>
           )}
 
           {isCancelled && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
+            <Reveal>
               <Card className="p-6 border-destructive bg-destructive/5">
                 <div className="flex items-center gap-3 text-destructive">
                   <XCircle className="h-6 w-6" />
                   <span className="font-medium">{t('order_detail.order_cancelled')}</span>
                 </div>
               </Card>
-            </motion.div>
+            </Reveal>
           )}
 
           {/* Order Items */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+          <Reveal>
             <Card className="overflow-hidden">
               <div className="p-6 border-b border-border">
                 <h2 className="font-semibold">{t('order_detail.items')}</h2>
@@ -223,14 +207,10 @@ function OrderDetailPageContent() {
                 ))}
               </div>
             </Card>
-          </motion.div>
+          </Reveal>
 
           {/* Delivery Info */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
+          <Reveal>
             <Card className="p-6">
               <h2 className="font-semibold mb-4">{t('order_detail.delivery')}</h2>
               <div className="space-y-4">
@@ -266,15 +246,11 @@ function OrderDetailPageContent() {
                 </div>
               </div>
             </Card>
-          </motion.div>
+          </Reveal>
 
           {/* Notes */}
           {order.notes && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
+            <Reveal>
               <Card className="p-6">
                 <div className="flex items-start gap-4">
                   <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -286,16 +262,12 @@ function OrderDetailPageContent() {
                   </div>
                 </div>
               </Card>
-            </motion.div>
+            </Reveal>
           )}
         </div>
 
         {/* Order Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
+        <Reveal>
           <Card className="p-6 sticky top-24">
             <h2 className="font-semibold mb-4">{t('order_detail.order_total')}</h2>
 
@@ -391,7 +363,7 @@ function OrderDetailPageContent() {
               </Button>
             </Link>
           </Card>
-        </motion.div>
+        </Reveal>
       </div>
     </div>
   );

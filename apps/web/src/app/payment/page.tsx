@@ -1,10 +1,10 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Banknote, CreditCard, Shield, HelpCircle, Wallet, FileText } from 'lucide-react';
 import Image from 'next/image';
 import { Card } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { Reveal } from '@/components/home/Reveal';
 
 type PaymentMethod = {
   id: string;
@@ -42,26 +42,17 @@ export default function PaymentPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-      >
+      <Reveal className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">{t('payment.title')}</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           {t('payment.subtitle')}
         </p>
-      </motion.div>
+      </Reveal>
 
       {/* Payment Methods */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
         {paymentMethods.map((method, index) => (
-          <motion.div
-            key={method.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
+          <Reveal key={method.id}>
             <Card className="p-6 text-center h-full">
               <div className="h-16 flex items-center justify-center mb-4">
                 {method.logo ? (
@@ -79,17 +70,13 @@ export default function PaymentPage() {
               <h3 className="font-semibold mb-2">{method.title}</h3>
               <p className="text-sm text-muted-foreground">{method.description}</p>
             </Card>
-          </motion.div>
+          </Reveal>
         ))}
       </div>
 
       {/* Payment Info */}
       <div className="grid md:grid-cols-2 gap-8 mb-12">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-        >
+        <Reveal>
           <Card className="p-6 h-full">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -106,13 +93,9 @@ export default function PaymentPage() {
               <li>{t('payment.deposit_3')}</li>
             </ul>
           </Card>
-        </motion.div>
+        </Reveal>
 
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.3 }}
-        >
+        <Reveal>
           <Card className="p-6 h-full">
             <div className="flex items-center gap-3 mb-4">
               <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -129,15 +112,11 @@ export default function PaymentPage() {
               <li>{t('payment.security_3')}</li>
             </ul>
           </Card>
-        </motion.div>
+        </Reveal>
       </div>
 
       {/* FAQ */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
+      <Reveal>
         <Card className="p-6">
           <div className="flex items-center gap-3 mb-4">
             <HelpCircle className="h-6 w-6 text-primary" />
@@ -164,7 +143,7 @@ export default function PaymentPage() {
             </div>
           </div>
         </Card>
-      </motion.div>
+      </Reveal>
     </div>
   );
 }

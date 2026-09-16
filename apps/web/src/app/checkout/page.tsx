@@ -25,6 +25,7 @@ import { userApi, ordersApi, paymentsApi, settingsApi } from '@/lib/api';
 import { formatPrice, formatDateForAPI, cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { DeliveryType, PaymentMethod } from '@/types';
+import { Reveal } from '@/components/home/Reveal';
 
 const paymentMethods: { value: PaymentMethod; labelKey: string; descKey: string; Icon: LucideIcon }[] = [
   { value: 'RAHMAT', labelKey: 'checkout.method_rahmat', descKey: 'checkout.method_rahmat_desc', Icon: CreditCard },
@@ -156,13 +157,9 @@ function CheckoutPageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-3xl font-bold mb-8"
-      >
+      <h1 className="text-3xl font-bold mb-8">
         {t('checkout.title')}
-      </motion.h1>
+      </h1>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Checkout Form */}
@@ -234,11 +231,7 @@ function CheckoutPageContent() {
           </AnimatePresence>
 
           {/* Payment Method */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+          <Reveal>
             <h2 className="font-semibold text-lg mb-4">{t('checkout.payment_method')}</h2>
             <div className="grid sm:grid-cols-3 gap-3">
               {paymentMethods.map((method) => {
@@ -296,14 +289,10 @@ function CheckoutPageContent() {
                 />
               </div>
             )}
-          </motion.div>
+          </Reveal>
 
           {/* Notes */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
+          <Reveal>
             <h2 className="font-semibold text-lg mb-4">{t('checkout.order_notes')}</h2>
             <textarea
               value={notes}
@@ -311,16 +300,11 @@ function CheckoutPageContent() {
               placeholder={t('checkout.notes_placeholder')}
               className="w-full h-24 rounded-xl border-2 border-input bg-card px-4 py-3 text-sm resize-none focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all"
             />
-          </motion.div>
+          </Reveal>
         </div>
 
         {/* Order Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="lg:col-span-1"
-        >
+        <Reveal className="lg:col-span-1">
           <Card className="p-6 sticky top-24">
             <h2 className="font-semibold text-lg mb-4">{t('checkout.your_order')}</h2>
 
@@ -404,7 +388,7 @@ function CheckoutPageContent() {
               {t('checkout.terms_agreement')}
             </p>
           </Card>
-        </motion.div>
+        </Reveal>
       </div>
 
       {/* Add Address Modal */}

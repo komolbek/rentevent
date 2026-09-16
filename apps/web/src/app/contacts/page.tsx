@@ -1,11 +1,11 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { Phone, Mail, MapPin, Clock, Send, MessageCircle } from 'lucide-react';
 import { Card, Button, Input } from '@/components/ui';
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { Reveal } from '@/components/home/Reveal';
 
 export default function ContactsPage() {
   const { t } = useTranslation();
@@ -59,27 +59,18 @@ export default function ContactsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-      >
+      <Reveal className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">{t('contacts.title')}</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           {t('contacts.subtitle')}
         </p>
-      </motion.div>
+      </Reveal>
 
       <div className="grid md:grid-cols-2 gap-8">
         {/* Contact Info */}
         <div className="space-y-4">
           {contactInfo.map((item, index) => (
-            <motion.div
-              key={item.title}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
+            <Reveal key={item.title}>
               <Card className="p-4">
                 {item.href ? (
                   <a
@@ -108,15 +99,11 @@ export default function ContactsPage() {
                   </div>
                 )}
               </Card>
-            </motion.div>
+            </Reveal>
           ))}
 
           {/* Address */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-          >
+          <Reveal>
             <Card className="p-4">
               <div className="flex items-start gap-4">
                 <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
@@ -132,15 +119,11 @@ export default function ContactsPage() {
                 </div>
               </div>
             </Card>
-          </motion.div>
+          </Reveal>
         </div>
 
         {/* Contact Form */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-        >
+        <Reveal>
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">
               {t('contacts.write_to_us')}
@@ -179,7 +162,7 @@ export default function ContactsPage() {
               <p className="text-center text-xs text-muted-foreground">{t('contacts.form_via_email')}</p>
             </form>
           </Card>
-        </motion.div>
+        </Reveal>
       </div>
     </div>
   );

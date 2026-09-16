@@ -1,8 +1,8 @@
 'use client';
 
 import { forwardRef, type HTMLAttributes } from 'react';
-import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Reveal } from '@/components/home/Reveal';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'glass' | 'elevated' | 'outline';
@@ -25,17 +25,15 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       ? 'hover-lift hover:elev-2 hover:border-primary/30 cursor-pointer'
       : 'transition-colors duration-300';
 
+    // `animate` is a scroll reveal, never a mount fade: Reveal leaves anything
+    // already on screen exactly as rendered (spec §3.1).
     if (animate) {
       return (
-        <motion.div
-          ref={ref}
-          className={cn(baseStyles, variants[variant], hoverStyles, className)}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {children}
-        </motion.div>
+        <Reveal>
+          <div ref={ref} className={cn(baseStyles, variants[variant], hoverStyles, className)} {...props}>
+            {children}
+          </div>
+        </Reveal>
       );
     }
 

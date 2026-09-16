@@ -1,9 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { FileText } from 'lucide-react';
 import { Card } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { Reveal } from '@/components/home/Reveal';
 
 export default function TermsPage() {
   const { t } = useTranslation();
@@ -20,11 +20,7 @@ export default function TermsPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       {/* Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-      >
+      <Reveal className="text-center mb-12">
         <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
           <FileText className="h-8 w-8 text-primary" />
         </div>
@@ -32,24 +28,19 @@ export default function TermsPage() {
         <p className="text-muted-foreground">
           {t('terms.last_updated')}
         </p>
-      </motion.div>
+      </Reveal>
 
       {/* Content */}
       <div className="space-y-6">
         {sections.map((section, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
+          <Reveal key={index}>
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">{section.title}</h2>
               <div className="text-muted-foreground whitespace-pre-line">
                 {section.content}
               </div>
             </Card>
-          </motion.div>
+          </Reveal>
         ))}
       </div>
     </div>

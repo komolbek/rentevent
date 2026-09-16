@@ -1,8 +1,8 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { Reveal } from '@/components/home/Reveal';
 
 interface EmptyStateProps {
   icon: ReactNode;
@@ -14,11 +14,7 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={cn('flex flex-col items-center justify-center py-16 px-4 text-center', className)}
-    >
+    <Reveal className={cn('flex flex-col items-center justify-center py-16 px-4 text-center', className)}>
       <div className="mb-6 rounded-2xl bg-muted p-6 text-muted-foreground">
         {icon}
       </div>
@@ -27,6 +23,6 @@ export function EmptyState({ icon, title, description, action, className }: Empt
         <p className="text-muted-foreground max-w-sm mb-6">{description}</p>
       )}
       {action}
-    </motion.div>
+    </Reveal>
   );
 }

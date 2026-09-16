@@ -7,6 +7,7 @@ import { ChevronDown, HelpCircle } from 'lucide-react';
 import { Card, Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { Reveal } from '@/components/home/Reveal';
 
 interface FAQItem {
   question: string;
@@ -60,11 +61,7 @@ export default function FAQPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       {/* Hero */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-12"
-      >
+      <Reveal className="text-center mb-12">
         <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
           <HelpCircle className="h-8 w-8 text-primary" />
         </div>
@@ -72,33 +69,23 @@ export default function FAQPage() {
         <p className="text-lg text-muted-foreground">
           {t('faq.subtitle')}
         </p>
-      </motion.div>
+      </Reveal>
 
       {/* FAQ List */}
       <div className="space-y-3">
         {faqData.map((item, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-          >
+          <Reveal key={index}>
             <FAQAccordion
               item={item}
               isOpen={openIndex === index}
               onToggle={() => setOpenIndex(openIndex === index ? null : index)}
             />
-          </motion.div>
+          </Reveal>
         ))}
       </div>
 
       {/* Contact CTA */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="mt-12 text-center"
-      >
+      <Reveal className="mt-12 text-center">
         <Card className="p-6">
           <h2 className="text-xl font-semibold mb-2">
             {t('faq.still_questions')}
@@ -110,7 +97,7 @@ export default function FAQPage() {
             <Button size="md" variant="primary">{t('faq.contact_us')}</Button>
           </Link>
         </Card>
-      </motion.div>
+      </Reveal>
     </div>
   );
 }

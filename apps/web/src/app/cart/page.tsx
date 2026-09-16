@@ -13,6 +13,7 @@ import { useCartStore } from '@/stores/cart-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { formatPrice } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { Reveal } from '@/components/home/Reveal';
 
 export default function CartPage() {
   const { t } = useTranslation();
@@ -73,18 +74,14 @@ export default function CartPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-3xl font-bold mb-8"
-      >
+      <h1 className="text-3xl font-bold mb-8">
         {t('cart.title')}
-      </motion.h1>
+      </h1>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-4">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence mode="popLayout" initial={false}>
             {items.map((item, index) => (
               <motion.div
                 key={item.productId}
@@ -192,12 +189,7 @@ export default function CartPage() {
         </div>
 
         {/* Order Summary */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="lg:col-span-1"
-        >
+        <Reveal className="lg:col-span-1">
           <Card className="p-6 sticky top-24">
             <h2 className="font-semibold text-lg mb-4">{t('cart.order_summary')}</h2>
 
@@ -239,7 +231,7 @@ export default function CartPage() {
               {t('cart.free_delivery_note')}
             </p>
           </Card>
-        </motion.div>
+        </Reveal>
       </div>
     </div>
   );

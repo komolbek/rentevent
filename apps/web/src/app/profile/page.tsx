@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   User,
@@ -28,6 +27,7 @@ import type { IUser } from '@rentevent/types';
 import { formatPhoneNumber } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { Address } from '@/types';
+import { Reveal } from '@/components/home/Reveal';
 
 function ProfilePageContent() {
   const { t } = useTranslation();
@@ -112,23 +112,15 @@ function ProfilePageContent() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-3xl font-bold mb-8"
-      >
+      <h1 className="text-3xl font-bold mb-8">
         {t('profile.title')}
-      </motion.h1>
+      </h1>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Info */}
         <div className="lg:col-span-2 space-y-6">
           {/* User Info Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
+          <Reveal>
             <Card className="p-6">
               <div className="flex items-start gap-4">
                 <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -179,14 +171,10 @@ function ProfilePageContent() {
                 </div>
               </div>
             </Card>
-          </motion.div>
+          </Reveal>
 
           {/* Addresses */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
+          <Reveal>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">{t('profile.delivery_addresses')}</h3>
               <Button
@@ -278,14 +266,10 @@ function ProfilePageContent() {
                 </Button>
               </Card>
             )}
-          </motion.div>
+          </Reveal>
 
           {/* Cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
+          <Reveal>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">{t('profile.payment_methods')}</h3>
             </div>
@@ -325,16 +309,11 @@ function ProfilePageContent() {
                 </p>
               </Card>
             )}
-          </motion.div>
+          </Reveal>
         </div>
 
         {/* Sidebar Menu */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="space-y-4"
-        >
+        <Reveal className="space-y-4">
           {menuItems.map((item) => (
             <Link key={item.href} href={item.href}>
               <Card hover className="p-4">
@@ -362,7 +341,7 @@ function ProfilePageContent() {
               </div>
             </Card>
           </button>
-        </motion.div>
+        </Reveal>
       </div>
 
       {/* Address Modal */}

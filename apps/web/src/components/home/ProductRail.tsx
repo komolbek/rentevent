@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { ArrowUpRight } from 'lucide-react';
 import type { Product } from '@/types';
 import { ProductCard } from '@/components/catalog/ProductCard';
 import { ProductCardSkeleton } from '@/components/ui';
+import { Reveal } from '@/components/home/Reveal';
 
 interface ProductRailProps {
   eyebrow: string;
@@ -56,16 +56,13 @@ export function ProductRail({
               </div>
             ))
           : products!.slice(0, 8).map((product, index) => (
-              <motion.div
+              <Reveal
                 key={product.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-60px' }}
-                transition={{ delay: Math.min(index, 4) * 0.06 }}
+                delay={Math.min(index, 4) * 0.06}
                 className="w-[15rem] shrink-0 snap-start sm:w-auto"
               >
                 <ProductCard product={product} />
-              </motion.div>
+              </Reveal>
             ))}
       </div>
     </section>

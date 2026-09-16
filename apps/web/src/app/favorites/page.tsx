@@ -11,6 +11,7 @@ import { AuthGuard } from '@/components/auth-guard';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { Reveal } from '@/components/home/Reveal';
 
 function FavoritesPageContent() {
   const { t } = useTranslation();
@@ -27,11 +28,7 @@ function FavoritesPageContent() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-4 mb-8"
-      >
+      <Reveal className="flex items-center gap-4 mb-8">
         <button
           onClick={() => router.back()}
           aria-label={t('favorites.back')}
@@ -46,7 +43,7 @@ function FavoritesPageContent() {
             {t('favorites.products_count', { count: favorites.length })}
           </p>
         </div>
-      </motion.div>
+      </Reveal>
 
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -68,12 +65,8 @@ function FavoritesPageContent() {
           }
         />
       ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-        >
-          <AnimatePresence mode="popLayout">
+        <Reveal className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <AnimatePresence mode="popLayout" initial={false}>
             {favorites.map((product, index) => (
               <motion.div
                 key={product.id}
@@ -86,7 +79,7 @@ function FavoritesPageContent() {
               </motion.div>
             ))}
           </AnimatePresence>
-        </motion.div>
+        </Reveal>
       )}
     </div>
   );

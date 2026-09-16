@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Phone, PackageCheck, CalendarClock, Truck, Undo2 } from 'lucide-react';
 import type { Product } from '@/types';
 import { Button } from '@/components/ui';
@@ -23,6 +23,7 @@ interface HomeHeroProps {
  */
 export function HomeHero({ products, productTotal, phoneNumber }: HomeHeroProps) {
   const { t, locale } = useTranslation();
+  const reduceMotion = useReducedMotion();
 
   const collage = products.filter((p) => p.photos?.[0]).slice(0, 3);
 
@@ -128,9 +129,10 @@ export function HomeHero({ products, productTotal, phoneNumber }: HomeHeroProps)
                 return (
                   <motion.div
                     key={product.id}
-                    initial={{ opacity: 0, y: 18, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ delay: 0.15 + index * 0.1, ease: [0.16, 1, 0.3, 1], duration: 0.6 }}
+                    // Above the fold: transform only, never from opacity 0.
+                    initial={reduceMotion ? false : { y: 18, scale: 0.96 }}
+                    animate={{ y: 0, scale: 1 }}
+                    transition={{ delay: 0.1 + index * 0.08, ease: [0.16, 1, 0.3, 1], duration: 0.45 }}
                     className={`absolute ${position.card}`}
                   >
                     <Link

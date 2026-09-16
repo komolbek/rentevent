@@ -22,6 +22,7 @@ import { authApi } from '@/lib/api';
 import { useAuthStore, getDeviceId } from '@/stores/auth-store';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { Reveal } from '@/components/home/Reveal';
 
 type AuthStep = 'phone' | 'otp';
 
@@ -148,11 +149,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
+      <Reveal className="w-full max-w-md">
         <Card variant="elevated" className="p-8">
           <AnimatePresence mode="wait">
             {step === 'phone' ? (
@@ -300,7 +297,7 @@ export default function AuthPage() {
             )}
           </AnimatePresence>
         </Card>
-      </motion.div>
+      </Reveal>
     </div>
   );
 }
