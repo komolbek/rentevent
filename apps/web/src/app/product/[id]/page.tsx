@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -222,15 +223,28 @@ export default function ProductDetailPage() {
           {/* Main Image */}
           <div className="relative aspect-square rounded-2xl overflow-hidden bg-muted">
             <AnimatePresence mode="wait">
-              <motion.img
+              <motion.div
                 key={selectedImageIndex}
-                src={product.photos[selectedImageIndex] || '/placeholder.png'}
-                alt={name}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="h-full w-full object-cover"
-              />
+                className="absolute inset-0"
+              >
+                {product.photos[selectedImageIndex] ? (
+                  <Image
+                    src={product.photos[selectedImageIndex]}
+                    alt={name}
+                    fill
+                    priority={selectedImageIndex === 0}
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-5xl font-bold text-muted-foreground/30">
+                    {name.charAt(0)}
+                  </div>
+                )}
+              </motion.div>
             </AnimatePresence>
 
             {/* Navigation Arrows */}
@@ -282,17 +296,13 @@ export default function ProductDetailPage() {
                   aria-label={t('product.image_thumbnail', { index: index + 1 })}
                   aria-current={selectedImageIndex === index ? 'true' : undefined}
                   className={cn(
-                    'shrink-0 h-20 w-20 rounded-xl overflow-hidden border-2 transition-all',
+                    'relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all',
                     selectedImageIndex === index
                       ? 'border-primary'
                       : 'border-transparent hover:border-border'
                   )}
                 >
-                  <img
-                    src={photo}
-                    alt={`${name} ${index + 1}`}
-                    className="h-full w-full object-cover"
-                  />
+                  <Image src={photo} alt={`${name} ${index + 1}`} fill sizes="80px" className="object-cover" />
                 </button>
               ))}
             </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
@@ -178,12 +179,14 @@ function OrderDetailPageContent() {
                     href={`/product/${item.productId}`}
                     className="flex gap-4 p-4 hover:bg-muted/50 transition-colors"
                   >
-                    <div className="h-20 w-20 rounded-xl overflow-hidden bg-muted shrink-0">
+                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
                       {item.productPhoto ? (
-                        <img
+                        <Image
                           src={item.productPhoto}
                           alt={item.productName}
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="80px"
+                          className="object-cover"
                         />
                       ) : (
                         <div className="h-full w-full flex items-center justify-center">

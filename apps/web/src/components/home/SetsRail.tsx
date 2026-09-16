@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, Layers } from 'lucide-react';
@@ -61,12 +62,12 @@ export function SetsRail() {
                   >
                     <div className="relative aspect-[4/3] overflow-hidden">
                       {set.photos[0] ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={set.photos[0]}
                           alt=""
-                          className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
-                          loading="lazy"
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-brand-dark-gray">

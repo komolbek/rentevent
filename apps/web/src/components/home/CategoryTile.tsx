@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Package } from 'lucide-react';
@@ -37,13 +38,12 @@ export function CategoryTile({ id, name, countLabel, photo, icon, className }: C
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           {photo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={photo}
               alt=""
-              className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
-              loading="lazy"
-              decoding="async"
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">

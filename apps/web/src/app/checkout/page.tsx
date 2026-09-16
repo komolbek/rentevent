@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -315,12 +316,14 @@ function CheckoutPageContent() {
             <div className="space-y-3 mb-4 max-h-48 overflow-y-auto scrollbar-thin">
               {items.map((item) => (
                 <div key={item.productId} className="flex gap-3">
-                  <div className="h-12 w-12 rounded-lg overflow-hidden bg-muted shrink-0">
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
                     {item.product.photos[0] && (
-                      <img
+                      <Image
                         src={item.product.photos[0]}
                         alt={item.product.name}
-                        className="h-full w-full object-cover"
+                        fill
+                        sizes="48px"
+                        className="object-cover"
                       />
                     )}
                   </div>

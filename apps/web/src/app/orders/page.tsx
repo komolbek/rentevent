@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -93,13 +94,15 @@ function OrdersPageContent() {
                     {order.items.slice(0, 4).map((item) => (
                       <div
                         key={item.id}
-                        className="shrink-0 h-16 w-16 rounded-lg overflow-hidden bg-muted"
+                        className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted"
                       >
                         {item.productPhoto ? (
-                          <img
+                          <Image
                             src={item.productPhoto}
                             alt={item.productName}
-                            className="h-full w-full object-cover"
+                            fill
+                            sizes="64px"
+                            className="object-cover"
                           />
                         ) : (
                           <div className="h-full w-full flex items-center justify-center">

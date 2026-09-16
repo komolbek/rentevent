@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, CalendarDays, MapPin } from 'lucide-react';
 import { eventsApi } from '@/lib/api';
@@ -54,12 +55,12 @@ export function EventsRail() {
                   <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-primary/40 hover:elev-2">
                     <div className="relative aspect-[16/9] overflow-hidden bg-muted">
                       {e.image_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={e.image_url}
                           alt=""
-                          className="h-full w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
-                          loading="lazy"
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, memo, useCallback } from 'react';
+import Image from 'next/image';
+import { memo, useCallback } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Heart, ArrowUpRight } from 'lucide-react';
@@ -20,7 +21,6 @@ interface ProductCardProps {
 }
 
 export const ProductCard = memo(function ProductCard({ product, className }: ProductCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const { isAuthenticated } = useAuthStore();
   const { isFavorite, addFavorite, removeFavorite } = useFavoritesStore();
   const { t, locale } = useTranslation();
@@ -58,24 +58,17 @@ export const ProductCard = memo(function ProductCard({ product, className }: Pro
       href={`/product/${product.id}`}
       aria-label={`${name} - ${formatPrice(product.dailyPrice)} ${t('common.currency')} ${t('product_card.per_day')}`}
     >
-      <motion.div
-        whileHover={{ y: -5 }}
-        whileTap={{ scale: 0.98 }}
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
-      >
+      <motion.div whileHover={{ y: -5 }} whileTap={{ scale: 0.98 }}>
         <Card hover className={cn('overflow-hidden group', className)}>
           {/* Image */}
           <div className="relative aspect-square overflow-hidden bg-muted">
             {product.photos[0] ? (
-              <motion.img
+              <Image
                 src={product.photos[0]}
                 alt={name}
-                className="h-full w-full object-cover"
-                loading="lazy"
-                decoding="async"
-                animate={{ scale: isHovered ? 1.05 : 1 }}
-                transition={{ duration: 0.3 }}
+                fill
+                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
             ) : (
               <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50" role="img" aria-label={name}>

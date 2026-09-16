@@ -31,7 +31,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // Pill silhouette is a deliberate brand rhyme (it echoed the original
     // pill-shaped wordmark) rather than a stock rounded-xl button.
     const baseStyles =
-      'group relative inline-flex items-center justify-center rounded-full font-medium tracking-tight whitespace-nowrap transition-[background-color,color,box-shadow,border-color,filter] duration-300 disabled:pointer-events-none disabled:opacity-50 select-none';
+      'group relative inline-flex items-center justify-center rounded-full font-medium tracking-tight whitespace-nowrap transition-[background-color,color,box-shadow,border-color,filter] duration-300 disabled:pointer-events-none disabled:opacity-50 select-none outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
     const variants = {
       // Fire orange — the primary call to action.

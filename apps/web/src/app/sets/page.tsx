@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Layers, ShoppingCart, Package, CalendarDays } from 'lucide-react';
@@ -117,7 +118,7 @@ export default function SetsPage() {
                 <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card">
                   <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                     {s.photos?.[0] ? (
-                      <img src={s.photos[0]} alt={name} className="h-full w-full object-cover" loading="lazy" />
+                      <Image src={s.photos[0]} alt={name} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-muted">
                         <Layers className="h-10 w-10 text-primary/40" />

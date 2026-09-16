@@ -8,4 +8,3 @@ export * from './Select';
 export * from './EmptyState';
 export * from './QuantitySelector';
 export * from './DateRangePicker';
-export * from './LazyImage';

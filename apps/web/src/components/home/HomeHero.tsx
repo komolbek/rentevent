@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Phone, PackageCheck, CalendarClock, Truck, Undo2 } from 'lucide-react';
@@ -143,12 +144,13 @@ export function HomeHero({ products, productTotal, phoneHref }: HomeHeroProps) {
                       className="group block h-full w-full overflow-hidden rounded-2xl bg-white shadow-[0_18px_40px_-14px_rgba(60,15,5,0.55)] ring-1 ring-black/5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:rotate-0"
                       aria-label={localizedName(product, locale)}
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                      <Image
                         src={product.photos[0]}
                         alt=""
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                        loading="eager"
+                        fill
+                        sizes="(max-width: 640px) 45vw, 240px"
+                        priority
+                        className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
                       />
                       <span
                         className={`absolute rounded-full bg-brand-graphite/85 px-2.5 py-1 text-[0.6875rem] font-medium text-white backdrop-blur-sm ${position.price}`}
