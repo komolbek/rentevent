@@ -2,34 +2,11 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, MapPin, ArrowUpRight } from 'lucide-react';
-import { eventsApi, type EventItem } from '@/lib/api';
+import { eventsApi } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import type { Locale } from '@/lib/i18n';
+import { localizeEvent, formatEventRange, eventRentalPeriod } from '@/lib/events';
 import { Reveal } from '@/components/home/Reveal';
-
-function localize(e: EventItem, locale: Locale, field: 'title' | 'description'): string {
-  const base = e[field] || '';
-  if (locale === 'uz') return (e[`${field}_uz`] || '').trim() || base;
-  if (locale === 'en') return (e[`${field}_en`] || '').trim() || base;
-  return base;
-}
-
-function fmtRange(start: string, end: string | null, locale: Locale) {
-  const loc = locale === 'uz' ? 'uz-UZ' : locale === 'en' ? 'en-US' : 'ru-RU';
-  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
-  try {
-    const s = new Date(start);
-    if (!end) return s.toLocaleDateString(loc, opts);
-    const e = new Date(end);
-    const sameMonth = s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear();
-    if (sameMonth) {
-      return `${s.getDate()}–${e.toLocaleDateString(loc, opts)}`;
-    }
-    return `${s.toLocaleDateString(loc, opts)} – ${e.toLocaleDateString(loc, opts)}`;
-  } catch {
-    return start;
-  }
-}
+import { RentForEventButton } from '@/components/events/RentForEventButton';
 
 export default function EventsPage() {
   const { t, locale } = useTranslation();
@@ -63,21 +40,30 @@ export default function EventsPage() {
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((e, i) => {
-            const title = localize(e, locale, 'title');
-            const description = localize(e, locale, 'description');
-            const Card = (
-              <Reveal delay={Math.min(i * 0.04, 0.4)} className="h-full">
-                <div className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-lg">
+            const title = localizeEvent(e, locale, 'title');
+            const description = localizeEvent(e, locale, 'description');
+            const isOver = eventRentalPeriod(e) === null;
+            return (
+              <Reveal key={e.id} delay={Math.min(i * 0.04, 0.4)} className="h-full">
+                {/* The card's one action is "rent for this fair" (spec §3.9);
+                    the fair's own website is a small secondary link. */}
+                <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-lg">
                   <div className="relative aspect-[16/9] overflow-hidden bg-muted">
                     {e.image_url ? (
-                      <img src={e.image_url} alt={title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={e.image_url}
+                        alt={title}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                      />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-muted">
                         <CalendarDays className="h-10 w-10 text-primary/40" />
                       </div>
                     )}
                     <div className="absolute left-3 top-3 rounded-full bg-black/70 px-3 py-1 text-xs font-semibold text-white backdrop-blur">
-                      {fmtRange(e.start_date, e.end_date, locale)}
+                      {formatEventRange(e.start_date, e.end_date, locale)}
                     </div>
                   </div>
                   <div className="flex flex-1 flex-col p-5">
@@ -91,21 +77,26 @@ export default function EventsPage() {
                     {description && (
                       <p className="mt-3 line-clamp-3 text-sm text-muted-foreground">{description}</p>
                     )}
-                    {e.website_url && (
-                      <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-primary-text">
-                        {t('events.learn_more')} <ArrowUpRight className="h-4 w-4" />
-                      </span>
-                    )}
+                    <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-5">
+                      {isOver ? (
+                        <span className="text-sm text-muted-foreground">{t('events.over')}</span>
+                      ) : (
+                        <RentForEventButton event={e} size="sm" />
+                      )}
+                      {e.website_url && (
+                        <a
+                          href={e.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex min-h-10 items-center gap-1 rounded text-sm text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary/50"
+                        >
+                          {t('events.website')} <ArrowUpRight className="h-4 w-4" aria-hidden="true" />
+                        </a>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </article>
               </Reveal>
-            );
-            return e.website_url ? (
-              <a key={e.id} href={e.website_url} target="_blank" rel="noopener noreferrer" className="block h-full">
-                {Card}
-              </a>
-            ) : (
-              <div key={e.id} className="h-full">{Card}</div>
             );
           })}
         </div>
