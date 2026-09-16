@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
-/* Tailwind v4: opt in to a class-based dark variant. The theme-store toggles
-   `class="dark"` on <html>; this maps that to the `dark:` utilities. */
+/* Tailwind v4: class-based dark variant. The inline <head> script in
+   app/layout.tsx sets `class="dark"` on <html> from the OS preference. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {

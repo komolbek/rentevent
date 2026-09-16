@@ -4,8 +4,11 @@ import { Header, Footer } from '@/components/layout';
 import './globals.css';
 
 const SITE_URL = 'https://rentevent.uz';
-const SITE_TITLE = 'RentEvent - Event Equipment Rental';
-const SITE_DESCRIPTION = 'Rent event equipment easily with RentEvent';
+// Russian by default: it is the site's default locale (`<html lang="ru">`);
+// the UI language itself is a client-side store, so the document metadata
+// cannot follow it — RU is what search engines and link previews get.
+const SITE_TITLE = 'RentEvent — аренда оборудования для мероприятий в Ташкенте';
+const SITE_DESCRIPTION = 'Мебель, декор, свет и звук — от 1 дня, с доставкой по Ташкенту.';
 
 // Icons, apple-touch-icon and the OG image come from the file conventions in
 // this directory (favicon.ico, icon.svg, apple-icon.png, opengraph-image.png);
@@ -14,7 +17,7 @@ const SITE_DESCRIPTION = 'Rent event equipment easily with RentEvent';
 // break link previews.
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: SITE_TITLE,
+  title: { default: SITE_TITLE, template: '%s — RentEvent' },
   description: SITE_DESCRIPTION,
   manifest: '/manifest.webmanifest',
   openGraph: {
@@ -47,23 +50,18 @@ export default function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
+        {/* Colour scheme follows the OS, nothing else: there is no manual
+            toggle (spec §3.3). Runs before paint so a dark-OS visitor never
+            sees a light flash; the listener follows live OS changes. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  var raw = localStorage.getItem('theme-storage');
-                  if (raw) {
-                    var parsed = JSON.parse(raw);
-                    var theme = parsed.state && parsed.state.theme;
-                    if (theme === 'dark') {
-                      document.documentElement.classList.add('dark');
-                    } else if (theme === 'system') {
-                      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                        document.documentElement.classList.add('dark');
-                      }
-                    }
-                  }
+                  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+                  var apply = function(dark) { document.documentElement.classList.toggle('dark', dark); };
+                  apply(mq.matches);
+                  mq.addEventListener('change', function(e) { apply(e.matches); });
                 } catch(e) {}
               })();
             `,

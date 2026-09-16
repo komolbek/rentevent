@@ -41,7 +41,7 @@ export function HomeHero({ products, productTotal, phoneNumber }: HomeHeroProps)
   ];
 
   return (
-    <section className="container mx-auto px-4 pt-4 sm:pt-6">
+    <section data-hero className="container mx-auto px-4 pt-4 sm:pt-6">
       {/* The first screen never starts invisible — only the collage cards animate in. */}
       <div
         className="relative overflow-hidden rounded-3xl text-white"

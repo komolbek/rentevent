@@ -9,8 +9,6 @@ import {
   User,
   Menu,
   X,
-  Sun,
-  Moon,
   Heart,
   Package,
   LogOut,
@@ -22,7 +20,6 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore } from '@/stores/cart-store';
-import { useThemeStore } from '@/stores/theme-store';
 import { useLanguageStore } from '@/stores/language-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
@@ -50,6 +47,7 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [pastHero, setPastHero] = useState(false);
   const [query, setQuery] = useState('');
   const router = useRouter();
   const pathname = usePathname();
@@ -58,7 +56,6 @@ export function Header() {
 
   const { isAuthenticated, user, logout } = useAuthStore();
   const itemCount = useCartStore((s) => s.itemCount);
-  const { resolvedTheme, setTheme, theme } = useThemeStore();
   const { locale, setLocale } = useLanguageStore();
 
   useEffect(() => {
@@ -72,12 +69,20 @@ export function Header() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // `pastHero` drives the fixed "Арендовать" tab: it appears once the hero
+  // (or, on pages without one, the first ~240px) has scrolled out, so it
+  // never sits on top of the first screen's own call to action.
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 8);
+      const hero = document.querySelector<HTMLElement>('[data-hero]');
+      const threshold = hero ? hero.offsetTop + hero.offsetHeight - 80 : 240;
+      setPastHero(window.scrollY > threshold);
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [pathname]);
 
   // Keep the search box in step with the catalog's ?q= so the query the
   // visitor is looking at is the one shown in the box. Read from
@@ -99,11 +104,6 @@ export function Header() {
     setIsUserMenuOpen(false);
     router.push('/');
   }, [logout, router]);
-
-  const toggleTheme = useCallback(() => {
-    if (theme === 'system') setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
-    else setTheme(theme === 'dark' ? 'light' : 'dark');
-  }, [theme, resolvedTheme, setTheme]);
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,12 +127,20 @@ export function Header() {
   const mobileNavLinks = [{ href: '/catalog', label: t('nav.catalog') }, ...navLinks];
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  const hideRentTab = ['/catalog', '/cart', '/checkout', '/product'].some((p) => isActive(p));
 
-  const iconBtn =
-    'inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground';
+  const focusRing =
+    'outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background';
 
-  const contactLink =
-    'inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground/70 transition-colors hover:text-primary-text';
+  const iconBtn = cn(
+    'inline-flex h-10 w-10 items-center justify-center rounded-full text-foreground/80 transition-colors hover:bg-muted hover:text-foreground',
+    focusRing,
+  );
+
+  const contactLink = cn(
+    'inline-flex min-h-8 items-center gap-1 rounded text-xs font-semibold uppercase tracking-[0.08em] text-foreground/70 transition-colors hover:text-primary-text',
+    focusRing,
+  );
 
   const localeSelect = (className?: string) => (
     <label className={cn('relative inline-flex items-center', className)}>
@@ -140,7 +148,10 @@ export function Header() {
       <select
         value={locale}
         onChange={(e) => setLocale(e.target.value as Locale)}
-        className="cursor-pointer appearance-none bg-transparent py-1 pl-1 pr-5 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground outline-none"
+        className={cn(
+          'h-8 cursor-pointer appearance-none rounded bg-transparent pl-1 pr-5 text-xs font-semibold uppercase tracking-[0.08em] text-foreground',
+          focusRing,
+        )}
       >
         {LOCALES.map((l) => (
           <option key={l.code} value={l.code} title={l.full}>
@@ -161,16 +172,9 @@ export function Header() {
       role="banner"
     >
       <div className="container relative mx-auto px-4">
-        {/* Language + theme tab, hanging from the top edge (desktop) */}
-        <div className="absolute right-4 top-0 hidden items-center gap-0.5 rounded-b-lg border border-t-0 border-border bg-muted pl-2 pr-1.5 lg:flex">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="inline-flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
-            aria-label={t('header.toggle_theme')}
-          >
-            {resolvedTheme === 'dark' ? <Sun className="h-3 w-3" /> : <Moon className="h-3 w-3" />}
-          </button>
+        {/* Language tab, hanging from the top edge (desktop). Colour scheme
+            follows the OS — a rental shop does not need a manual toggle. */}
+        <div className="absolute right-4 top-0 hidden h-8 items-center rounded-b-lg border border-t-0 border-border bg-muted pl-2 pr-1.5 lg:flex">
           {localeSelect()}
         </div>
 
@@ -201,8 +205,9 @@ export function Header() {
                     key={link.href}
                     href={link.href}
                     className={cn(
-                      'relative py-1 text-[11px] font-semibold uppercase tracking-[0.12em] transition-colors',
+                      'relative rounded py-1 text-[13px] font-semibold uppercase tracking-[0.08em] transition-colors',
                       active ? 'text-foreground' : 'text-foreground/70 hover:text-foreground',
+                      focusRing,
                     )}
                     aria-current={active ? 'page' : undefined}
                   >
@@ -219,25 +224,29 @@ export function Header() {
               })}
             </nav>
 
-            <form onSubmit={submitSearch} role="search" className="w-full max-w-[22rem]">
-              <label className="flex items-center gap-2 border-b border-foreground/50 pb-1 transition-colors focus-within:border-primary">
+            <form onSubmit={submitSearch} role="search" className="w-full max-w-[24rem]">
+              <label className="flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
                 <span className="sr-only">{t('header.search_label')}</span>
                 <input
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder={t('header.search_placeholder')}
-                  className="w-full min-w-0 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+                  className="w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 />
-                <button type="submit" className="shrink-0 text-foreground/70 hover:text-foreground" aria-label={t('header.search_submit')}>
-                  <Search className="h-3.5 w-3.5" />
+                <button
+                  type="submit"
+                  className={cn('-mr-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-foreground/70 hover:text-foreground', focusRing)}
+                  aria-label={t('header.search_submit')}
+                >
+                  <Search className="h-4 w-4" />
                 </button>
               </label>
             </form>
           </div>
 
           {/* Right column — icon cluster over contact row (desktop) */}
-          <div className="ml-auto flex items-center gap-1 lg:flex-col lg:items-end lg:justify-center lg:gap-1.5 lg:pt-4">
+          <div className="ml-auto flex items-center gap-1 lg:flex-col lg:items-end lg:justify-center lg:gap-1 lg:pt-6">
             <div className="flex items-center">
               <Link href="/favorites" className={cn(iconBtn, 'hidden sm:inline-flex')} aria-label={t('header.favorites')}>
                 <Heart className="h-[18px] w-[18px]" />
@@ -321,11 +330,11 @@ export function Header() {
             {/* Contact row — direct links, no reveal step */}
             <div className="hidden items-center gap-1.5 lg:flex">
               <a href={CONTACT_PHONE_HREF} className={contactLink} aria-label={`${t('header.phone')}: ${CONTACT_PHONE_LABEL}`}>
-                <Phone className="h-3 w-3" /> {t('header.phone')} <ChevronRight className="h-3 w-3" />
+                <Phone className="h-3.5 w-3.5" /> {t('header.phone')} <ChevronRight className="h-3.5 w-3.5" />
               </a>
-              <span className="text-[11px] text-muted-foreground">{t('header.or')}</span>
+              <span className="text-xs text-muted-foreground">{t('header.or')}</span>
               <a href={`mailto:${CONTACT_EMAIL}`} className={contactLink} aria-label={`${t('header.email')}: ${CONTACT_EMAIL}`}>
-                <Mail className="h-3 w-3" /> {t('header.email')} <ChevronRight className="h-3 w-3" />
+                <Mail className="h-3.5 w-3.5" /> {t('header.email')} <ChevronRight className="h-3.5 w-3.5" />
               </a>
             </div>
           </div>
@@ -333,22 +342,36 @@ export function Header() {
       </div>
 
       {/* "Rent now" tab — fixed to the right edge of the viewport, the way
-          fair.rent does it. This is the one route into the catalog on
-          desktop, so it stays in view on every page and every scroll
-          position. Hidden below md, where it would sit on top of content. */}
-      <Link
-        href="/catalog"
-        className={cn(
-          // rounded-r + rotate(180deg) = rounded on the visible left edge.
-          'fixed right-0 top-1/2 z-30 hidden items-center gap-2 rounded-r-lg bg-rent px-2.5 py-4 text-[11px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)] transition-colors hover:bg-rent-hover md:flex',
-          pathname === '/catalog' && 'md:hidden',
+          fair.rent does it. It slides in once the hero has scrolled out
+          (see `pastHero`) and stays away from the pages that already have a
+          single job — catalog, cart, checkout, product — where it used to
+          sit on top of the price box and the order summary. Hidden below md,
+          where the bottom tab bar is the persistent way into the catalog. */}
+      <AnimatePresence>
+        {pastHero && !hideRentTab && (
+          <motion.div
+            initial={{ x: 56 }}
+            animate={{ x: 0 }}
+            exit={{ x: 56 }}
+            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed right-0 top-1/2 z-30 hidden -translate-y-1/2 md:block"
+          >
+            <Link
+              href="/catalog"
+              className={cn(
+                // rounded-r + rotate(180deg) = rounded on the visible left edge.
+                'flex items-center gap-2 rounded-r-lg bg-rent px-2.5 py-4 text-xs font-bold uppercase tracking-[0.16em] text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)] transition-colors hover:bg-rent-hover',
+                focusRing,
+              )}
+              style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+              aria-label={t('header.rent_now')}
+            >
+              <ShoppingCart className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
+              {t('header.rent_now')}
+            </Link>
+          </motion.div>
         )}
-        style={{ writingMode: 'vertical-rl', transform: 'translateY(-50%) rotate(180deg)' }}
-        aria-label={t('header.rent_now')}
-      >
-        <ShoppingCart className="h-3.5 w-3.5 rotate-180" aria-hidden="true" />
-        {t('header.rent_now')}
-      </Link>
+      </AnimatePresence>
 
       {/* Mobile menu */}
       <AnimatePresence>
@@ -409,19 +432,8 @@ export function Header() {
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={toggleTheme}
-                    className="inline-flex h-9 items-center gap-2 rounded-full border border-border px-3 text-xs font-medium"
-                    aria-label={t('header.toggle_theme')}
-                  >
-                    {resolvedTheme === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-                    {t('header.theme')}
-                  </button>
-                  <div className="inline-flex h-9 items-center rounded-full border border-border px-2">
-                    {localeSelect()}
-                  </div>
+                <div className="inline-flex h-10 items-center rounded-full border border-border px-2">
+                  {localeSelect()}
                 </div>
                 {!isAuthenticated && (
                   <Link
