@@ -210,6 +210,8 @@ const en: Record<TranslationKey, string> = {
   'product.not_found': 'Product not found',
   'product.back_to_catalog': 'Back to catalog',
   'product.rental_dates': 'Rental dates',
+  'product.free_on_dates': '{count} free on the selected dates',
+  'product.none_free_on_dates': 'Nothing free on the selected dates — try other dates',
   'product.quantity': 'Quantity',
   'product.add_to_cart': 'Add to cart',
   'product.added_to_cart': 'Added to cart',

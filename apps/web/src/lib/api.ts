@@ -4,7 +4,6 @@ import type {
   IUser,
   ICategory,
   IProduct,
-  IDayAvailability,
   IOrder,
   IAddress,
   ICard,
@@ -143,6 +142,16 @@ export const categoriesApi = {
 // Products API
 // ---------------------------------------------------------------------------
 
+export interface ProductAvailability {
+  productId: string;
+  productName: string;
+  totalStock: number;
+  requestedQuantity: number;
+  /** Every day of the range has at least `requestedQuantity` free. */
+  available: boolean;
+  days: { date: string; reserved: number; available: number }[];
+}
+
 export const productsApi = {
   getAll(params?: {
     page?: number;
@@ -161,11 +170,12 @@ export const productsApi = {
     return api.get<IProduct>(`/products/${id}`);
   },
 
+  /** Day-by-day free units for a period — the shape the API actually returns. */
   checkAvailability(
     id: string,
     params: { start_date: string; end_date: string; quantity?: number },
   ) {
-    return api.get<IDayAvailability[]>(`/products/${id}/availability`, { params });
+    return api.get<ProductAvailability>(`/products/${id}/availability`, { params });
   },
 
   getReviews(id: string, params?: { page?: number; limit?: number }) {

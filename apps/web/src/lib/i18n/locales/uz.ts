@@ -210,6 +210,8 @@ const uz: Record<TranslationKey, string> = {
   'product.not_found': 'Mahsulot topilmadi',
   'product.back_to_catalog': 'Katalogga qaytish',
   'product.rental_dates': 'Ijara sanalari',
+  'product.free_on_dates': 'Tanlangan kunlarga {count} bo\'sh',
+  'product.none_free_on_dates': 'Tanlangan kunlarga hammasi band — boshqa kunlarni tanlang',
   'product.quantity': 'Miqdor',
   'product.add_to_cart': 'Savatchaga qo\'shish',
   'product.added_to_cart': 'Savatchaga qo\'shildi',

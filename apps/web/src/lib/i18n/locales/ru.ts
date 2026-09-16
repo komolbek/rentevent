@@ -208,6 +208,8 @@ const ru = {
   'product.not_found': 'Товар не найден',
   'product.back_to_catalog': 'Вернуться в каталог',
   'product.rental_dates': 'Даты аренды',
+  'product.free_on_dates': 'Свободно {count} на выбранные даты',
+  'product.none_free_on_dates': 'На выбранные даты всё занято — попробуйте другие даты',
   'product.quantity': 'Количество',
   'product.add_to_cart': 'Добавить в корзину',
   'product.added_to_cart': 'Добавлено в корзину',

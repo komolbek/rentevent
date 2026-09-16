@@ -46,8 +46,8 @@ export function AvailabilityCalendar({ productId, totalStock }: AvailabilityCale
   const availabilityMap = useMemo(() => {
     const map = new Map<string, number>();
     if (availability) {
-      availability.forEach((day) => {
-        map.set(day.date, day.availableQuantity);
+      availability.days.forEach((day) => {
+        map.set(day.date, day.available);
       });
     }
     return map;

@@ -33,8 +33,10 @@ import {
   calculateRentalDays,
   getTomorrow,
   addDays,
+  formatDateForAPI,
   cn,
 } from '@/lib/utils';
+import { countLabel } from '@/lib/i18n';
 import { useCartStore } from '@/stores/cart-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
 import { useRentalPeriodStore, getStoredPeriod } from '@/stores/rental-period-store';
@@ -79,12 +81,32 @@ export default function ProductDetailPage() {
     enabled: !!id,
   });
 
+  // Ask for one more than the grid shows: the current product is in its own
+  // category and gets filtered out.
   const { data: relatedProducts } = useQuery({
     queryKey: ['products', 'related', product?.categoryId],
-    queryFn: () =>
-      productsApi.getAll({ category_id: product?.categoryId, limit: 4 }),
+    queryFn: () => productsApi.getAll({ category_id: product?.categoryId, limit: 5 }),
     enabled: !!product?.categoryId,
   });
+  const related = (relatedProducts?.items ?? []).filter((p) => p.id !== product?.id).slice(0, 4);
+
+  // Free units on the chosen dates — the worst day of the range, the same
+  // rule the catalog's date filter applies. Shown under the date field so the
+  // visitor knows before pressing "add".
+  const periodKey =
+    dateRange?.from && dateRange?.to
+      ? { start_date: formatDateForAPI(dateRange.from), end_date: formatDateForAPI(dateRange.to) }
+      : null;
+  const { data: availability } = useQuery({
+    queryKey: ['product-availability', id, periodKey?.start_date, periodKey?.end_date],
+    queryFn: () => productsApi.checkAvailability(id!, periodKey!),
+    enabled: !!id && !!periodKey,
+    staleTime: 60 * 1000,
+  });
+  const freeUnits =
+    availability && availability.days.length > 0
+      ? Math.min(...availability.days.map((d) => d.available))
+      : undefined;
 
   const isFav = product ? isFavorite(product.id) : false;
 
@@ -322,6 +344,14 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
+          {/* Description sits above the fold on desktop — it used to render
+              under the CTA, so the first screen had no words about the item. */}
+          {description && (
+            <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground sm:text-base">
+              {description}
+            </p>
+          )}
+
           {/* Price */}
           <Card className="p-4">
             <div className="flex items-baseline gap-2 mb-2">
@@ -352,6 +382,19 @@ export default function ProductDetailPage() {
               onChange={handleDateRangeChange}
               minDate={getTomorrow()}
             />
+            {freeUnits !== undefined && (
+              <p
+                className={cn(
+                  'mt-2 text-sm',
+                  freeUnits === 0 ? 'text-destructive' : 'text-muted-foreground',
+                )}
+                aria-live="polite"
+              >
+                {freeUnits === 0
+                  ? t('product.none_free_on_dates')
+                  : t('product.free_on_dates', { count: countLabel(freeUnits, locale, 'units') })}
+              </p>
+            )}
           </div>
 
           {/* Quantity */}
@@ -361,7 +404,7 @@ export default function ProductDetailPage() {
               value={quantity}
               onChange={setQuantity}
               min={1}
-              max={product.totalStock}
+              max={Math.max(1, freeUnits ?? product.totalStock)}
               size="lg"
             />
           </div>
@@ -377,14 +420,6 @@ export default function ProductDetailPage() {
           >
             {product.totalStock === 0 ? t('product_card.out_of_stock') : t('product.add_to_cart')}
           </Button>
-
-          {/* Description — was computed but never rendered, so the page
-              had no words about the product at all. */}
-          {description && (
-            <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground sm:text-base">
-              {description}
-            </p>
-          )}
 
           {/* Benefits */}
           <div className="grid grid-cols-2 gap-3">
@@ -465,17 +500,21 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Related Products */}
-      {relatedProducts && relatedProducts.items.length > 1 && (
+      {related.length > 0 && (
         <Reveal className="mt-16">
           <section>
             <h2 className="text-2xl font-bold mb-6">{t('product.related')}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {relatedProducts.items
-                .filter((p) => p.id !== product.id)
-                .slice(0, 4)
-                .map((relatedProduct) => (
-                  <ProductCard key={relatedProduct.id} product={relatedProduct} />
-                ))}
+            {/* As many columns as there are cards, so three items never sit
+                in a four-column grid with a hole. */}
+            <div
+              className={cn(
+                'grid grid-cols-2 gap-4',
+                related.length >= 4 ? 'md:grid-cols-4' : related.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2',
+              )}
+            >
+              {related.map((relatedProduct) => (
+                <ProductCard key={relatedProduct.id} product={relatedProduct} />
+              ))}
             </div>
           </section>
         </Reveal>
