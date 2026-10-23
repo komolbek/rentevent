@@ -7,8 +7,10 @@ const SITE_URL = 'https://rentevent.uz';
 // Russian by default: it is the site's default locale (`<html lang="ru">`);
 // the UI language itself is a client-side store, so the document metadata
 // cannot follow it — RU is what search engines and link previews get.
-const SITE_TITLE = 'RentEvent — аренда оборудования для мероприятий в Ташкенте';
-const SITE_DESCRIPTION = 'Мебель, декор, свет и звук — от 1 дня, с доставкой по Ташкенту.';
+// The browser tab reads "Rent Event"; the longer line is the description.
+const SITE_TITLE = 'Rent Event';
+const SITE_DESCRIPTION =
+  'Аренда мебели и оборудования для выставок и мероприятий в Ташкенте — от 1 дня, с доставкой.';
 
 // Icons, apple-touch-icon and the OG image come from the file conventions in
 // this directory (favicon.ico, icon.svg, apple-icon.png, opengraph-image.png);
@@ -17,13 +19,13 @@ const SITE_DESCRIPTION = 'Мебель, декор, свет и звук — о�
 // break link previews.
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: SITE_TITLE, template: '%s — RentEvent' },
+  title: { default: SITE_TITLE, template: '%s — Rent Event' },
   description: SITE_DESCRIPTION,
   manifest: '/manifest.webmanifest',
   openGraph: {
     type: 'website',
     url: SITE_URL,
-    siteName: 'RentEvent',
+    siteName: 'Rent Event',
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
   },

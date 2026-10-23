@@ -2,9 +2,13 @@
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Truck, Shield, Clock, Phone, PackageCheck, Send } from 'lucide-react';
+import { Truck, Shield, Clock, Phone, PackageCheck, Send, CalendarDays, Sofa, Timer, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { HomeHero } from '@/components/home/HomeHero';
+import { HomeHeroSlide } from '@/components/home/HomeHero';
+import { HeroSlider } from '@/components/home/HeroSlider';
+import { Inspirations } from '@/components/home/Inspirations';
+import { AppDownload } from '@/components/home/AppDownload';
+import { EventPicker } from '@/components/events/EventPicker';
 import { CategoryTile } from '@/components/home/CategoryTile';
 import { ProductRail } from '@/components/home/ProductRail';
 import { SetsRail } from '@/components/home/SetsRail';
@@ -12,7 +16,8 @@ import { EventsRail } from '@/components/home/EventsRail';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { SectionHeader } from '@/components/home/SectionHeader';
 import { Reveal } from '@/components/home/Reveal';
-import { categoriesApi, productsApi } from '@/lib/api';
+import { categoriesApi, contentApi, eventsApi, productsApi } from '@/lib/api';
+import { upcomingEvents } from '@/lib/events';
 import { useBusinessContacts } from '@/lib/business';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { ICategory } from '@rentevent/types';
@@ -28,10 +33,24 @@ export default function HomePage() {
     queryFn: categoriesApi.getAll,
   });
 
+  // "Recommended": pinned products first, then the admin's manual order.
   const { data: popular, isLoading: popularLoading } = useQuery({
-    queryKey: ['products', 'home-popular'],
-    queryFn: () => productsApi.getAll({ sort: 'popular', limit: 8 }),
+    queryKey: ['products', 'home-recommended'],
+    queryFn: () => productsApi.getAll({ sort: 'recommended', limit: 8 }),
   });
+
+  const { data: heroSlides } = useQuery({
+    queryKey: ['hero-slides'],
+    queryFn: () => contentApi.getHeroSlides(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: events } = useQuery({
+    queryKey: ['events', 'picker'],
+    queryFn: () => eventsApi.getAll(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const upcomingCount = upcomingEvents(events?.items ?? []).length;
 
   // Fallback artwork for categories without an image of their own: the
   // catalogue is small (≈40 items), so one request gives every category the
@@ -82,11 +101,45 @@ export default function HomePage() {
 
   return (
     <div className="pb-8">
-      <HomeHero
-        products={popular?.items ?? []}
-        productTotal={productTotal}
-        phoneHref={contacts.phoneHref}
+      <HeroSlider
+        slides={heroSlides?.items ?? []}
+        fallback={<HomeHeroSlide products={popular?.items ?? []} productTotal={productTotal} />}
       />
+
+      {/* ================= SELECT YOUR EXHIBITION (fair.rent) ================= */}
+      <section className="container relative z-20 mx-auto -mt-7 px-4 sm:-mt-9">
+        <div className="mx-auto max-w-4xl px-2 sm:px-6">
+          <EventPicker />
+        </div>
+      </section>
+
+      {/* ================= FACTS STRIP ================= */}
+      <section className="container mx-auto px-4 pt-10 sm:pt-14">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {[
+            {
+              icon: Sofa,
+              value: productTotal !== undefined ? String(productTotal) : '—',
+              label: t('home.fact_items'),
+            },
+            {
+              icon: CalendarDays,
+              value: events ? String(upcomingCount) : '—',
+              label: t('home.fact_events'),
+            },
+            { icon: Timer, value: t('home.fact_min_value'), label: t('home.fact_min') },
+            { icon: Undo2, value: t('home.fact_cancel_value'), label: t('home.fact_cancel') },
+          ].map(({ icon: Icon, value, label }, i) => (
+            <Reveal key={label} delay={i * 0.05}>
+              <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary-50 to-accent-100/70 p-5 ring-1 ring-primary/10 dark:from-primary/15 dark:to-accent/10 sm:p-6">
+                <Icon className="absolute -bottom-3 -right-3 h-20 w-20 text-primary/10" aria-hidden="true" />
+                <p className="font-display text-3xl font-bold tracking-tight text-primary-text sm:text-4xl">{value}</p>
+                <p className="mt-1 text-sm font-medium text-foreground/75">{label}</p>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
 
       {/* ================= CATEGORIES ================= */}
       {rootCategories.length > 0 && (
@@ -117,6 +170,9 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* ================= EVENTS ================= */}
+      <EventsRail />
+
       {/* ================= POPULAR PRODUCTS ================= */}
       <ProductRail
         eyebrow={t('home.popular_eyebrow')}
@@ -133,8 +189,11 @@ export default function HomePage() {
       {/* ================= HOW IT WORKS ================= */}
       <HowItWorks />
 
-      {/* ================= EVENTS ================= */}
-      <EventsRail />
+      {/* ================= INSPIRATIONS ================= */}
+      <Inspirations />
+
+      {/* ================= APP ================= */}
+      <AppDownload />
 
       {/* ================= TERMS (concrete, not adjectives) ================= */}
       <section className="container mx-auto px-4 pt-14 sm:pt-20">

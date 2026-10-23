@@ -27,6 +27,8 @@ export class BusinessSettingsService {
       longitude: settings?.longitude ?? null,
       workingHours: settings?.workingHours ?? '09:00 - 18:00',
       telegramUrl: settings?.telegramUrl ?? null,
+      appStoreUrl: settings?.appStoreUrl ?? null,
+      playStoreUrl: settings?.playStoreUrl ?? null,
       deliveryZones,
     };
   }

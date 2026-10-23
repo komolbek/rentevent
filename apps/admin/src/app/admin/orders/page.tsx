@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react'
-import { Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Filter, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import { Modal, btn } from '@/components/Modal'
 import { adminOrdersApi } from '@/lib/api'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 interface OrderItem {
   id: string
@@ -39,7 +40,21 @@ interface Order {
   companyInn?: string | null
   corporateInvoiceStatus?: 'PENDING' | 'OFFER_SENT' | 'PAID' | 'CANCELLED' | null
   corporateInvoiceNote?: string | null
+  event?: { id: string; title: string } | null
   created_at: string
+}
+
+function EventChip({ event }: { event: { id: string; title: string } }) {
+  const { t } = useTranslation()
+  return (
+    <span
+      className="inline-flex max-w-[220px] items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700"
+      title={t('orders.event_chip_title', { title: event.title })}
+    >
+      <CalendarDays className="h-3 w-3 shrink-0" />
+      <span className="truncate">{event.title}</span>
+    </span>
+  )
 }
 
 const statusOptions = [
@@ -52,6 +67,7 @@ const statusOptions = [
 ]
 
 export default function Orders() {
+  const { t } = useTranslation()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -283,6 +299,11 @@ export default function Orders() {
                           {order.items_count} товаров, {order.total_quantity}{' '}
                           шт
                         </div>
+                        {order.event && (
+                          <div className="mt-1">
+                            <EventChip event={order.event} />
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div>{order.user.name || 'Без имени'}</div>
@@ -368,6 +389,12 @@ export default function Orders() {
       >
         {selectedOrder && (
           <>
+            {selectedOrder.event && (
+              <div className="mb-4 flex items-center gap-2 text-sm">
+                <span className="text-gray-600">{t('orders.event_label')}:</span>
+                <EventChip event={selectedOrder.event} />
+              </div>
+            )}
 
             {/* Order Items with Images */}
             <div className="mb-4">

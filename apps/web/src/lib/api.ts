@@ -152,22 +152,26 @@ export interface ProductAvailability {
   days: { date: string; reserved: number; available: number }[];
 }
 
+export type ProductSort = 'recommended' | 'newest' | 'popular' | 'price_asc' | 'price_desc';
+
 export const productsApi = {
   getAll(params?: {
     page?: number;
     limit?: number;
     category_id?: string;
     search?: string;
-    sort?: 'newest' | 'popular' | 'price_asc' | 'price_desc';
+    sort?: ProductSort;
     /** YYYY-MM-DD; with end_date, filters to products free for the whole period. */
     start_date?: string;
     end_date?: string;
+    /** Adds each product's `eventPrice` for this fair. */
+    event_id?: string;
   }) {
     return api.get<PaginatedResponse<IProduct>>('/products', { params });
   },
 
-  getById(id: string) {
-    return api.get<IProduct>(`/products/${id}`);
+  getById(id: string, params?: { event_id?: string }) {
+    return api.get<IProduct>(`/products/${id}`, { params });
   },
 
   /** Day-by-day free units for a period — the shape the API actually returns. */
@@ -209,6 +213,46 @@ export const eventsApi = {
   },
   getById(id: string) {
     return api.get<EventItem>(`/events/${id}`);
+  },
+};
+
+// ---------------------------------------------------------------------------
+// Home page content (managed in admin)
+// ---------------------------------------------------------------------------
+
+export interface HeroSlide {
+  id: string;
+  image_url: string;
+  title: string;
+  title_uz: string | null;
+  title_en: string | null;
+  subtitle: string | null;
+  subtitle_uz: string | null;
+  subtitle_en: string | null;
+  cta_label: string | null;
+  cta_label_uz: string | null;
+  cta_label_en: string | null;
+  cta_url: string | null;
+}
+
+export interface Inspiration {
+  id: string;
+  image_url: string;
+  title: string;
+  title_uz: string | null;
+  title_en: string | null;
+  description: string | null;
+  description_uz: string | null;
+  description_en: string | null;
+  link_url: string | null;
+}
+
+export const contentApi = {
+  getHeroSlides() {
+    return api.get<{ items: HeroSlide[] }>('/hero-slides');
+  },
+  getInspirations() {
+    return api.get<{ items: Inspiration[] }>('/inspirations');
   },
 };
 
@@ -362,6 +406,8 @@ export const ordersApi = {
     payment_method: string;
     company_name?: string;
     company_inn?: string;
+    /** The fair the order is for — the API applies its event prices. */
+    event_id?: string;
     notes?: string;
   }) {
     return api.post<IOrder>('/orders', data);

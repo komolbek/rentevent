@@ -3,7 +3,7 @@ import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RentEvent Admin",
+  title: "Rent Event Admin",
   description: "RentEvent Administration Panel",
 };
 

@@ -50,3 +50,12 @@ export function eventRentalPeriod(e: EventItem): { from: Date; to: Date } | null
   if (Number.isNaN(start.getTime()) || end < tomorrow) return null;
   return { from: start < tomorrow ? tomorrow : start, to: end };
 }
+
+/** Upcoming (not yet finished) active events, soonest first. */
+export function upcomingEvents(events: EventItem[]): EventItem[] {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return events
+    .filter((e) => e.is_active !== false && eventLastDay(e) >= today.getTime())
+    .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+}

@@ -7,9 +7,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Search, ChevronDown, ChevronRight, CalendarDays, X } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
-import { ru as ruLocale } from 'date-fns/locale';
-import { categoriesApi, productsApi } from '@/lib/api';
-import { useRentalPeriodStore, getStoredPeriod } from '@/stores/rental-period-store';
+import { dateFnsLocale } from '@/lib/i18n/dates';
+import { categoriesApi, productsApi, type ProductSort } from '@/lib/api';
+import { useRentalPeriodStore } from '@/stores/rental-period-store';
+import { EventPicker } from '@/components/events/EventPicker';
 import { Button, ProductCardSkeleton, EmptyState, DateRangePicker } from '@/components/ui';
 import { formatDateForAPI, getTomorrow } from '@/lib/utils';
 import { ProductCard } from '@/components/catalog/ProductCard';
@@ -19,12 +20,13 @@ import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { countLabel } from '@/lib/i18n';
 
-// Popular first: rental shoppers want the proven items; "new" means
-// nothing to them (spec §3.6).
-const DEFAULT_SORT = 'popular';
+// The admin's order: pinned products first, then the order dragged into
+// place in admin → Товары → Порядок.
+const DEFAULT_SORT: ProductSort = 'recommended';
 
 function getSortOptions(t: (key: string) => string) {
   return [
+    { value: 'recommended', label: t('catalog.sort_recommended') },
     { value: 'popular', label: t('catalog.sort_popular') },
     { value: 'newest', label: t('catalog.sort_newest') },
     { value: 'price_asc', label: t('catalog.sort_price_asc') },
@@ -55,22 +57,26 @@ function CatalogPageContent() {
   });
 
   // Rental period — a real filter: the API drops products with no free unit
-  // on any day of the range and reports free units for the rest. Shared with
-  // the product page and the sets dialog through the rental-period store, so
-  // dates picked here follow the visitor around the site. The persisted
-  // store is empty during SSR, so it is read after mount.
+  // on any day of the range and reports free units for the rest. It lives in
+  // the rental-period store (shared with the product page, sets and the fair
+  // picker), so picking a fair here or on the home page fills the dates. The
+  // persisted store is empty during SSR, so it is read after mount.
   const setPeriod = useRentalPeriodStore((s) => s.setPeriod);
-  const [range, setRange] = useState<DateRange | undefined>(undefined);
+  const storedFrom = useRentalPeriodStore((s) => s.from);
+  const storedTo = useRentalPeriodStore((s) => s.to);
+  const selectedEvent = useRentalPeriodStore((s) => s.event);
+  const clearEvent = useRentalPeriodStore((s) => s.clearEvent);
   const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    const stored = getStoredPeriod();
-    if (stored.from) setRange({ from: stored.from, to: stored.to ?? stored.from });
-    setMounted(true);
-  }, []);
+  useEffect(() => setMounted(true), []);
+
+  const range: DateRange | undefined =
+    mounted && storedFrom
+      ? { from: new Date(storedFrom), to: new Date(storedTo ?? storedFrom) }
+      : undefined;
+  const eventId = mounted ? selectedEvent?.id : undefined;
 
   const handleRangeChange = (next: DateRange | undefined) => {
-    setRange(next);
-    setPeriod(next?.from, next?.to);
+    setPeriod(next?.from, next?.to ?? next?.from);
   };
 
   const periodParams =
@@ -81,15 +87,16 @@ function CatalogPageContent() {
   // `isPending`, not `isLoading`: the query is disabled until the stored
   // period is read, and during that frame there is still nothing to show.
   const { data: products, isPending: productsLoading } = useQuery({
-    queryKey: ['products', categoryId, search, sort, page, periodParams.start_date, periodParams.end_date],
+    queryKey: ['products', categoryId, search, sort, page, periodParams.start_date, periodParams.end_date, eventId],
     queryFn: () =>
       productsApi.getAll({
         category_id: categoryId,
         search,
-        sort: sort as 'newest' | 'popular' | 'price_asc' | 'price_desc',
+        sort: sort as ProductSort,
         page,
         limit: 12,
         ...periodParams,
+        event_id: eventId,
       }),
     // Wait for the stored period so the first fetch is already the right one.
     enabled: mounted,
@@ -115,9 +122,10 @@ function CatalogPageContent() {
     return () => ro.disconnect();
   }, [updateChipFade, categories, search]);
 
+  const dfLocale = dateFnsLocale(locale);
   const periodLabel =
     range?.from && range?.to
-      ? `${format(range.from, 'd MMM', { locale: ruLocale })} — ${format(range.to, 'd MMM yyyy', { locale: ruLocale })}`
+      ? `${format(range.from, 'd MMM', { locale: dfLocale })} — ${format(range.to, 'd MMM yyyy', { locale: dfLocale })}`
       : null;
 
   const updateParams = (updates: Record<string, string | undefined>) => {
@@ -222,7 +230,7 @@ function CatalogPageContent() {
           furniture shop, so it gets a sentence and a full row, not a small
           grey input. Pre-filled from the rental-period store. */}
       <div className="mb-6 rounded-2xl border border-border bg-card p-4 sm:p-5">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary-text">
               <CalendarDays className="h-5 w-5" />
@@ -232,7 +240,11 @@ function CatalogPageContent() {
               <p className="text-sm text-muted-foreground">{t('catalog.date_bar_hint')}</p>
             </div>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:flex-nowrap">
+            <div className="w-full sm:w-72">
+              <span className="sr-only">{t('event_picker.eyebrow')}</span>
+              <EventPicker variant="field" navigateTo={null} />
+            </div>
             <div className="w-full sm:w-72">
               <span className="sr-only">{t('catalog.period_label')}</span>
               <DateRangePicker value={range} onChange={handleRangeChange} minDate={getTomorrow()} />
@@ -262,8 +274,22 @@ function CatalogPageContent() {
       </div>
 
       {/* What the grid is filtered by right now */}
-      {(periodLabel || search || selectedCategory) && (
+      {(periodLabel || search || selectedCategory || selectedEvent) && (
         <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
+          {mounted && selectedEvent && (
+            <span className="inline-flex max-w-full items-center gap-2 rounded-full bg-brand-graphite px-3 py-1.5 font-medium text-white">
+              <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <span className="truncate">{t('catalog.event_prices_for', { event: selectedEvent.title })}</span>
+              <button
+                type="button"
+                onClick={clearEvent}
+                aria-label={t('event_picker.clear')}
+                className="-mr-1 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full hover:bg-white/15"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+              </button>
+            </span>
+          )}
           {periodLabel && (
             <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 font-medium text-primary-text">
               {t('catalog.showing_free_on', { dates: periodLabel })}

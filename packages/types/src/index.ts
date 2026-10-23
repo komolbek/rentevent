@@ -166,6 +166,13 @@ export interface IProduct {
    * otherwise fall back to totalStock.
    */
   availableStock?: number;
+  /**
+   * Daily price for the event asked for with `event_id` — null when that
+   * event uses the normal price. Absent when no event was asked for.
+   */
+  eventPrice?: number | null;
+  /** Pinned by the admin: listed first. */
+  isPinned?: boolean;
   isActive: boolean;
   specWidth: string | null;
   specHeight: string | null;
@@ -258,6 +265,8 @@ export interface IBusinessSettings {
   longitude: number | null;
   workingHours: string;
   telegramUrl: string | null;
+  appStoreUrl?: string | null;
+  playStoreUrl?: string | null;
 }
 
 // ==================== Reviews ====================

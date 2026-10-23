@@ -33,6 +33,8 @@ export class AdminSettingsController {
       longitude?: number;
       working_hours?: string;
       telegram_url?: string;
+      app_store_url?: string | null;
+      play_store_url?: string | null;
     },
   ) {
     return this.adminSettingsService.updateSettings(body);

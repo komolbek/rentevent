@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react'
-import { Plus, Edit, Trash2, GripVertical, Upload, X, CalendarDays } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Edit, Trash2, GripVertical, Upload, X, CalendarDays, Tag } from 'lucide-react'
 import { Modal, btn } from '@/components/Modal'
 import { adminEventsApi, adminUploadApi } from '@/lib/api'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 interface EventItem {
   id: string
@@ -21,6 +23,7 @@ interface EventItem {
   website_url: string | null
   is_active: boolean
   display_order: number
+  event_prices_count?: number
 }
 
 const emptyForm = {
@@ -49,6 +52,7 @@ function fmtDate(d: string | null) {
 }
 
 export default function EventsPage() {
+  const { t } = useTranslation()
   const [events, setEvents] = useState<EventItem[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -232,14 +236,25 @@ export default function EventsPage() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       {e.image_url ? (
-                        <img src={e.image_url} alt={e.title} className="h-12 w-16 rounded object-cover" />
+                        <img src={e.image_url} alt={e.title} className="h-12 w-20 rounded border border-gray-200 bg-white object-contain p-1" />
                       ) : (
-                        <div className="h-12 w-16 rounded bg-blue-50 flex items-center justify-center">
+                        <div className="h-12 w-20 rounded bg-blue-50 flex items-center justify-center">
                           <CalendarDays className="h-5 w-5 text-blue-400" />
                         </div>
                       )}
                       <div>
-                        <div className="font-medium">{e.title}</div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{e.title}</span>
+                          {!!e.event_prices_count && (
+                            <span
+                              className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700"
+                              title={t('events.prices_count_title', { count: e.event_prices_count })}
+                            >
+                              <Tag className="h-3 w-3" />
+                              {e.event_prices_count}
+                            </span>
+                          )}
+                        </div>
                         {e.venue && <div className="text-xs text-gray-400">{e.venue}</div>}
                       </div>
                     </div>
@@ -255,6 +270,15 @@ export default function EventsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex gap-1">
+                      <Link
+                        href={`/admin/events/${e.id}/prices`}
+                        aria-label={t('events.prices_action')}
+                        title={t('events.prices_action')}
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-violet-700 hover:bg-violet-50"
+                      >
+                        <Tag className="h-4 w-4" />
+                        {t('events.prices_action')}
+                      </Link>
                       <button type="button" onClick={() => openEdit(e)} aria-label="Редактировать" className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50">
                         <Edit className="h-5 w-5" />
                       </button>
@@ -322,7 +346,7 @@ export default function EventsPage() {
             <div className="flex items-center gap-3">
               {form.image_url ? (
                 <div className="relative">
-                  <img src={form.image_url} alt="" className="h-16 w-24 rounded-lg object-cover border" />
+                  <img src={form.image_url} alt="" className="h-16 w-32 rounded-lg border bg-white object-contain p-1" />
                   <button type="button" onClick={() => setForm((p) => ({ ...p, image_url: '' }))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                     <X className="h-3 w-3" />
                   </button>
@@ -334,6 +358,7 @@ export default function EventsPage() {
                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
               </label>
             </div>
+            <p className="mt-1 text-xs text-gray-500">{t('events.image_hint')}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

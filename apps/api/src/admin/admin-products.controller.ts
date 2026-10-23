@@ -39,6 +39,7 @@ interface ProductBody {
   min_rental_days?: number;
   max_rental_days?: number;
   deposit_amount?: number;
+  is_pinned?: boolean;
   pricingTiers?: { days: number; totalPrice: number }[];
   quantityPricing?: { quantity: number; totalPrice: number }[];
 }
@@ -62,6 +63,12 @@ export class AdminProductsController {
     @Query('category_id') categoryId?: string,
   ) {
     return this.adminProductsService.findAll({ page, limit, search, categoryId });
+  }
+
+  @Post('reorder')
+  @ApiOperation({ summary: 'Persist a new storefront product order' })
+  async reorder(@Body() body: { orderedIds: string[] }) {
+    return this.adminProductsService.reorder(body.orderedIds);
   }
 
   @Post()

@@ -22,7 +22,7 @@ const quantityPricingSchema = z.object({
 export const createProductSchema = z.object({
   name: z.string().min(1),
   category_id: z.string(),
-  photos: z.array(z.string()).max(3).optional(),
+  photos: z.array(z.string()).max(5).optional(),
   daily_price: z.number().int().positive(),
   total_stock: z.number().int().positive(),
   is_active: z.boolean().optional(),
@@ -34,7 +34,7 @@ export const createProductSchema = z.object({
 export const updateProductSchema = z.object({
   name: z.string().min(1).optional(),
   category_id: z.string().optional(),
-  photos: z.array(z.string()).max(3).optional(),
+  photos: z.array(z.string()).max(5).optional(),
   daily_price: z.number().int().positive().optional(),
   total_stock: z.number().int().positive().optional(),
   is_active: z.boolean().optional(),

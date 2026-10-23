@@ -1,6 +1,6 @@
 'use client';
 
-import { Banknote, CreditCard, Shield, HelpCircle, Wallet, FileText } from 'lucide-react';
+import { Banknote, CreditCard, Shield, HelpCircle } from 'lucide-react';
 import Image from 'next/image';
 import { Card } from '@/components/ui';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -17,25 +17,14 @@ type PaymentMethod = {
 export default function PaymentPage() {
   const { t } = useTranslation();
 
+  // Payme only for now (see checkout); the online payment link is sent by
+  // the manager until the Payme merchant integration is connected.
   const paymentMethods: PaymentMethod[] = [
     {
-      id: 'rahmat',
-      title: 'Rahmat',
-      description: t('payment.rahmat_desc'),
+      id: 'payme',
+      title: 'Payme',
+      description: t('payment.payme_desc'),
       icon: <CreditCard className="h-10 w-10 text-primary" />,
-    },
-    {
-      id: 'cash',
-      title: t('payment.cash_title'),
-      description: t('payment.cash_desc'),
-      icon: <Wallet className="h-10 w-10 text-primary" />,
-    },
-    // Checkout offers this too; the page used to list only two of the three.
-    {
-      id: 'bank',
-      title: t('payment.bank_title'),
-      description: t('payment.bank_desc'),
-      icon: <FileText className="h-10 w-10 text-primary" />,
     },
   ];
 
@@ -50,7 +39,7 @@ export default function PaymentPage() {
       </Reveal>
 
       {/* Payment Methods */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
+      <div className="mx-auto mb-12 grid max-w-md grid-cols-1 gap-4">
         {paymentMethods.map((method, index) => (
           <Reveal key={method.id}>
             <Card className="p-6 text-center h-full">

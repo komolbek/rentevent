@@ -13,6 +13,7 @@ import { UsersModule } from './users/users.module';
 import { BusinessSettingsModule } from './business-settings/business-settings.module';
 import { PaymentsModule } from './payments/payments.module';
 import { EventsModule } from './events/events.module';
+import { ContentModule } from './content/content.module';
 import { SetsModule } from './sets/sets.module';
 import { AppController } from './app.controller';
 
@@ -33,6 +34,7 @@ import { AppController } from './app.controller';
     BusinessSettingsModule,
     PaymentsModule,
     EventsModule,
+    ContentModule,
     SetsModule,
   ],
 })

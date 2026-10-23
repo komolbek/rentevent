@@ -29,3 +29,18 @@ export function localizedDescription(
   if (locale === 'en') return item.descriptionEn?.trim() || item.description || null;
   return item.description ?? null;
 }
+
+/**
+ * Admin-managed snake_case content (hero slides, inspirations, events):
+ * `field` is the Russian base, `field_uz` / `field_en` the translations.
+ */
+export function localizedField<K extends string>(
+  row: { [P in K | `${K}_uz` | `${K}_en`]?: string | null },
+  field: K,
+  locale: Locale,
+): string {
+  const base = (row[field] ?? '').trim();
+  if (locale === 'ru') return base;
+  const translated = (row[`${field}_${locale}` as `${K}_uz`] ?? '').trim();
+  return translated || base;
+}

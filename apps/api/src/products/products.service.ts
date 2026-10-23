@@ -17,6 +17,8 @@ function parsePeriod(start?: string, end?: string): { start: Date; end: Date } |
   return { start: s, end: e };
 }
 
+export type ProductSort = 'recommended' | 'newest' | 'popular' | 'price_asc' | 'price_desc';
+
 @Injectable()
 export class ProductsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -26,11 +28,12 @@ export class ProductsService {
     limit: number;
     category_id?: string;
     search?: string;
-    sort?: 'newest' | 'popular' | 'price_asc' | 'price_desc';
+    sort?: ProductSort;
     start_date?: string;
     end_date?: string;
+    event_id?: string;
   }) {
-    const { page, limit, category_id, search, sort, start_date, end_date } = params;
+    const { page, limit, category_id, search, sort, start_date, end_date, event_id } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.ProductWhereInput = {
@@ -63,20 +66,25 @@ export class ProductsService {
       ];
     }
 
-    let orderBy: Prisma.ProductOrderByWithRelationInput;
+    // Pinned products lead every non-price sort; "recommended" then follows
+    // the order the admin dragged them into.
+    let orderBy: Prisma.ProductOrderByWithRelationInput[];
     switch (sort) {
       case 'price_asc':
-        orderBy = { dailyPrice: 'asc' };
+        orderBy = [{ dailyPrice: 'asc' }];
         break;
       case 'price_desc':
-        orderBy = { dailyPrice: 'desc' };
+        orderBy = [{ dailyPrice: 'desc' }];
         break;
       case 'popular':
-        orderBy = { orderItems: { _count: 'desc' } };
+        orderBy = [{ isPinned: 'desc' }, { orderItems: { _count: 'desc' } }];
         break;
       case 'newest':
+        orderBy = [{ isPinned: 'desc' }, { createdAt: 'desc' }];
+        break;
+      case 'recommended':
       default:
-        orderBy = { createdAt: 'desc' };
+        orderBy = [{ isPinned: 'desc' }, { displayOrder: 'asc' }, { createdAt: 'desc' }];
         break;
     }
 
@@ -97,6 +105,7 @@ export class ProductsService {
           photos: true,
           dailyPrice: true,
           totalStock: true,
+          isPinned: true,
           createdAt: true,
           // Flat id alongside the nested ref: `IProduct.categoryId` is
           // required, and the storefront filters by it.
@@ -112,13 +121,16 @@ export class ProductsService {
       this.prisma.product.count({ where }),
     ]);
 
+    const eventPrices = event_id ? await this.eventPriceMap(event_id) : null;
+
     return {
-      items: availableById
-        ? items.map((p) => ({
-            ...p,
-            availableStock: Math.max(0, availableById.get(p.id) ?? p.totalStock),
-          }))
-        : items,
+      items: items.map((p) => ({
+        ...p,
+        ...(availableById && {
+          availableStock: Math.max(0, availableById.get(p.id) ?? p.totalStock),
+        }),
+        ...(eventPrices && { eventPrice: eventPrices.get(p.id) ?? null }),
+      })),
       meta: {
         page,
         limit,
@@ -126,6 +138,19 @@ export class ProductsService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  /** Daily price per product for one active event; empty for an unknown event. */
+  private async eventPriceMap(eventId: string, productIds?: string[]): Promise<Map<string, number>> {
+    const rows = await this.prisma.eventProductPrice.findMany({
+      where: {
+        eventId,
+        event: { isActive: true },
+        ...(productIds && { productId: { in: productIds } }),
+      },
+      select: { productId: true, dailyPrice: true },
+    });
+    return new Map(rows.map((r) => [r.productId, r.dailyPrice]));
   }
 
   /**
@@ -183,7 +208,7 @@ export class ProductsService {
     return result;
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, eventId?: string) {
     const product = await this.prisma.product.findFirst({
       where: { id, isActive: true, deletedAt: null },
       include: {
@@ -214,9 +239,12 @@ export class ProductsService {
       _avg: { rating: true },
     });
 
+    const eventPrices = eventId ? await this.eventPriceMap(eventId, [id]) : null;
+
     return {
       ...product,
       averageRating: ratingAgg._avg.rating ? Number(ratingAgg._avg.rating.toFixed(1)) : null,
+      ...(eventPrices && { eventPrice: eventPrices.get(id) ?? null }),
     };
   }
 

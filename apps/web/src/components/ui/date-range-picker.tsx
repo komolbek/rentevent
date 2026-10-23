@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { DayPicker, type DateRange } from 'react-day-picker';
 import 'react-day-picker/style.css';
-import { format, differenceInDays } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { format, differenceInDays, addDays, nextSaturday, isSaturday, isSameDay } from 'date-fns';
+import { dateFnsLocale } from '@/lib/i18n/dates';
+import { countLabel } from '@/lib/i18n';
 import { Calendar, ChevronLeft, ChevronRight, X, CalendarDays, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -24,12 +25,13 @@ interface RangeCalendarProps {
  * popover inside a modal would be clipped by the panel).
  */
 export function RangeCalendar({ value, onChange, minDate, maxDate, months = 1 }: RangeCalendarProps) {
+  const { locale } = useTranslation();
   return (
     <DayPicker
       mode="range"
       selected={value}
       onSelect={onChange}
-      locale={ru}
+      locale={dateFnsLocale(locale)}
       disabled={{ before: minDate ?? new Date(), after: maxDate }}
       numberOfMonths={months}
       showOutsideDays
@@ -44,19 +46,21 @@ export function RangeCalendar({ value, onChange, minDate, maxDate, months = 1 }:
         button_next:
           'h-8 w-8 bg-transparent p-0 hover:bg-muted rounded-lg flex items-center justify-center transition-colors',
         weekday: 'text-muted-foreground w-10 font-medium text-xs uppercase',
+        // The range is one continuous band (cells), with the two ends as
+        // solid orange circles (buttons) — it reads as "from … to" at a glance.
         day: 'text-center text-sm p-0',
         day_button: cn(
-          'h-10 w-10 p-0 font-medium rounded-lg transition-all duration-200',
-          'hover:bg-primary/10',
-          'focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2'
+          'h-10 w-10 p-0 font-medium rounded-full transition-colors duration-150',
+          'hover:bg-primary/15',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1'
         ),
-        selected: 'bg-primary text-primary-foreground hover:bg-primary',
-        range_start: 'bg-primary text-primary-foreground rounded-l-lg',
-        range_end: 'bg-primary text-primary-foreground rounded-r-lg',
-        range_middle: 'bg-primary/20 text-foreground rounded-none',
-        today: 'font-bold text-primary-text',
-        outside: 'text-muted-foreground/30 opacity-30',
-        disabled: 'text-muted-foreground/20 opacity-30 cursor-not-allowed line-through',
+        selected: 'font-semibold',
+        range_start: 'rounded-l-full bg-primary/20 [&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:shadow-[0_4px_12px_-4px_rgba(242,86,41,0.8)]',
+        range_end: 'rounded-r-full bg-primary/20 [&>button]:bg-primary [&>button]:text-primary-foreground [&>button]:shadow-[0_4px_12px_-4px_rgba(242,86,41,0.8)]',
+        range_middle: 'bg-primary/20 text-foreground [&>button]:hover:bg-primary/25',
+        today: 'font-bold text-primary-text [&>button]:ring-1 [&>button]:ring-inset [&>button]:ring-primary/40',
+        outside: 'text-muted-foreground/40',
+        disabled: 'text-muted-foreground/35 [&>button]:cursor-not-allowed [&>button]:hover:bg-transparent',
         hidden: 'invisible',
       }}
       components={{
@@ -96,7 +100,8 @@ export function DateRangePicker({
   className,
   variant = 'default',
 }: DateRangePickerProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const dfLocale = dateFnsLocale(locale);
   const [isOpen, setIsOpen] = useState(false);
   // Two months side by side is ~600px wide — wider than a phone. Show one
   // month below `sm` so the popover never overflows the viewport.
@@ -120,9 +125,28 @@ export function DateRangePicker({
     onChange(range);
   };
 
+  // One tap for the periods people actually rent for. Weekend = the next
+  // Saturday–Sunday on or after the earliest bookable day.
+  const earliest = minDate;
+  const firstSaturday = isSaturday(earliest) ? earliest : nextSaturday(earliest);
+  const presets: { label: string; range: DateRange }[] = [
+    { label: t('date_picker.preset_1_day'), range: { from: earliest, to: earliest } },
+    { label: t('date_picker.preset_weekend'), range: { from: firstSaturday, to: addDays(firstSaturday, 1) } },
+    { label: t('date_picker.preset_3_days'), range: { from: earliest, to: addDays(earliest, 2) } },
+    { label: t('date_picker.preset_week'), range: { from: earliest, to: addDays(earliest, 6) } },
+  ];
+  const isPresetActive = (r: DateRange) =>
+    !!value?.from && !!value?.to && isSameDay(value.from, r.from!) && isSameDay(value.to, r.to!);
+
+  // A single tapped day is a one-day rental: Apply closes it as from = to.
+  const apply = () => {
+    if (value?.from && !value.to) onChange({ from: value.from, to: value.from });
+    setIsOpen(false);
+  };
+
   const formatDisplayDate = () => {
     if (!value?.from) return t('date_picker.select_dates');
-    if (!value.to) return format(value.from, 'd MMM yyyy', { locale: ru });
+    if (!value.to || isSameDay(value.from, value.to)) return format(value.from, 'd MMM yyyy', { locale: dfLocale });
     // Most rentals start and end in the same month, so naming it twice just
     // makes the label wide enough to clip. "23 – 26 авг. 2026", not
     // "23 авг. - 26 авг. 2026". The popover header still shows both in full.
@@ -130,9 +154,9 @@ export function DateRangePicker({
       value.from.getFullYear() === value.to.getFullYear() &&
       value.from.getMonth() === value.to.getMonth();
     const start = sameMonth
-      ? format(value.from, 'd', { locale: ru })
-      : format(value.from, 'd MMM', { locale: ru });
-    return `${start} – ${format(value.to, 'd MMM yyyy', { locale: ru })}`;
+      ? format(value.from, 'd', { locale: dfLocale })
+      : format(value.from, 'd MMM', { locale: dfLocale });
+    return `${start} – ${format(value.to, 'd MMM yyyy', { locale: dfLocale })}`;
   };
 
   const handleClearDates = (e: React.MouseEvent) => {
@@ -182,7 +206,7 @@ export function DateRangePicker({
           </span>
           {rentalDays > 0 && (
             <span className="text-xs text-muted-foreground mt-0.5 block">
-              {rentalDays} {rentalDays === 1 ? t('date_picker.day_one') : rentalDays < 5 ? t('date_picker.day_few') : t('date_picker.day_many')}
+              {countLabel(rentalDays, locale, 'days')}
             </span>
           )}
         </div>
@@ -219,16 +243,16 @@ export function DateRangePicker({
             />
             {/* Positioning lives on a plain wrapper: framer writes an inline
                 `transform` on the animated element, which would override any
-                translate-based centring. Below `sm` the popover is centred in
-                the viewport (a phone is narrower than the calendar); from `sm`
-                up it hangs under the trigger. */}
-            <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-3 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 sm:block sm:p-0">
+                translate-based centring. Centred in the viewport at every
+                width: hung under the trigger it ran off-screen whenever the
+                field sat low on the page (product page, cart). */}
+            <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-3">
               <motion.div
                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="pointer-events-auto w-max max-w-full overflow-hidden rounded-2xl border border-border bg-card shadow-2xl sm:max-w-[calc(100vw-3rem)]"
+                className="pointer-events-auto max-h-[calc(100dvh-1.5rem)] w-max max-w-full overflow-y-auto rounded-2xl border border-border bg-card shadow-2xl sm:max-w-[calc(100vw-3rem)]"
               >
               {/* Header */}
               <div className="px-6 py-4 border-b border-border bg-muted/30">
@@ -248,6 +272,7 @@ export function DateRangePicker({
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
+                    aria-label={t('date_picker.close')}
                     className="h-8 w-8 rounded-lg hover:bg-muted flex items-center justify-center transition-colors"
                   >
                     <X className="h-4 w-4" />
@@ -263,21 +288,40 @@ export function DateRangePicker({
                   >
                     <div className="flex-1 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
                       <p className="text-xs text-muted-foreground mb-0.5">{t('date_picker.start')}</p>
-                      <p className="font-medium">{format(value.from, 'd MMMM yyyy', { locale: ru })}</p>
+                      <p className="font-medium">{format(value.from, 'd MMMM yyyy', { locale: dfLocale })}</p>
                     </div>
                     <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
                     <div className="flex-1 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20">
                       <p className="text-xs text-muted-foreground mb-0.5">{t('date_picker.end')}</p>
                       <p className="font-medium">
-                        {value.to ? format(value.to, 'd MMMM yyyy', { locale: ru }) : '—'}
+                        {value.to ? format(value.to, 'd MMMM yyyy', { locale: dfLocale }) : '—'}
                       </p>
                     </div>
                   </motion.div>
                 )}
               </div>
 
+              {/* Presets */}
+              <div className="flex gap-2 overflow-x-auto border-b border-border px-4 py-3 scrollbar-hide sm:px-6">
+                {presets.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => onChange(p.range)}
+                    className={cn(
+                      'h-9 shrink-0 rounded-full px-3.5 text-sm font-medium transition-colors',
+                      isPresetActive(p.range)
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted text-foreground hover:bg-primary/15',
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
               {/* Calendar */}
-              <div className="p-4 sm:p-6">
+              <div className="flex justify-center p-4 sm:p-6">
                 <RangeCalendar
                   value={value}
                   onChange={handleSelect}
@@ -296,16 +340,20 @@ export function DateRangePicker({
                   {t('date_picker.clear')}
                 </button>
                 <button
-                  onClick={() => setIsOpen(false)}
-                  disabled={!value?.from || !value?.to}
+                  onClick={apply}
+                  disabled={!value?.from}
                   className={cn(
-                    'px-4 py-2 rounded-lg font-medium text-sm transition-all',
-                    value?.from && value?.to
-                      ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                    'h-10 rounded-full px-5 font-semibold text-sm transition-all',
+                    value?.from
+                      ? 'bg-primary text-primary-foreground shadow-[0_6px_20px_-6px_rgba(242,86,41,0.55)] hover:bg-primary/90'
                       : 'bg-muted text-muted-foreground cursor-not-allowed'
                   )}
                 >
-                  {t('date_picker.apply')}
+                  {value?.from
+                    ? t('date_picker.apply_days', {
+                        days: countLabel(value.to ? differenceInDays(value.to, value.from) + 1 : 1, locale, 'days'),
+                      })
+                    : t('date_picker.apply')}
                 </button>
                 </div>
               </motion.div>

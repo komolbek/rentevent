@@ -12,3 +12,4 @@ export * from './skeleton';
 export * from './empty-state';
 export * from './quantity-selector';
 export * from './date-range-picker';
+export * from './dropdown-menu';

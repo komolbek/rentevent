@@ -29,6 +29,10 @@ export const ProductCard = memo(function ProductCard({ product, className }: Pro
   // for that period; otherwise fall back to the total stock.
   const stock = product.availableStock ?? product.totalStock;
 
+  // Asked for with a fair: its price replaces the normal one.
+  const hasEventPrice = product.eventPrice != null;
+  const price = hasEventPrice ? product.eventPrice! : product.dailyPrice;
+
   const isFav = isFavorite(product.id);
   const hasDiscount = (product.pricingTiers?.length ?? 0) > 0 || (product.quantityPricing?.length ?? 0) > 0;
 
@@ -56,7 +60,7 @@ export const ProductCard = memo(function ProductCard({ product, className }: Pro
   return (
     <Link
       href={`/product/${product.id}`}
-      aria-label={`${name} - ${formatPrice(product.dailyPrice)} ${t('common.currency')} ${t('product_card.per_day')}`}
+      aria-label={`${name} - ${formatPrice(price)} ${t('common.currency')} ${t('product_card.per_day')}`}
     >
       <motion.div whileHover={{ y: -5 }} whileTap={{ scale: 0.98 }}>
         <Card hover className={cn('overflow-hidden group', className)}>
@@ -80,7 +84,17 @@ export const ProductCard = memo(function ProductCard({ product, className }: Pro
 
             {/* Badges */}
             <div className="absolute top-3 left-3 flex flex-col gap-1">
-              {hasDiscount && (
+              {hasEventPrice && (
+                <Badge size="sm" className="bg-brand-graphite text-white">
+                  {t('product_card.event_price')}
+                </Badge>
+              )}
+              {product.isPinned && !hasEventPrice && (
+                <Badge size="sm" className="bg-primary text-white">
+                  {t('product_card.top')}
+                </Badge>
+              )}
+              {hasDiscount && !hasEventPrice && (
                 <Badge variant="success" size="sm">
                   {t('product_card.discount')}
                 </Badge>
@@ -125,10 +139,15 @@ export const ProductCard = memo(function ProductCard({ product, className }: Pro
             {/* One line, no eyebrow: "300 000 сум / день" (spec §3.5). */}
             <div className="flex items-center justify-between gap-2">
               <p className="min-w-0 truncate text-base font-semibold text-foreground">
-                {formatPrice(product.dailyPrice)}
+                {formatPrice(price)}
                 <span className="ml-1 text-sm font-normal text-muted-foreground">
                   {t('common.currency')} / {t('product_card.per_day')}
                 </span>
+                {hasEventPrice && product.eventPrice !== product.dailyPrice && (
+                  <span className="ml-1.5 text-xs font-normal text-muted-foreground line-through">
+                    {formatPrice(product.dailyPrice)}
+                  </span>
+                )}
               </p>
 
               {/* The whole card is the link, so no "Подробнее" button (Krug:

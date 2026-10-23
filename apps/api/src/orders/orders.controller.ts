@@ -33,6 +33,7 @@ export class OrdersController {
       payment_method: string;
       company_name?: string;
       company_inn?: string;
+      event_id?: string;
       notes?: string;
     },
   ) {

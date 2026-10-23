@@ -54,6 +54,8 @@ export const adminProductsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     api.patch(`/admin/products/${id}`, data),
   delete: (id: string) => api.delete(`/admin/products/${id}`),
+  reorder: (data: { orderedIds: string[] }) =>
+    api.post("/admin/products/reorder", data),
 };
 
 // ─── Categories ──────────────────────────────────────────────────────────────
@@ -141,7 +143,7 @@ export const adminCustomersApi = {
 export const adminSettingsApi = {
   get: () => api.get("/admin/settings"),
   update: (data: Record<string, unknown>) =>
-    api.patch("/admin/settings", data),
+    api.put("/admin/settings", data),
 };
 
 // ─── Delivery Zones ──────────────────────────────────────────────────────────
@@ -173,7 +175,27 @@ export const adminEventsApi = {
   delete: (id: string) => api.delete(`/admin/events/${id}`),
   reorder: (data: { orderedIds: string[] }) =>
     api.post("/admin/events/reorder", data),
+  getPrices: (id: string) => api.get(`/admin/events/${id}/prices`),
+  setPrices: (
+    id: string,
+    data: { prices: { product_id: string; daily_price: number | null }[] },
+  ) => api.put(`/admin/events/${id}/prices`, data),
 };
+
+// ─── Home content (hero slides, inspirations) ────────────────────────────────
+
+const contentApi = (path: string) => ({
+  list: () => api.get(`/admin/${path}`),
+  create: (data: Record<string, unknown>) => api.post(`/admin/${path}`, data),
+  update: (id: string, data: Record<string, unknown>) =>
+    api.patch(`/admin/${path}/${id}`, data),
+  delete: (id: string) => api.delete(`/admin/${path}/${id}`),
+  reorder: (data: { orderedIds: string[] }) =>
+    api.post(`/admin/${path}/reorder`, data),
+});
+
+export const adminHeroSlidesApi = contentApi("hero-slides");
+export const adminInspirationsApi = contentApi("inspirations");
 
 export const adminSetsApi = {
   list: () => api.get("/admin/sets"),

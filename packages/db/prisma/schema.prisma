@@ -175,6 +175,9 @@ model Product {
   maxRentalDays   Int       @default(30) @map("max_rental_days")
   depositAmount   Int       @default(0) @map("deposit_amount")
   deletedAt       DateTime? @map("deleted_at")
+  // Manual storefront order (admin drag-and-drop); pinned products come first.
+  displayOrder    Int       @default(0) @map("display_order")
+  isPinned        Boolean   @default(false) @map("is_pinned")
 
   category        Category         @relation(fields: [categoryId], references: [id])
   pricingTiers    PricingTier[]
@@ -183,7 +186,9 @@ model Product {
   favorites       Favorite[]
   reviews         Review[]
   setItems        SetItem[]
+  eventPrices     EventProductPrice[]
 
+  @@index([isPinned, displayOrder])
   @@map("products")
 }
 
@@ -206,9 +211,31 @@ model Event {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
+  productPrices EventProductPrice[]
+  orders        Order[]
+
   @@index([startDate])
   @@index([isActive])
   @@map("events")
+}
+
+/// A product's daily price while renting for one event. Products without a
+/// row here use their normal `dailyPrice`; quantity/day tiers are not applied
+/// on top of an event price.
+model EventProductPrice {
+  id         String   @id @default(cuid())
+  eventId    String   @map("event_id")
+  productId  String   @map("product_id")
+  dailyPrice Int      @map("daily_price")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  event   Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, productId])
+  @@index([productId])
+  @@map("event_product_prices")
 }
 
 model Set {
@@ -341,6 +368,8 @@ model Order {
   companyInn             String?                 @map("company_inn")
   corporateInvoiceStatus CorporateInvoiceStatus? @map("corporate_invoice_status")
   corporateInvoiceNote   String?                 @map("corporate_invoice_note")
+  /// The fair this order was placed for; its event prices were applied.
+  eventId         String?       @map("event_id")
   notes           String?
   adminNotes      String?       @map("admin_notes")
   updatedBy       String?       @map("updated_by")
@@ -350,6 +379,7 @@ model Order {
 
   user            User        @relation(fields: [userId], references: [id])
   deliveryAddress Address?    @relation(fields: [deliveryAddressId], references: [id])
+  event           Event?      @relation(fields: [eventId], references: [id], onDelete: SetNull)
   items           OrderItem[]
   statusHistory   OrderStatusHistory[]
   returnRequests  ReturnRequest[]
@@ -426,9 +456,56 @@ model BusinessSettings {
   longitude    Decimal? @db.Decimal(11, 8)
   workingHours String   @default("09:00 - 18:00") @map("working_hours")
   telegramUrl  String?  @map("telegram_url")
+  appStoreUrl  String?  @map("app_store_url")
+  playStoreUrl String?  @map("play_store_url")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("business_settings")
+}
+
+// ==================== HOME PAGE CONTENT ====================
+
+/// One slide of the home page hero carousel, managed in admin.
+model HeroSlide {
+  id            String   @id @default(cuid())
+  imageUrl      String   @map("image_url")
+  title         String
+  titleUz       String?  @map("title_uz")
+  titleEn       String?  @map("title_en")
+  subtitle      String?
+  subtitleUz    String?  @map("subtitle_uz")
+  subtitleEn    String?  @map("subtitle_en")
+  ctaLabel      String?  @map("cta_label")
+  ctaLabelUz    String?  @map("cta_label_uz")
+  ctaLabelEn    String?  @map("cta_label_en")
+  ctaUrl        String?  @map("cta_url")
+  isActive      Boolean  @default(true) @map("is_active")
+  displayOrder  Int      @default(0) @map("display_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, displayOrder])
+  @@map("hero_slides")
+}
+
+/// "Inspirations": photo stories of stands and events furnished by RentEvent.
+model Inspiration {
+  id            String   @id @default(cuid())
+  imageUrl      String   @map("image_url")
+  title         String
+  titleUz       String?  @map("title_uz")
+  titleEn       String?  @map("title_en")
+  description   String?
+  descriptionUz String?  @map("description_uz")
+  descriptionEn String?  @map("description_en")
+  linkUrl       String?  @map("link_url")
+  isActive      Boolean  @default(true) @map("is_active")
+  displayOrder  Int      @default(0) @map("display_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, displayOrder])
+  @@map("inspirations")
 }
 
 // ==================== NOTIFICATIONS ====================

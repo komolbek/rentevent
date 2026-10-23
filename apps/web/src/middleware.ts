@@ -20,6 +20,8 @@ export async function middleware(request: NextRequest) {
   if (isGateEnabled()) {
     const isExempt =
       pathname === '/coming-soon' ||
+      // The home page QR code: a phone scanning it must reach the store.
+      pathname === '/app' ||
       pathname.startsWith('/api/access') ||
       pathname.startsWith('/_next/') ||
       pathname === '/favicon.ico' ||

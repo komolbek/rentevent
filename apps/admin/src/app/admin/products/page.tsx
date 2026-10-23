@@ -1,9 +1,17 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react'
-import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Upload, X, AlertTriangle, Star, GripVertical } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Upload, X, AlertTriangle, Star, GripVertical, Pin, PinOff, List, ArrowUpDown } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { Modal, btn } from '@/components/Modal'
 import { adminProductsApi, adminCategoriesApi, adminUploadApi } from '@/lib/api'
+import { useTranslation } from '@/lib/i18n/useTranslation'
+
+// Max photos per product (the API rejects more)
+const MAX_PHOTOS = 5
+
+// Products loaded at once in the sort-order view
+const SORT_LIMIT = 200
 
 // Special value for custom input
 const CUSTOM_VALUE = '__custom__'
@@ -90,6 +98,8 @@ interface Product {
   daily_price: number
   total_stock: number
   is_active: boolean
+  is_pinned: boolean
+  display_order: number
   created_at: string
 }
 
@@ -99,6 +109,8 @@ interface Category {
 }
 
 export default function Products() {
+  const { t } = useTranslation()
+  const [view, setView] = useState<'list' | 'sort'>('list')
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -142,6 +154,7 @@ export default function Products() {
     daily_price: '',
     total_stock: '',
     is_active: true,
+    is_pinned: false,
     spec_width: '',
     spec_height: '',
     spec_depth: '',
@@ -207,6 +220,7 @@ export default function Products() {
       daily_price: '',
       total_stock: '1',
       is_active: true,
+      is_pinned: false,
       spec_width: '',
       spec_height: '',
       spec_depth: '',
@@ -238,6 +252,7 @@ export default function Products() {
       daily_price: product.daily_price != null ? product.daily_price.toString() : '',
       total_stock: product.total_stock != null ? product.total_stock.toString() : '',
       is_active: product.is_active,
+      is_pinned: !!product.is_pinned,
       spec_width: product.specifications?.width || '',
       spec_height: product.specifications?.height || '',
       spec_depth: product.specifications?.depth || '',
@@ -256,8 +271,9 @@ export default function Products() {
     if (!files || files.length === 0) return
 
     // Check limit
-    if (photos.length + files.length > 3) {
-      alert('Максимум 3 фото')
+    if (photos.length + files.length > MAX_PHOTOS) {
+      toast.error(t('products.photos_max', { max: MAX_PHOTOS }))
+      e.target.value = ''
       return
     }
 
@@ -277,7 +293,7 @@ export default function Products() {
       }
 
       if (uploadedUrls.length > 0) {
-        setPhotos((prev) => [...prev, ...uploadedUrls].slice(0, 3))
+        setPhotos((prev) => [...prev, ...uploadedUrls].slice(0, MAX_PHOTOS))
       }
     } catch (err) {
       console.error('Failed to upload images:', err)
@@ -381,6 +397,7 @@ export default function Products() {
         daily_price: dailyPrice,
         total_stock: totalStock,
         is_active: form.is_active,
+        is_pinned: form.is_pinned,
         specifications: {
           width: form.spec_width || null,
           height: form.spec_height || null,
@@ -437,6 +454,22 @@ export default function Products() {
     }
   }
 
+  const togglePinned = async (product: Product) => {
+    const next = !product.is_pinned
+    setProducts((prev) => prev.map((p) => (p.id === product.id ? { ...p, is_pinned: next } : p)))
+    try {
+      const { data } = await adminProductsApi.update(product.id, { is_pinned: next })
+      if (data.success) {
+        toast.success(next ? t('products.pinned_toast') : t('products.unpinned_toast'))
+        fetchProducts()
+      }
+    } catch (err) {
+      console.error('Failed to toggle product pin:', err)
+      toast.error(t('common.save_error'))
+      fetchProducts()
+    }
+  }
+
   const formatPrice = (price: number) => {
     if (price == null || Number.isNaN(Number(price))) return '—'
     return new Intl.NumberFormat('ru-RU').format(price) + ' сум'
@@ -446,6 +479,35 @@ export default function Products() {
     <>
       <h1 className="text-2xl font-bold mb-6">Товары</h1>
 
+      {/* View switch: list / storefront sort order */}
+      <div role="tablist" className="mb-6 inline-flex rounded-lg border border-gray-200 bg-white p-1 shadow-sm">
+        {([
+          { key: 'list', label: t('products.tab_list'), icon: List },
+          { key: 'sort', label: t('products.tab_sort'), icon: ArrowUpDown },
+        ] as const).map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            role="tab"
+            aria-selected={view === tab.key}
+            onClick={() => {
+              setView(tab.key)
+              if (tab.key === 'list') fetchProducts()
+            }}
+            className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              view === tab.key ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            <tab.icon className="h-4 w-4" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {view === 'sort' ? (
+        <ProductSortOrder formatPrice={formatPrice} />
+      ) : (
+      <>
       {/* Header */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <form onSubmit={handleSearch} className="flex-1">
@@ -537,7 +599,15 @@ export default function Products() {
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="font-medium truncate max-w-[200px]">{product.name}</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium truncate max-w-[200px]">{product.name}</span>
+                              {product.is_pinned && (
+                                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">
+                                  <Pin className="h-3 w-3" />
+                                  {t('products.pinned_badge')}
+                                </span>
+                              )}
+                            </div>
                             {incomplete && (
                               <div className="text-xs text-amber-600 flex items-center gap-1 mt-0.5">
                                 <AlertTriangle className="h-3 w-3" />
@@ -570,6 +640,20 @@ export default function Products() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => togglePinned(product)}
+                            className={`inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
+                              product.is_pinned
+                                ? 'text-orange-600 hover:bg-orange-50'
+                                : 'text-gray-400 hover:bg-gray-100 hover:text-gray-700'
+                            }`}
+                            aria-label={product.is_pinned ? t('products.unpin_action') : t('products.pin_action')}
+                            aria-pressed={product.is_pinned}
+                            title={product.is_pinned ? t('products.unpin_action') : t('products.pin_action')}
+                          >
+                            {product.is_pinned ? <PinOff className="h-5 w-5" /> : <Pin className="h-5 w-5" />}
+                          </button>
                           <button
                             type="button"
                             onClick={() => openEditModal(product)}
@@ -622,6 +706,8 @@ export default function Products() {
           </>
         )}
       </div>
+      </>
+      )}
 
       {/* Create / Edit modal */}
       <Modal
@@ -731,7 +817,7 @@ export default function Products() {
                 {/* Photos Upload */}
                 <div className="col-span-2">
                   <label className="block text-sm text-gray-600 mb-1">
-                    Фотографии (макс. 3) {!editingProduct && <span className="text-red-500">*</span>}
+                    {t('products.photos_label', { max: MAX_PHOTOS })} {!editingProduct && <span className="text-red-500">*</span>}
                   </label>
                   <p className="text-xs text-gray-500 mb-2">
                     Первое фото - главное. Перетащите для изменения порядка или нажмите ⭐ для выбора главного.
@@ -785,7 +871,7 @@ export default function Products() {
                         </button>
                       </div>
                     ))}
-                    {photos.length < 3 && (
+                    {photos.length < MAX_PHOTOS && (
                       <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-gray-50">
                         {uploadingImages ? (
                           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600" />
@@ -879,6 +965,25 @@ export default function Products() {
                   <label htmlFor="is_active" className="ml-2 text-sm">
                     Активен
                   </label>
+                </div>
+
+                <div className="col-span-2">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="is_pinned"
+                      checked={form.is_pinned}
+                      onChange={(e) =>
+                        setForm({ ...form, is_pinned: e.target.checked })
+                      }
+                      className="h-4 w-4 text-blue-600 rounded"
+                    />
+                    <label htmlFor="is_pinned" className="ml-2 inline-flex items-center gap-1 text-sm">
+                      <Pin className="h-3.5 w-3.5 text-orange-600" />
+                      {t('products.pin_label')}
+                    </label>
+                  </div>
+                  <p className="ml-6 mt-0.5 text-xs text-gray-500">{t('products.pin_hint')}</p>
                 </div>
               </div>
 
@@ -1137,6 +1242,137 @@ export default function Products() {
           </div>
         )}
       </Modal>
+    </>
+  )
+}
+
+/**
+ * Storefront default order: every product on one page, drag-and-drop to
+ * reorder (same pattern as categories). Pinned products always come first on
+ * the site, so they stay grouped at the top here too.
+ */
+function ProductSortOrder({ formatPrice }: { formatPrice: (price: number) => string }) {
+  const { t } = useTranslation()
+  const [items, setItems] = useState<Product[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetchAll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const fetchAll = async () => {
+    setLoading(true)
+    try {
+      const { data } = await adminProductsApi.list({ page: '1', limit: String(SORT_LIMIT) })
+      if (data.success) {
+        setItems(data.data.items || [])
+        setTotal(data.data.meta?.total ?? (data.data.items || []).length)
+      }
+    } catch (err) {
+      console.error('Failed to fetch products:', err)
+      toast.error(t('common.network_error'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleReorderDrop = async (targetIndex: number) => {
+    const from = dragIndex
+    setDragIndex(null)
+    setDragOverIndex(null)
+    if (from === null || from === targetIndex) return
+
+    const moved = [...items]
+    const [item] = moved.splice(from, 1)
+    moved.splice(targetIndex, 0, item)
+    // Pinned products always lead on the storefront: keep them grouped on top
+    // (stable), so the list here matches what the site shows.
+    const reordered = [...moved.filter((p) => p.is_pinned), ...moved.filter((p) => !p.is_pinned)]
+    setItems(reordered) // optimistic
+
+    setSaving(true)
+    try {
+      await adminProductsApi.reorder({ orderedIds: reordered.map((p) => p.id) })
+      toast.success(t('products.sort_saved'))
+    } catch (err) {
+      console.error('Failed to reorder products:', err)
+      toast.error(t('products.sort_error'))
+      fetchAll() // revert to server order on failure
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <>
+      <div className="mb-4 flex items-start justify-between gap-4">
+        <p className="text-sm text-gray-600">{t('products.sort_hint')}</p>
+        {saving && (
+          <span className="flex shrink-0 items-center gap-2 text-sm text-blue-600">
+            <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+            {t('common.saving')}
+          </span>
+        )}
+      </div>
+      {total > items.length && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+          {t('products.sort_truncated', { count: items.length, total })}
+        </div>
+      )}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+          </div>
+        ) : items.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">{t('products.sort_empty')}</div>
+        ) : (
+          <ul className="divide-y divide-gray-200">
+            {items.map((p, index) => (
+              <li
+                key={p.id}
+                draggable
+                onDragStart={() => setDragIndex(index)}
+                onDragOver={(ev) => { ev.preventDefault(); if (dragOverIndex !== index) setDragOverIndex(index) }}
+                onDrop={() => handleReorderDrop(index)}
+                onDragEnd={() => { setDragIndex(null); setDragOverIndex(null) }}
+                className={`flex items-center gap-3 px-3 py-2 hover:bg-gray-50 ${dragIndex === index ? 'opacity-40' : ''} ${dragOverIndex === index && dragIndex !== null && dragIndex !== index ? 'border-t-2 border-blue-500' : ''} ${p.is_active ? '' : 'text-gray-400'}`}
+              >
+                <GripVertical className="h-5 w-5 shrink-0 text-gray-400 cursor-grab active:cursor-grabbing" />
+                <span className="w-8 shrink-0 text-right text-xs tabular-nums text-gray-400">{index + 1}</span>
+                {p.photos[0] ? (
+                  <img src={p.photos[0]} alt={p.name} className="h-9 w-9 shrink-0 rounded object-cover" />
+                ) : (
+                  <div className="h-9 w-9 shrink-0 rounded bg-gray-200 flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate text-sm font-medium">{p.name}</span>
+                    {p.is_pinned && (
+                      <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">
+                        <Pin className="h-3 w-3" />
+                        {t('products.pinned_badge')}
+                      </span>
+                    )}
+                    {!p.is_active && (
+                      <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-600">{t('products.inactive')}</span>
+                    )}
+                  </div>
+                </div>
+                <span className="hidden sm:block w-48 shrink-0 truncate text-sm text-gray-500">{p.category_name}</span>
+                <span className="hidden md:block w-32 shrink-0 text-right text-sm text-gray-500">{formatPrice(p.daily_price)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </>
   )
 }

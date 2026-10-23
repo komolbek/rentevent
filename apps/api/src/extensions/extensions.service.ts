@@ -59,10 +59,12 @@ export class ExtensionsService {
     }
 
     // Check that the extension would not exceed max rental days for any product
-    const currentDays = Math.ceil(
-      (order.rentalEndDate.getTime() - order.rentalStartDate.getTime()) /
-        (1000 * 60 * 60 * 24),
-    );
+    // Both ends included, as at order creation.
+    const currentDays =
+      Math.round(
+        (order.rentalEndDate.getTime() - order.rentalStartDate.getTime()) /
+          (1000 * 60 * 60 * 24),
+      ) + 1;
     const newTotalDays = currentDays + dto.additional_days;
 
     for (const item of order.items) {

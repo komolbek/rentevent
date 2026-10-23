@@ -36,6 +36,17 @@ export interface CartItem {
   dailyPrice: number;
   totalPrice: number;
   savings: number;
+  /**
+   * The fair this item was added for. Its event price (`product.eventPrice`,
+   * fetched with that event) replaces the normal price and tiers, the same
+   * rule the API applies when the order names the event.
+   */
+  eventId?: string | null;
+}
+
+/** The fair the cart is being rented for, if any item was added for one. */
+export function cartEventId(items: CartItem[]): string | undefined {
+  return items.find((i) => i.eventId)?.eventId ?? undefined;
 }
 
 interface CartState {
@@ -49,7 +60,7 @@ interface CartState {
   itemCount: number;
 
   // Actions
-  addItem: (product: IProduct, quantity: number, startDate: Date, endDate: Date) => void;
+  addItem: (product: IProduct, quantity: number, startDate: Date, endDate: Date, eventId?: string | null) => void;
   updateItem: (productId: string, updates: Partial<Pick<CartItem, 'quantity' | 'rentalStartDate' | 'rentalEndDate'>>) => void;
   removeItem: (productId: string) => void;
   clearCart: () => void;
@@ -62,8 +73,17 @@ const calculateItemPrice = (
   quantity: number,
   startDate: Date,
   endDate: Date,
+  eventId?: string | null,
 ): Pick<CartItem, 'rentalDays' | 'dailyPrice' | 'totalPrice' | 'savings'> => {
   const rentalDays = calculateRentalDays(startDate, endDate);
+  if (eventId && product.eventPrice != null) {
+    return {
+      rentalDays,
+      dailyPrice: product.eventPrice,
+      totalPrice: product.eventPrice * rentalDays * quantity,
+      savings: 0,
+    };
+  }
   const { totalPrice, dailyPriceUsed, savings } = calculatePrice(
     product.dailyPrice,
     rentalDays,
@@ -90,17 +110,18 @@ export const useCartStore = create<CartState>()(
       total: 0,
       itemCount: 0,
 
-      addItem: (product, quantity, startDate, endDate) => {
+      addItem: (product, quantity, startDate, endDate, eventId) => {
         const { items } = get();
         const existingIndex = items.findIndex((item) => item.productId === product.id);
 
-        const priceInfo = calculateItemPrice(product, quantity, startDate, endDate);
+        const priceInfo = calculateItemPrice(product, quantity, startDate, endDate, eventId);
         const newItem: CartItem = {
           productId: product.id,
           product,
           quantity,
           rentalStartDate: startDate.toISOString(),
           rentalEndDate: endDate.toISOString(),
+          eventId: eventId ?? null,
           ...priceInfo,
         };
 
@@ -140,7 +161,7 @@ export const useCartStore = create<CartState>()(
           ? new Date(updates.rentalEndDate)
           : new Date(item.rentalEndDate);
 
-        const priceInfo = calculateItemPrice(item.product, newQuantity, newStartDate, newEndDate);
+        const priceInfo = calculateItemPrice(item.product, newQuantity, newStartDate, newEndDate, item.eventId);
 
         const newItems = [...items];
         newItems[itemIndex] = {

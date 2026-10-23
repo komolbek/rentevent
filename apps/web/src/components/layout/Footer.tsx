@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Phone, Mail, MapPin, Send, Clock } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useBusinessContacts } from '@/lib/business';
-import { Logo } from './Logo';
+import { LogoLockup } from './Logo';
 
 export function Footer() {
   const { t } = useTranslation();
@@ -69,8 +69,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <Link href="/" className="flex h-10 items-center" aria-label="RentEvent — Home">
-              <Logo className="h-10 w-auto text-primary dark:text-white" />
+            <Link href="/" className="flex h-11 items-center" aria-label="Rent Event — Home">
+              <LogoLockup tagline={t('header.tagline')} />
             </Link>
             {/* Only real profiles: a dead social icon reads as an abandoned
                 site. Telegram comes from Business Settings. */}

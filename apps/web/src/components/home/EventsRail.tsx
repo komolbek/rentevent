@@ -53,14 +53,16 @@ export function EventsRail() {
                 <Reveal key={e.id} delay={index * 0.06}>
                   {/* Same action as the events page: rent for this fair. */}
                   <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-primary/40 hover:elev-2">
-                    <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+                    {/* Event images are the fair's logo (wide, often transparent):
+                        shown whole on white, never cropped to a photo frame. */}
+                    <div className="relative aspect-[16/9] overflow-hidden border-b border-border bg-white">
                       {e.image_url ? (
                         <Image
                           src={e.image_url}
                           alt=""
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]"
+                          className="object-contain p-8 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04] sm:p-10"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">

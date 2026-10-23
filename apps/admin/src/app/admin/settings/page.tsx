@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react'
-import { Save, Building2, Phone, MapPin, Clock, MessageCircle, Navigation } from 'lucide-react'
+import { Save, Building2, Phone, MapPin, Clock, MessageCircle, Navigation, Smartphone } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { adminSettingsApi } from '@/lib/api'
+import { useTranslation } from '@/lib/i18n/useTranslation'
 
 interface Settings {
   name: string
@@ -12,9 +14,20 @@ interface Settings {
   longitude: string
   working_hours: string
   telegram_url: string | null
+  app_store_url: string
+  play_store_url: string
+}
+
+// GET /admin/settings answers `{ settings: {...} }` with camelCase fields;
+// read either casing so the form fills whichever shape comes back.
+type RawSettings = Record<string, unknown>
+const pick = (s: RawSettings, snake: string, camel: string): string => {
+  const v = s[camel] ?? s[snake]
+  return v == null ? '' : String(v)
 }
 
 export default function SettingsPage() {
+  const { t } = useTranslation()
   const [settings, setSettings] = useState<Settings>({
     name: '',
     phone: '',
@@ -23,6 +36,8 @@ export default function SettingsPage() {
     longitude: '',
     working_hours: '',
     telegram_url: '',
+    app_store_url: '',
+    play_store_url: '',
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -37,14 +52,17 @@ export default function SettingsPage() {
     try {
       const { data } = await adminSettingsApi.get()
       if (data.success) {
+        const s: RawSettings = data.data?.settings ?? data.data ?? {}
         setSettings({
-          name: data.data.name || '',
-          phone: data.data.phone || '',
-          address: data.data.address || '',
-          latitude: data.data.latitude || '',
-          longitude: data.data.longitude || '',
-          working_hours: data.data.working_hours || '',
-          telegram_url: data.data.telegram_url || '',
+          name: pick(s, 'name', 'name'),
+          phone: pick(s, 'phone', 'phone'),
+          address: pick(s, 'address', 'address'),
+          latitude: pick(s, 'latitude', 'latitude'),
+          longitude: pick(s, 'longitude', 'longitude'),
+          working_hours: pick(s, 'working_hours', 'workingHours'),
+          telegram_url: pick(s, 'telegram_url', 'telegramUrl'),
+          app_store_url: pick(s, 'app_store_url', 'appStoreUrl'),
+          play_store_url: pick(s, 'play_store_url', 'playStoreUrl'),
         })
       }
     } catch (err) {
@@ -68,13 +86,17 @@ export default function SettingsPage() {
         longitude: settings.longitude ? parseFloat(settings.longitude) : null,
         working_hours: settings.working_hours,
         telegram_url: settings.telegram_url || null,
+        app_store_url: settings.app_store_url.trim() || null,
+        play_store_url: settings.play_store_url.trim() || null,
       })
       if (data.success) {
         setSaved(true)
+        toast.success(t('common.saved'))
         setTimeout(() => setSaved(false), 3000)
       }
     } catch (err) {
       console.error('Failed to save settings:', err)
+      toast.error(t('common.save_error'))
     } finally {
       setSaving(false)
     }
@@ -200,6 +222,37 @@ export default function SettingsPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="https://t.me/username"
                 />
+              </div>
+
+              {/* Mobile app store links */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <Smartphone className="h-4 w-4 mr-2" />
+                  {t('settings.app_links')}
+                </label>
+                <p className="text-xs text-gray-500 mb-2">{t('settings.app_links_hint')}</p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">App Store</label>
+                    <input
+                      type="url"
+                      value={settings.app_store_url}
+                      onChange={(e) => setSettings({ ...settings, app_store_url: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://apps.apple.com/app/..."
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">Google Play</label>
+                    <input
+                      type="url"
+                      value={settings.play_store_url}
+                      onChange={(e) => setSettings({ ...settings, play_store_url: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="https://play.google.com/store/apps/details?id=..."
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Submit Button */}

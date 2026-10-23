@@ -12,6 +12,8 @@ import {
   Settings,
   CalendarDays,
   Layers,
+  GalleryHorizontal,
+  Sparkles,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,6 +31,8 @@ const navItems = [
   { href: "/admin/categories", labelKey: "nav.categories", icon: FolderTree },
   { href: "/admin/sets", labelKey: "nav.sets", icon: Layers },
   { href: "/admin/events", labelKey: "nav.events", icon: CalendarDays },
+  { href: "/admin/hero-slides", labelKey: "nav.hero_slides", icon: GalleryHorizontal },
+  { href: "/admin/inspirations", labelKey: "nav.inspirations", icon: Sparkles },
   { href: "/admin/orders", labelKey: "nav.orders", icon: ShoppingCart },
   { href: "/admin/customers", labelKey: "nav.customers", icon: Users },
   { href: "/admin/staff", labelKey: "nav.staff", icon: UserCog, ownerOnly: true },

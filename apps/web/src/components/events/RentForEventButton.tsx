@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import type { EventItem } from '@/lib/api';
 import { eventRentalPeriod } from '@/lib/events';
-import { useRentalPeriodStore } from '@/stores/rental-period-store';
+import { useSelectEvent } from './useSelectEvent';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 
@@ -17,21 +17,22 @@ interface RentForEventButtonProps {
 }
 
 /**
- * The one action on an event card: set the rental period to the fair's
- * dates and open the catalog, which then shows only what is free for them.
+ * The one action on an event card: choose this fair — its dates become the
+ * rental period and its prices apply — and open the catalog, which then
+ * shows only what is free for those days.
  * The events page used to open the fair's own website — the visitor came
  * here to rent, not to buy a ticket.
  */
 export function RentForEventButton({ event, size = 'md', variant = 'quiet', className }: RentForEventButtonProps) {
   const router = useRouter();
-  const setPeriod = useRentalPeriodStore((s) => s.setPeriod);
+  const selectEvent = useSelectEvent();
   const { t } = useTranslation();
   const period = eventRentalPeriod(event);
 
   if (!period) return null;
 
   const rent = () => {
-    setPeriod(period.from, period.to);
+    selectEvent(event);
     router.push('/catalog');
   };
 

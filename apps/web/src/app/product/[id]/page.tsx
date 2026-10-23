@@ -14,6 +14,8 @@ import {
   ChevronRight,
   Truck,
   Shield,
+  CalendarDays,
+  X,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import type { DateRange } from 'react-day-picker';
@@ -57,6 +59,11 @@ export default function ProductDetailPage() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const setRentalPeriod = useRentalPeriodStore((s) => s.setPeriod);
+  const storedEvent = useRentalPeriodStore((s) => s.event);
+  const clearEvent = useRentalPeriodStore((s) => s.clearEvent);
+  // Read after mount for the same SSR reason as the dates below.
+  const [selectedEvent, setSelectedEvent] = useState<typeof storedEvent>(null);
+  useEffect(() => setSelectedEvent(storedEvent), [storedEvent]);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: getTomorrow(),
     to: addDays(getTomorrow(), 0),
@@ -77,10 +84,11 @@ export default function ProductDetailPage() {
   };
 
   const { data: product, isLoading } = useQuery({
-    queryKey: ['product', id],
-    queryFn: () => productsApi.getById(id!),
+    queryKey: ['product', id, selectedEvent?.id],
+    queryFn: () => productsApi.getById(id!, { event_id: selectedEvent?.id }),
     enabled: !!id,
   });
+  const eventPrice = selectedEvent ? product?.eventPrice ?? null : null;
 
   // Ask for one more than the grid shows: the current product is in its own
   // category and gets filtered out.
@@ -118,17 +126,21 @@ export default function ProductDetailPage() {
       : 1;
   }, [dateRange]);
 
+  // A fair's price replaces the normal price and its tiers — the same rule
+  // the cart and the API apply.
   const priceInfo = useMemo(() => {
-    return product
-      ? calculatePrice(
-          product.dailyPrice,
-          rentalDays,
-          quantity,
-          product.pricingTiers,
-          product.quantityPricing
-        )
-      : { totalPrice: 0, dailyPriceUsed: 0, savings: 0 };
-  }, [product, rentalDays, quantity]);
+    if (!product) return { totalPrice: 0, dailyPriceUsed: 0, savings: 0 };
+    if (eventPrice != null) {
+      return { totalPrice: eventPrice * rentalDays * quantity, dailyPriceUsed: eventPrice, savings: 0 };
+    }
+    return calculatePrice(
+      product.dailyPrice,
+      rentalDays,
+      quantity,
+      product.pricingTiers,
+      product.quantityPricing
+    );
+  }, [product, rentalDays, quantity, eventPrice]);
 
   const handleAddToCart = () => {
     if (!product || !dateRange?.from || !dateRange?.to) {
@@ -136,7 +148,7 @@ export default function ProductDetailPage() {
       return;
     }
 
-    addItem(product, quantity, dateRange.from, dateRange.to);
+    addItem(product, quantity, dateRange.from, dateRange.to, eventPrice != null ? selectedEvent?.id : null);
     toast.success(t('product.added_to_cart'));
   };
 
@@ -364,11 +376,29 @@ export default function ProductDetailPage() {
 
           {/* Price */}
           <Card className="p-4">
+            {selectedEvent && (
+              <div className="-mx-4 -mt-4 mb-3 flex items-center gap-2 rounded-t-2xl bg-brand-graphite px-4 py-2.5 text-sm text-white">
+                <CalendarDays className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 flex-1 truncate">
+                  {eventPrice != null
+                    ? t('product.event_price_for', { event: selectedEvent.title })
+                    : t('product.event_regular_price', { event: selectedEvent.title })}
+                </span>
+                <button
+                  type="button"
+                  onClick={clearEvent}
+                  className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-white/15"
+                  aria-label={t('event_picker.clear')}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
             <div className="flex items-baseline gap-2 mb-2">
               <span className="text-3xl font-bold text-primary">
                 {formatPrice(priceInfo.totalPrice)} {t('common.currency')}
               </span>
-              {priceInfo.savings > 0 && (
+              {(priceInfo.savings > 0 || (eventPrice != null && eventPrice < product.dailyPrice)) && (
                 <span className="text-lg text-muted-foreground line-through">
                   {formatPrice(product.dailyPrice * rentalDays * quantity)} {t('common.currency')}
                 </span>

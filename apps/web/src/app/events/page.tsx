@@ -49,14 +49,16 @@ export default function EventsPage() {
                 {/* The card's one action is "rent for this fair" (spec §3.9);
                     the fair's own website is a small secondary link. */}
                 <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-shadow hover:shadow-lg">
-                  <div className="relative aspect-[16/9] overflow-hidden bg-muted">
+                  {/* Event images are the fair's logo (wide, often transparent):
+                      shown whole on white, never cropped to a photo frame. */}
+                  <div className="relative aspect-[16/9] overflow-hidden border-b border-border bg-white">
                     {e.image_url ? (
                       <Image
                         src={e.image_url}
                         alt={title}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="object-contain p-8 transition-transform duration-300 group-hover:scale-[1.04] sm:p-10"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/10 to-muted">

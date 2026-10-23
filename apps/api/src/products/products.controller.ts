@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
-import { ProductsService } from './products.service';
+import { ProductsService, ProductSort } from './products.service';
 
 @ApiTags('Products')
 @Controller('products')
@@ -16,7 +16,7 @@ export class ProductsController {
   @ApiQuery({
     name: 'sort',
     required: false,
-    enum: ['newest', 'popular', 'price_asc', 'price_desc'],
+    enum: ['recommended', 'newest', 'popular', 'price_asc', 'price_desc'],
   })
   @ApiQuery({
     name: 'start_date',
@@ -26,14 +26,21 @@ export class ProductsController {
     description: 'With end_date: only products with a free unit on every day of the range; adds availableStock to each item',
   })
   @ApiQuery({ name: 'end_date', required: false, type: String, example: '2026-09-16' })
+  @ApiQuery({
+    name: 'event_id',
+    required: false,
+    type: String,
+    description: "Adds eventPrice (that event's daily price, or null) to each item",
+  })
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
     @Query('category_id') categoryId?: string,
     @Query('search') search?: string,
-    @Query('sort') sort?: 'newest' | 'popular' | 'price_asc' | 'price_desc',
+    @Query('sort') sort?: ProductSort,
     @Query('start_date') startDate?: string,
     @Query('end_date') endDate?: string,
+    @Query('event_id') eventId?: string,
   ) {
     return this.productsService.findAll({
       page,
@@ -43,14 +50,16 @@ export class ProductsController {
       sort,
       start_date: startDate,
       end_date: endDate,
+      event_id: eventId,
     });
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a single product with pricing tiers and quantity pricing' })
   @ApiParam({ name: 'id', type: String })
-  async findOne(@Param('id') id: string) {
-    return this.productsService.findOne(id);
+  @ApiQuery({ name: 'event_id', required: false, type: String })
+  async findOne(@Param('id') id: string, @Query('event_id') eventId?: string) {
+    return this.productsService.findOne(id, eventId);
   }
 
   @Get(':id/availability')

@@ -11,6 +11,7 @@ export const createOrderSchema = z.object({
   rental_end_date: z.string(),
   payment_method: z.enum(['PAYME', 'CLICK', 'UZUM']),
   card_id: z.string().optional().nullable(),
+  event_id: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
 });
 

@@ -43,6 +43,7 @@ export class EventsService {
       website_url: e.websiteUrl ?? null,
       is_active: e.isActive,
       display_order: e.displayOrder,
+      ...(e._count && { event_prices_count: e._count.productPrices }),
       created_at: e.createdAt,
     };
   }
@@ -91,6 +92,7 @@ export class EventsService {
   async findAll() {
     const events = await this.prisma.event.findMany({
       orderBy: [{ startDate: 'asc' }, { displayOrder: 'asc' }],
+      include: { _count: { select: { productPrices: true } } },
     });
     return { items: events.map((e) => this.toRow(e)) };
   }
@@ -123,6 +125,74 @@ export class EventsService {
     if (!existing) throw new NotFoundException('Event not found');
     await this.prisma.event.delete({ where: { id } });
     return { deleted: true };
+  }
+
+  /**
+   * Every product with its normal price and this event's price (null = the
+   * event uses the normal price), for the admin price table.
+   */
+  async getPrices(id: string) {
+    const event = await this.prisma.event.findUnique({ where: { id } });
+    if (!event) throw new NotFoundException('Event not found');
+    const [products, prices] = await Promise.all([
+      this.prisma.product.findMany({
+        where: { deletedAt: null },
+        orderBy: [{ category: { displayOrder: 'asc' } }, { isPinned: 'desc' }, { displayOrder: 'asc' }, { name: 'asc' }],
+        select: {
+          id: true,
+          name: true,
+          photos: true,
+          dailyPrice: true,
+          isActive: true,
+          category: { select: { id: true, name: true } },
+        },
+      }),
+      this.prisma.eventProductPrice.findMany({ where: { eventId: id } }),
+    ]);
+    const byProduct = new Map(prices.map((p) => [p.productId, p.dailyPrice]));
+    return {
+      event: this.toRow(event),
+      items: products.map((p) => ({
+        product_id: p.id,
+        product_name: p.name,
+        photo: p.photos[0] ?? null,
+        category_id: p.category.id,
+        category_name: p.category.name,
+        is_active: p.isActive,
+        daily_price: p.dailyPrice,
+        event_daily_price: byProduct.get(p.id) ?? null,
+      })),
+    };
+  }
+
+  /**
+   * Upsert event prices; a null/empty price removes the override so the
+   * product falls back to its normal price. Only the rows sent are touched.
+   */
+  async setPrices(id: string, prices: { product_id: string; daily_price: number | null }[]) {
+    const event = await this.prisma.event.findUnique({ where: { id } });
+    if (!event) throw new NotFoundException('Event not found');
+    if (!Array.isArray(prices)) throw new BadRequestException('prices must be an array');
+    for (const p of prices) {
+      if (!p?.product_id) throw new BadRequestException('product_id is required');
+      if (p.daily_price != null && (!Number.isInteger(p.daily_price) || p.daily_price < 0)) {
+        throw new BadRequestException('daily_price must be a non-negative integer');
+      }
+    }
+    await this.prisma.$transaction(
+      prices.map((p) =>
+        p.daily_price == null
+          ? this.prisma.eventProductPrice.deleteMany({
+              where: { eventId: id, productId: p.product_id },
+            })
+          : this.prisma.eventProductPrice.upsert({
+              where: { eventId_productId: { eventId: id, productId: p.product_id } },
+              create: { eventId: id, productId: p.product_id, dailyPrice: p.daily_price },
+              update: { dailyPrice: p.daily_price },
+            }),
+      ),
+    );
+    return this.getPrices(id);
   }
 
   async reorder(orderedIds: string[]) {

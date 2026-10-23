@@ -32,6 +32,7 @@ interface ProductInput {
   min_rental_days?: number;
   max_rental_days?: number;
   deposit_amount?: number;
+  is_pinned?: boolean;
   pricingTiers?: { days: number; totalPrice: number }[];
   quantityPricing?: { quantity: number; totalPrice: number }[];
 }
@@ -42,6 +43,9 @@ const PRODUCT_INCLUDE = {
   quantityPricing: { orderBy: { quantity: 'asc' } },
   _count: { select: { orderItems: true, reviews: true, favorites: true } },
 } as const;
+
+/** Photos per product — the admin uploader and the storefront gallery agree on this. */
+export const MAX_PRODUCT_PHOTOS = 5;
 
 @Injectable()
 export class AdminProductsService {
@@ -76,11 +80,16 @@ export class AdminProductsService {
       pricing_tiers: p.pricingTiers ?? [],
       quantity_pricing: p.quantityPricing ?? [],
       orders_count: p._count?.orderItems ?? 0,
+      is_pinned: p.isPinned,
+      display_order: p.displayOrder,
       created_at: p.createdAt,
     };
   }
 
   private mapInput(body: ProductInput): Prisma.ProductUncheckedUpdateInput {
+    if (body.photos && body.photos.length > MAX_PRODUCT_PHOTOS) {
+      throw new BadRequestException(`At most ${MAX_PRODUCT_PHOTOS} photos per product`);
+    }
     const out: Prisma.ProductUncheckedUpdateInput = {};
     const set = <T>(v: T | undefined, key: keyof Prisma.ProductUncheckedUpdateInput) => {
       if (v !== undefined) (out as Record<string, unknown>)[key as string] = v;
@@ -99,6 +108,7 @@ export class AdminProductsService {
     set(body.min_rental_days, 'minRentalDays');
     set(body.max_rental_days, 'maxRentalDays');
     set(body.deposit_amount, 'depositAmount');
+    set(body.is_pinned, 'isPinned');
     if (body.specifications !== undefined) {
       const s = body.specifications || {};
       out.specWidth = s.width ?? null;
@@ -109,6 +119,19 @@ export class AdminProductsService {
       out.specMaterial = s.material ?? null;
     }
     return out;
+  }
+
+  /** Persist the storefront order from the admin drag-and-drop list. */
+  async reorder(orderedIds: string[]) {
+    if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+      throw new BadRequestException('orderedIds must be a non-empty array');
+    }
+    await this.prisma.$transaction(
+      orderedIds.map((id, index) =>
+        this.prisma.product.update({ where: { id }, data: { displayOrder: index } }),
+      ),
+    );
+    return { reordered: true };
   }
 
   async findAll(params: {
@@ -134,7 +157,8 @@ export class AdminProductsService {
     const [items, total] = await Promise.all([
       this.prisma.product.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        // Same order the storefront's default "recommended" sort uses.
+        orderBy: [{ isPinned: 'desc' }, { displayOrder: 'asc' }, { createdAt: 'desc' }],
         skip,
         take: limit,
         include: PRODUCT_INCLUDE,

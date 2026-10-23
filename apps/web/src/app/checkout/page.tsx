@@ -10,29 +10,31 @@ import {
   Check,
   Plus,
   CreditCard,
-  Banknote,
-  FileText,
+  CalendarDays,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { ru as ruLocale } from 'date-fns/locale';
-import { Button, Card, Modal, Input } from '@/components/ui';
+import { Button, Card, Modal } from '@/components/ui';
 import { AddressForm } from '@/components/profile/AddressForm';
 import { AuthGuard } from '@/components/auth-guard';
-import { useCartStore, getDeliveryStatus } from '@/stores/cart-store';
+import { useCartStore, getDeliveryStatus, cartEventId } from '@/stores/cart-store';
+import { useRentalPeriodStore } from '@/stores/rental-period-store';
 import { useAuthStore } from '@/stores/auth-store';
-import { userApi, ordersApi, paymentsApi, settingsApi } from '@/lib/api';
+import { userApi, ordersApi, settingsApi } from '@/lib/api';
 import { formatPrice, formatDateForAPI, cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { countLabel } from '@/lib/i18n';
 import type { DeliveryType, PaymentMethod } from '@/types';
 import { Reveal } from '@/components/home/Reveal';
 
+// Payme is the only method for now, and its checkout is not connected yet:
+// the order is created as PAYME / PENDING and the manager sends the payment
+// link. When the Payme merchant API is wired up, redirect after the order is
+// created (the way the Multicard flow used to) — see `onSuccess` below.
 const paymentMethods: { value: PaymentMethod; labelKey: string; descKey: string; Icon: LucideIcon }[] = [
-  { value: 'RAHMAT', labelKey: 'checkout.method_rahmat', descKey: 'checkout.method_rahmat_desc', Icon: CreditCard },
-  { value: 'CASH', labelKey: 'checkout.method_cash', descKey: 'checkout.method_cash_desc', Icon: Banknote },
-  { value: 'BANK_TRANSFER', labelKey: 'checkout.method_bank_transfer', descKey: 'checkout.method_bank_transfer_desc', Icon: FileText },
+  { value: 'PAYME', labelKey: 'checkout.method_payme', descKey: 'checkout.method_payme_desc', Icon: CreditCard },
 ];
 
 function CheckoutPageContent() {
@@ -44,9 +46,9 @@ function CheckoutPageContent() {
 
   const deliveryType: DeliveryType = 'DELIVERY';
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('RAHMAT');
-  const [companyName, setCompanyName] = useState('');
-  const [companyInn, setCompanyInn] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('PAYME');
+  const selectedEvent = useRentalPeriodStore((s) => s.event);
+  const eventId = cartEventId(items);
   const [notes, setNotes] = useState('');
   const [showAddressModal, setShowAddressModal] = useState(false);
 
@@ -94,18 +96,8 @@ function CheckoutPageContent() {
       clearCart();
       toast.success(t('checkout.order_success'));
 
-      if (order.paymentMethod === 'RAHMAT') {
-        try {
-          const { checkout_url } = await paymentsApi.multicardCheckout(order.id);
-          window.location.href = checkout_url;
-          return;
-        } catch {
-          toast.error(t('checkout.payment_redirect_error'));
-          router.push(`/orders/${order.id}`);
-          return;
-        }
-      }
-
+      // Payme placeholder: no redirect yet, the order page says a payment
+      // link will follow.
       router.push(`/orders/${order.id}`);
     },
     onError: () => {
@@ -117,17 +109,6 @@ function CheckoutPageContent() {
     if (deliveryType === 'DELIVERY' && !selectedAddressId) {
       toast.error(t('checkout.select_address'));
       return;
-    }
-
-    if (paymentMethod === 'BANK_TRANSFER') {
-      if (!companyName.trim()) {
-        toast.error(t('checkout.company_name_required'));
-        return;
-      }
-      if (!/^\d{9}$/.test(companyInn.trim())) {
-        toast.error(t('checkout.inn_invalid'));
-        return;
-      }
     }
 
     // Get rental dates from first cart item (assuming all items have same dates)
@@ -144,8 +125,7 @@ function CheckoutPageContent() {
       delivery_type: deliveryType,
       delivery_address_id: deliveryType === 'DELIVERY' ? selectedAddressId || undefined : undefined,
       payment_method: paymentMethod,
-      company_name: paymentMethod === 'BANK_TRANSFER' ? companyName.trim() : undefined,
-      company_inn: paymentMethod === 'BANK_TRANSFER' ? companyInn.trim() : undefined,
+      event_id: eventId,
       notes: notes || undefined,
     });
   };
@@ -237,7 +217,7 @@ function CheckoutPageContent() {
           {/* Payment Method */}
           <Reveal>
             <h2 className="font-semibold text-lg mb-4">{t('checkout.payment_method')}</h2>
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid gap-3 sm:max-w-md">
               {paymentMethods.map((method) => {
                 const { Icon } = method;
                 const isActive = paymentMethod === method.value;
@@ -270,29 +250,7 @@ function CheckoutPageContent() {
               })}
             </div>
 
-            {paymentMethod === 'BANK_TRANSFER' && (
-              <div className="mt-4 space-y-3 rounded-xl border border-border bg-muted/40 p-4">
-                <p className="text-sm text-muted-foreground">
-                  {t('checkout.bank_transfer_hint')}
-                </p>
-                <Input
-                  label={t('checkout.company_name')}
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder={t('checkout.company_name_placeholder')}
-                />
-                <Input
-                  label={t('checkout.company_inn')}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={9}
-                  value={companyInn}
-                  onChange={(e) => setCompanyInn(e.target.value.replace(/\D/g, ''))}
-                  placeholder="123456789"
-                />
-              </div>
-            )}
+            <p className="mt-3 text-sm text-muted-foreground">{t('checkout.payme_placeholder_hint')}</p>
           </Reveal>
 
           {/* Notes */}
@@ -311,6 +269,12 @@ function CheckoutPageContent() {
         <Reveal className="lg:col-span-1">
           <Card className="p-6 sticky top-24">
             <h2 className="font-semibold text-lg mb-4">{t('checkout.your_order')}</h2>
+            {eventId && selectedEvent?.id === eventId && (
+              <p className="mb-4 flex items-center gap-2 rounded-xl bg-primary/10 px-3 py-2 text-sm font-medium text-primary-text">
+                <CalendarDays className="h-4 w-4 shrink-0" />
+                <span className="min-w-0 truncate">{t('checkout.for_event', { event: selectedEvent.title })}</span>
+              </p>
+            )}
 
             {/* Items Preview */}
             <div className="space-y-3 mb-4 max-h-48 overflow-y-auto scrollbar-thin">

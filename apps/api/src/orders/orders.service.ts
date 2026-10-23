@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
-import { Prisma, OrderStatus } from '@rentevent/db';
+import { Prisma, OrderStatus, PaymentMethod } from '@rentevent/db';
 
 interface CreateOrderDto {
   items: { product_id: string; quantity: number }[];
@@ -16,6 +16,8 @@ interface CreateOrderDto {
   payment_method: string;
   company_name?: string;
   company_inn?: string;
+  /** The fair the order is for: its per-product event prices apply. */
+  event_id?: string;
   notes?: string;
 }
 
@@ -51,14 +53,20 @@ export class OrdersService {
       throw new BadRequestException('Rental start date must be today or later');
     }
 
-    if (endDate <= startDate) {
-      throw new BadRequestException('Rental end date must be after start date');
+    // Rental dates are whole days and both ends are included — the way the
+    // storefront counts them — so a one-day rental has start == end.
+    if (endDate < startDate) {
+      throw new BadRequestException('Rental end date must not be before start date');
     }
 
     if (dto.delivery_type === 'DELIVERY' && !dto.delivery_address_id) {
       throw new BadRequestException(
         'Delivery address is required for delivery orders',
       );
+    }
+
+    if (!(Object.values(PaymentMethod) as string[]).includes(dto.payment_method)) {
+      throw new BadRequestException('Unknown payment method');
     }
 
     const isBankTransfer = dto.payment_method === 'BANK_TRANSFER';
@@ -75,9 +83,8 @@ export class OrdersService {
       }
     }
 
-    const rentalDays = Math.ceil(
-      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
-    );
+    const rentalDays =
+      Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
     // --- Execute in SERIALIZABLE transaction ---
     return this.prisma.$transaction(
@@ -96,6 +103,21 @@ export class OrdersService {
         }
 
         const productMap = new Map(products.map((p) => [p.id, p]));
+
+        // Event prices replace the product's own price (and its tiers) for
+        // the products the event lists; everything else keeps normal pricing.
+        const event = dto.event_id
+          ? await tx.event.findFirst({
+              where: { id: dto.event_id, isActive: true },
+              include: { productPrices: { where: { productId: { in: productIds } } } },
+            })
+          : null;
+        if (dto.event_id && !event) {
+          throw new BadRequestException('Event not found');
+        }
+        const eventPriceMap = new Map(
+          (event?.productPrices ?? []).map((ep) => [ep.productId, ep.dailyPrice]),
+        );
 
         // Check availability for each day in rental period
         for (const item of dto.items) {
@@ -128,7 +150,8 @@ export class OrdersService {
                 order: {
                   status: { notIn: ['CANCELLED', 'RETURNED'] },
                   rentalStartDate: { lte: dayEnd },
-                  rentalEndDate: { gt: dayStart },
+                  // Inclusive end: an order ending today still holds its units today.
+                  rentalEndDate: { gte: dayStart },
                 },
               },
               _sum: { quantity: true },
@@ -160,6 +183,22 @@ export class OrdersService {
 
         for (const item of dto.items) {
           const product = productMap.get(item.product_id)!;
+
+          const eventPrice = eventPriceMap.get(product.id);
+          if (eventPrice !== undefined) {
+            const itemTotal = eventPrice * rentalDays * item.quantity;
+            subtotal += itemTotal;
+            orderItemsData.push({
+              productId: product.id,
+              productName: product.name,
+              productPhoto: product.photos[0] || null,
+              quantity: item.quantity,
+              dailyPrice: eventPrice,
+              totalPrice: itemTotal,
+              savings: 0,
+            });
+            continue;
+          }
 
           // Determine per-unit price from pricing tiers
           let unitPrice: number;
@@ -247,6 +286,7 @@ export class OrdersService {
             companyName: companyName || null,
             companyInn: companyInn || null,
             corporateInvoiceStatus: isBankTransfer ? 'PENDING' : null,
+            eventId: event?.id ?? null,
             notes: dto.notes || null,
             items: {
               create: orderItemsData,

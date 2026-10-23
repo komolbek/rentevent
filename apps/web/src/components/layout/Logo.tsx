@@ -30,3 +30,47 @@ export function Logo({ className, ...rest }: SVGProps<SVGSVGElement>) {
     </svg>
   );
 }
+
+interface LogoLockupProps {
+  /** Small uppercase line under the name; omitted when empty. */
+  tagline?: string;
+  /** `light` for dark surfaces (graphite footer, photo hero). */
+  tone?: 'default' | 'light';
+  className?: string;
+}
+
+/**
+ * The full lockup: the "re." mark in white on an orange tile, then the name
+ * "Rent Event" and an optional tagline. The bare mark alone read as an
+ * unexplained "re." next to the nav; the tile keeps it legible at 40 px and
+ * matches the app icon.
+ */
+export function LogoLockup({ tagline, tone = 'default', className }: LogoLockupProps) {
+  return (
+    <span className={['flex items-center gap-2.5', className].filter(Boolean).join(' ')}>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary shadow-[0_6px_16px_-6px_rgba(242,86,41,0.8)] lg:h-11 lg:w-11">
+        <Logo className="h-[1.05rem] w-auto text-white lg:h-[1.15rem]" />
+      </span>
+      <span className="flex flex-col leading-none">
+        <span
+          className={[
+            'font-display text-[1.3rem] font-bold tracking-tight',
+            tone === 'light' ? 'text-white' : 'text-foreground',
+          ].join(' ')}
+        >
+          Rent<span className="text-primary">Event</span>
+        </span>
+        {tagline && (
+          <span
+            className={[
+              'mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.18em] sm:block',
+              tone === 'light' ? 'text-white/60' : 'text-muted-foreground',
+            ].join(' ')}
+          >
+            {tagline}
+          </span>
+        )}
+      </span>
+    </span>
+  );
+}

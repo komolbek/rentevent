@@ -18,6 +18,8 @@ export class AdminSettingsService {
         longitude: null,
         workingHours: '09:00 - 18:00',
         telegramUrl: null,
+        appStoreUrl: null,
+        playStoreUrl: null,
       },
     };
   }
@@ -30,6 +32,8 @@ export class AdminSettingsService {
     longitude?: number;
     working_hours?: string;
     telegram_url?: string;
+    app_store_url?: string | null;
+    play_store_url?: string | null;
   }) {
     const settings = await this.prisma.businessSettings.upsert({
       where: { id: 'default' },
@@ -42,6 +46,8 @@ export class AdminSettingsService {
         ...(data.longitude !== undefined && { longitude: data.longitude }),
         ...(data.working_hours !== undefined && { workingHours: data.working_hours }),
         ...(data.telegram_url !== undefined && { telegramUrl: data.telegram_url }),
+        ...(data.app_store_url !== undefined && { appStoreUrl: data.app_store_url || null }),
+        ...(data.play_store_url !== undefined && { playStoreUrl: data.play_store_url || null }),
       },
       update: {
         ...(data.name !== undefined && { name: data.name }),
@@ -51,6 +57,8 @@ export class AdminSettingsService {
         ...(data.longitude !== undefined && { longitude: data.longitude }),
         ...(data.working_hours !== undefined && { workingHours: data.working_hours }),
         ...(data.telegram_url !== undefined && { telegramUrl: data.telegram_url }),
+        ...(data.app_store_url !== undefined && { appStoreUrl: data.app_store_url || null }),
+        ...(data.play_store_url !== undefined && { playStoreUrl: data.play_store_url || null }),
       },
     });
 

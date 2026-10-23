@@ -11,9 +11,9 @@ Paste this at the top of any prompt (ChatGPT, Claude, v0, Cursor) and the output
 
 ## Principles (hold the line)
 
-1. **One loud colour per screen.** Orange is the hero and the primary button. Nothing else may be orange except icon chips ≤ 48 px. Two orange things on one screen — one of them is wrong.
+1. **Warm and saturated, one action per block.** The brand is fire orange: the hero, the facts strip (orange→amber washes), the app band and the event chips all carry it, so the page reads "juicy", not beige. What stays single is the *action*: one primary button per block. The red `rent` colour is reserved for "Арендовать / Rent now" (side tab, hero button) and nothing else.
 2. **Paper, not white.** Background `#fbfaf7`, cards `#fff`, borders `#ebe7e0`.
-3. **Graphite for the ending.** The closing CTA band and set cards are `#171717` — the only dark surface on a light page.
+3. **Graphite for weight.** The closing CTA band, set cards, photo slides and "event price" chips are `#171717` — the dark surfaces on a light page.
 4. **Content first, motion second.** Nothing above the fold starts invisible. Motion ≤ 450 ms, transform + opacity only, once, honours `prefers-reduced-motion`. Use `Reveal`; never write `initial={{ opacity: 0 }}` on page content.
 5. **Every card is one link.** No "Подробнее" buttons inside a card that is already a link.
 6. **Facts, not adjectives.** "41 позиций", "от 500 000 сум", "48 ч" — never "широкий выбор", "лучшие цены". Copy is sourced from the FAQ and delivery pages, never invented.
@@ -35,7 +35,7 @@ Colour   brand-orange  #F2562B  surfaces, buttons        → bg-primary
          muted         #f3f0ea  hover/skeleton surface   → bg-muted
          muted-fg      #6b6862                           → text-muted-foreground
          destructive   #e5484d
-         rent          #D92C1E  the fixed "Арендовать" tab only
+         rent          #D92C1E  "Арендовать / Rent now" only (side tab, hero button)
 Dark     background #0e0e11 · card #17171a · border #2a2a2f · muted #1c1c20 · primary-text = #F2562B
 Type     system stack (SF Pro / Segoe / Roboto).  H1 52/1.08 desktop, 30/1.08 mobile.
          H2 36 (lg) / 30 (sm) / 24 (xs).  Body 16, small 14, label 12, eyebrow 11 uppercase 0.18em (.eyebrow)
@@ -65,7 +65,10 @@ Every primitive is the shadcn shape (same exports, `data-slot` attributes, `cn()
 | `Skeleton` (+ `ProductCardSkeleton`, `CartSkeleton`, …) | Loading placeholders sized like the real thing. | `<Skeleton className="h-4 w-2/3" />` |
 | `EmptyState` | Nothing-here screens with one action. | `<EmptyState icon={<Search />} title="Ничего не найдено" action={<Button>Сбросить</Button>} />` |
 | `QuantitySelector` | −/+ stepper. | `<QuantitySelector value={q} onChange={setQ} min={1} max={stock} />` |
-| `DateRangePicker`, `RangeCalendar` | Rental period. Store the result in `useRentalPeriodStore`. | `<DateRangePicker value={range} onChange={setRange} minDate={getTomorrow()} />` |
+| `DateRangePicker`, `RangeCalendar` | Rental period: centred dialog, presets (1 day / weekend / 3 days / week), both ends included, month names follow the UI language. Store the result in `useRentalPeriodStore`. | `<DateRangePicker value={range} onChange={setRange} minDate={getTomorrow()} />` |
+| `DropdownMenu` family | Menus and single-choice lists (language switcher). | `<DropdownMenu><DropdownMenuTrigger>…</DropdownMenuTrigger><DropdownMenuContent><DropdownMenuRadioGroup>…</DropdownMenuRadioGroup></DropdownMenuContent></DropdownMenu>` |
+
+Feature components outside `ui/`: `EventPicker` (choose a fair → dates + event prices), `HeroSlider` (admin slides after the built-in brand slide), `Inspirations`, `AppDownload` (store badges + QR to `/app`), `LanguageSwitcher`, `LogoLockup`.
 
 Page-level building blocks in `@/components/home`: `SectionHeader` (eyebrow + title + optional link), `Reveal` (the scroll reveal), `ProductRail`, `CategoryTile`, `SetsRail`, `EventsRail`, `HowItWorks`, `HomeHero`.
 

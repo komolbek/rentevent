@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Put,
   Delete,
   Param,
   Body,
@@ -45,6 +46,21 @@ export class AdminEventsController {
   @ApiOperation({ summary: 'Persist a new event display order' })
   async reorder(@Body() body: { orderedIds: string[] }) {
     return this.eventsService.reorder(body.orderedIds);
+  }
+
+  @Get(':id/prices')
+  @ApiOperation({ summary: 'Every product with its normal and event daily price' })
+  async getPrices(@Param('id') id: string) {
+    return this.eventsService.getPrices(id);
+  }
+
+  @Put(':id/prices')
+  @ApiOperation({ summary: 'Set event prices; daily_price null removes the override' })
+  async setPrices(
+    @Param('id') id: string,
+    @Body() body: { prices: { product_id: string; daily_price: number | null }[] },
+  ) {
+    return this.eventsService.setPrices(id, body.prices);
   }
 
   @Post()

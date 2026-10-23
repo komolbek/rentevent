@@ -15,38 +15,28 @@ import {
   Phone,
   Mail,
   ChevronRight,
-  ChevronDown,
   Search,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useCartStore } from '@/stores/cart-store';
-import { useLanguageStore } from '@/stores/language-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useBusinessContacts } from '@/lib/business';
 import { cn } from '@/lib/utils';
 import { Button, Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui';
-import { Logo } from './Logo';
+import { LogoLockup } from './Logo';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { OPEN_SEARCH_EVENT } from './BottomTabBar';
-import type { Locale } from '@/lib/i18n';
-
-const LOCALES: { code: Locale; label: string; full: string }[] = [
-  { code: 'ru', label: 'RU', full: 'Русский' },
-  { code: 'uz', label: 'UZ', full: 'O‘zbekcha' },
-  { code: 'en', label: 'EN', full: 'English' },
-];
 
 /**
  * Site header, proportioned after the Fair.Rent reference the client sent:
  * one ~80px bar — logo lockup left, small uppercase nav with a hairline
- * search underneath in the centre, a compact icon cluster over a phone/email
- * row on the right — and the language switch as a small tab hanging from the
- * top edge instead of a full-width utility strip.
+ * search underneath in the centre, a compact icon cluster (language list,
+ * favourites, account, cart) over a phone/email row on the right.
  */
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [pastHero, setPastHero] = useState(false);
   const [query, setQuery] = useState('');
   const router = useRouter();
   const pathname = usePathname();
@@ -56,7 +46,6 @@ export function Header() {
   const { isAuthenticated, user, logout } = useAuthStore();
   const itemCount = useCartStore((s) => s.itemCount);
   const contacts = useBusinessContacts();
-  const { locale, setLocale } = useLanguageStore();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -69,16 +58,8 @@ export function Header() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // `pastHero` drives the fixed "Арендовать" tab: it appears once the hero
-  // (or, on pages without one, the first ~240px) has scrolled out, so it
-  // never sits on top of the first screen's own call to action.
   useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > 8);
-      const hero = document.querySelector<HTMLElement>('[data-hero]');
-      const threshold = hero ? hero.offsetTop + hero.offsetHeight - 80 : 240;
-      setPastHero(window.scrollY > threshold);
-    };
+    const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
@@ -128,10 +109,10 @@ export function Header() {
   // listing it twice would just be noise. The phone menu, where the tab is
   // hidden, keeps a Catalog entry.
   const navLinks = [
-    { href: '/sets', label: t('nav.sets') },
     { href: '/events', label: t('nav.events') },
+    { href: '/sets', label: t('nav.sets') },
+    { href: '/inspirations', label: t('nav.inspirations') },
     { href: '/delivery', label: t('nav.delivery') },
-    { href: '/about', label: t('footer.about') },
     { href: '/contacts', label: t('nav.contacts') },
   ];
   const mobileNavLinks = [{ href: '/catalog', label: t('nav.catalog') }, ...navLinks];
@@ -152,27 +133,6 @@ export function Header() {
     focusRing,
   );
 
-  const localeSelect = (className?: string) => (
-    <label className={cn('relative inline-flex items-center', className)}>
-      <span className="sr-only">{t('header.language')}</span>
-      <select
-        value={locale}
-        onChange={(e) => setLocale(e.target.value as Locale)}
-        className={cn(
-          'h-8 cursor-pointer appearance-none rounded bg-transparent pl-1 pr-5 text-xs font-semibold uppercase tracking-[0.08em] text-foreground',
-          focusRing,
-        )}
-      >
-        {LOCALES.map((l) => (
-          <option key={l.code} value={l.code} title={l.full}>
-            {l.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-0.5 h-3 w-3 text-muted-foreground" aria-hidden="true" />
-    </label>
-  );
-
   return (
     <header
       className={cn(
@@ -182,27 +142,15 @@ export function Header() {
       role="banner"
     >
       <div className="container relative mx-auto px-4">
-        {/* Language tab, hanging from the top edge (desktop). Colour scheme
-            follows the OS — a rental shop does not need a manual toggle. */}
-        <div className="absolute right-4 top-0 hidden h-8 items-center rounded-b-lg border border-t-0 border-border bg-muted pl-2 pr-1.5 lg:flex">
-          {localeSelect()}
-        </div>
-
         <div className="flex h-16 items-center gap-6 lg:h-20 lg:items-stretch">
           {/* Logo lockup — the mark plus the name, so a first-time visitor
               can tell what the site is without reading the hero. */}
           <Link
             href="/"
-            className="flex shrink-0 items-center gap-2.5 self-center"
-            aria-label="RentEvent — Home"
+            className={cn('flex shrink-0 items-center self-center rounded-xl', focusRing)}
+            aria-label="Rent Event — Home"
           >
-            <Logo className="h-8 w-auto text-primary dark:text-white lg:h-9" />
-            <span className="hidden flex-col leading-none sm:flex">
-              <span className="font-display text-[1.35rem] font-semibold tracking-tight text-foreground">RentEvent</span>
-              <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                {t('header.tagline')}
-              </span>
-            </span>
+            <LogoLockup tagline={t('header.tagline')} />
           </Link>
 
           {/* Centre column — nav over search (desktop) */}
@@ -256,8 +204,9 @@ export function Header() {
           </div>
 
           {/* Right column — icon cluster over contact row (desktop) */}
-          <div className="ml-auto flex items-center gap-1 lg:flex-col lg:items-end lg:justify-center lg:gap-1 lg:pt-6">
+          <div className="ml-auto flex items-center gap-1 lg:flex-col lg:items-end lg:justify-center lg:gap-1">
             <div className="flex items-center">
+              <LanguageSwitcher className="hidden lg:inline-flex" />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href="/favorites" className={cn(iconBtn, 'hidden sm:inline-flex')} aria-label={t('header.favorites')}>
@@ -362,14 +311,14 @@ export function Header() {
         </div>
       </div>
 
-      {/* "Rent now" tab — fixed to the right edge of the viewport, the way
-          fair.rent does it. It slides in once the hero has scrolled out
-          (see `pastHero`) and stays away from the pages that already have a
-          single job — catalog, cart, checkout, product — where it used to
-          sit on top of the price box and the order summary. Hidden below md,
-          where the bottom tab bar is the persistent way into the catalog. */}
+      {/* Red "Rent now" tab — fixed to the right edge of the viewport from
+          the first screen, the way fair.rent does it. It stays away from the
+          pages that already have a single job — catalog, cart, checkout,
+          product — where it would sit on top of the price box and the order
+          summary. Hidden below md, where the bottom tab bar is the persistent
+          way into the catalog. */}
       <AnimatePresence>
-        {pastHero && !hideRentTab && (
+        {!hideRentTab && (
           <motion.div
             initial={{ x: 56 }}
             animate={{ x: 0 }}
@@ -381,7 +330,7 @@ export function Header() {
               href="/catalog"
               className={cn(
                 // rounded-r + rotate(180deg) = rounded on the visible left edge.
-                'flex items-center gap-2 rounded-r-lg bg-rent px-2.5 py-4 text-xs font-bold uppercase tracking-[0.16em] text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)] transition-colors hover:bg-rent-hover',
+                'flex items-center gap-2 rounded-r-lg bg-rent px-3 py-5 text-[13px] font-bold uppercase tracking-[0.16em] text-white shadow-[0_8px_24px_-8px_rgba(217,44,30,0.7)] transition-[background-color,padding] hover:bg-rent-hover hover:pr-4',
                 focusRing,
               )}
               style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
@@ -453,9 +402,7 @@ export function Header() {
               </a>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <div className="inline-flex h-10 items-center rounded-full border border-border px-2">
-                {localeSelect()}
-              </div>
+              <LanguageSwitcher variant="full" align="start" />
               {!isAuthenticated && (
                 <Button asChild size="sm">
                   <Link href="/auth">{t('header.login')}</Link>

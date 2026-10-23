@@ -3,27 +3,25 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight, Phone, PackageCheck, CalendarClock, Truck, Undo2 } from 'lucide-react';
+import { ArrowRight, PackageCheck, CalendarClock, Truck, Undo2 } from 'lucide-react';
 import type { Product } from '@/types';
 import { Button } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { localizedName } from '@/lib/i18n/product';
 
-interface HomeHeroProps {
+interface HomeHeroSlideProps {
   products: Product[];
   productTotal?: number;
-  /** `tel:` href from Business Settings; empty hides the call button. */
-  phoneHref: string;
 }
 
 /**
- * Fire-orange hero. The brand's one loud colour carries the first screen;
- * everything below it stays on the warm paper so the page still breathes.
- * Catalogue photos are white/grey studio cutouts, so they sit on white cards
- * that pop against the orange instead of fighting it.
+ * Fire-orange brand slide — the first slide of the home carousel, and the
+ * whole first screen until admin adds photo slides. Catalogue photos are
+ * white/grey studio cutouts, so they sit on white cards that pop against the
+ * orange instead of fighting it.
  */
-export function HomeHero({ products, productTotal, phoneHref }: HomeHeroProps) {
+export function HomeHeroSlide({ products, productTotal }: HomeHeroSlideProps) {
   const { t, locale } = useTranslation();
   const reduceMotion = useReducedMotion();
 
@@ -43,10 +41,9 @@ export function HomeHero({ products, productTotal, phoneHref }: HomeHeroProps) {
   ];
 
   return (
-    <section data-hero className="container mx-auto px-4 pt-4 sm:pt-6">
-      {/* The first screen never starts invisible — only the collage cards animate in. */}
-      <div
-        className="relative overflow-hidden rounded-3xl text-white"
+    // The first screen never starts invisible — only the collage cards animate in.
+    <div
+        className="relative flex h-full min-h-[30rem] items-center overflow-hidden rounded-3xl text-white sm:min-h-[32rem] lg:min-h-[36rem]"
         style={{
           background:
             'linear-gradient(120deg, #F2562B 0%, #E9481F 45%, #C2431D 100%)',
@@ -64,7 +61,7 @@ export function HomeHero({ products, productTotal, phoneHref }: HomeHeroProps) {
           />
         </div>
 
-        <div className="relative z-10 grid items-center gap-8 px-5 pb-6 pt-8 sm:px-10 sm:pb-8 sm:pt-10 md:px-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:py-14">
+        <div className="relative z-10 grid w-full items-center gap-8 px-5 pb-28 pt-8 sm:px-10 sm:pt-10 md:px-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:pb-28 lg:pt-14">
           <div>
             <p className="eyebrow mb-4 inline-flex items-center gap-2 text-white/85">
               <span className="h-1.5 w-1.5 rounded-full bg-white" />
@@ -88,17 +85,12 @@ export function HomeHero({ products, productTotal, phoneHref }: HomeHeroProps) {
                   {t('home.view_catalog')}
                 </Button>
               </Link>
-              {phoneHref && (
-                <a href={phoneHref}>
-                  <Button
-                    size="lg"
-                    className="border border-white/35 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
-                    leftIcon={<Phone className="h-5 w-5" />}
-                  >
-                    {t('home.call')}
-                  </Button>
-                </a>
-              )}
+              <Link
+                href="/events"
+                className="inline-flex h-12 items-center rounded-full bg-rent px-6 text-sm font-bold uppercase tracking-[0.08em] text-white shadow-[0_10px_30px_-10px_rgba(120,10,0,0.8)] transition-colors hover:bg-rent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+              >
+                {t('header.rent_now')}
+              </Link>
             </div>
 
             {/* Concrete facts, not adjectives — each one is sourced from the FAQ / delivery pages. */}
@@ -165,6 +157,5 @@ export function HomeHero({ products, productTotal, phoneHref }: HomeHeroProps) {
           )}
         </div>
       </div>
-    </section>
   );
 }
