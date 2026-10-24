@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Popover as PopoverPrimitive } from 'radix-ui';
-import { CalendarDays, Check, ChevronDown, MapPin, Search, X } from 'lucide-react';
+import { ArrowRight, CalendarDays, Check, ChevronDown, MapPin, Search, X } from 'lucide-react';
 import { eventsApi, type EventItem } from '@/lib/api';
 import { formatEventRange, localizeEvent, upcomingEvents } from '@/lib/events';
 import { useRentalPeriodStore } from '@/stores/rental-period-store';
@@ -58,38 +59,111 @@ export function EventPicker({ navigateTo = '/catalog', variant = 'band', classNa
   };
 
   const label = selected ? selected.title : t('event_picker.placeholder');
+  // Logo, venue and dates for the selected fair come from the list itself.
+  const selectedRow = selected ? data?.items.find((e) => e.id === selected.id) : undefined;
+  const selectedPlace = selectedRow ? [selectedRow.venue, selectedRow.city].filter(Boolean).join(', ') : '';
+
+  const focusRing =
+    'outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background';
+
+  const band = (
+    <div
+      className={cn(
+        'flex items-center gap-3 rounded-2xl bg-card p-3 ring-1 ring-border shadow-[0_18px_50px_-20px_rgba(23,23,23,0.45)] transition-shadow hover:ring-primary/50 sm:gap-4 sm:p-4',
+        className,
+      )}
+    >
+      <PopoverPrimitive.Trigger className={cn('group flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left sm:gap-4', focusRing)}>
+        {selected ? (
+          <span className="relative flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-white sm:h-16 sm:w-24">
+            {selectedRow?.image_url ? (
+              <Image src={selectedRow.image_url} alt="" fill sizes="96px" className="object-contain p-2" />
+            ) : (
+              <CalendarDays className="h-6 w-6 text-primary" aria-hidden="true" />
+            )}
+          </span>
+        ) : (
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-[0_6px_16px_-6px_rgba(242,86,41,0.8)] sm:h-14 sm:w-14">
+            <CalendarDays className="h-6 w-6" aria-hidden="true" />
+          </span>
+        )}
+
+        <span className="min-w-0 flex-1">
+          <span className="eyebrow block text-primary-text">
+            {selected ? t('event_picker.your_fair') : t('event_picker.eyebrow')}
+          </span>
+          <span
+            className={cn(
+              'mt-1 block font-semibold leading-snug',
+              selected ? 'line-clamp-2 text-sm sm:line-clamp-1 sm:text-base' : 'text-base text-foreground/80 sm:text-lg',
+            )}
+          >
+            {label}
+          </span>
+          {selected && (
+            <span className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground sm:text-sm">
+              <span className="whitespace-nowrap font-semibold text-primary-text">
+                {formatEventRange(selected.startDate, selected.endDate, locale, 'short')}
+              </span>
+              {selectedPlace && (
+                <span className="hidden min-w-0 items-center gap-1 sm:flex">
+                  <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  <span className="truncate">{selectedPlace}</span>
+                </span>
+              )}
+            </span>
+          )}
+        </span>
+
+        {selected ? (
+          <span className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-muted-foreground transition-colors group-hover:text-foreground">
+            <span className="hidden lg:inline">{t('event_picker.change')}</span>
+            <ChevronDown className="h-5 w-5 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
+          </span>
+        ) : (
+          <span className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 text-sm font-semibold text-primary-foreground shadow-[0_6px_20px_-6px_rgba(242,86,41,0.55)] transition-colors group-hover:bg-primary/90 sm:px-5">
+            <span className="hidden sm:inline">{t('event_picker.choose')}</span>
+            <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
+          </span>
+        )}
+      </PopoverPrimitive.Trigger>
+
+      {/* Outside the trigger: a link inside a button is invalid HTML. */}
+      {selected && (
+        <Link
+          href="/catalog"
+          className={cn(
+            'inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-primary px-3.5 text-sm font-semibold text-primary-foreground shadow-[0_6px_20px_-6px_rgba(242,86,41,0.55)] transition-colors hover:bg-primary/90 sm:px-5',
+            focusRing,
+          )}
+          aria-label={t('event_picker.see_products')}
+        >
+          <span className="hidden md:inline">{t('event_picker.see_products')}</span>
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
+      )}
+    </div>
+  );
 
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+      {variant === 'band' ? (
+        // The list opens under the whole card, not just the trigger part.
+        <PopoverPrimitive.Anchor asChild>{band}</PopoverPrimitive.Anchor>
+      ) : (
       <div className={cn('relative', className)}>
         <PopoverPrimitive.Trigger
           className={cn(
-            'group flex w-full items-center gap-3 text-left outline-none transition-colors',
-            'focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-            variant === 'band'
-              ? 'min-h-16 rounded-2xl bg-card px-4 shadow-[0_18px_50px_-20px_rgba(23,23,23,0.45)] ring-1 ring-border hover:ring-primary/60 sm:min-h-[4.5rem] sm:px-6'
-              : cn('min-h-12 rounded-xl border-2 border-input bg-card px-4 hover:border-primary/50', selected && 'pr-3'),
+            'group flex w-full items-center gap-3 text-left transition-colors',
+            focusRing,
+            cn('min-h-12 rounded-xl border-2 border-input bg-card px-4 hover:border-primary/50', selected && 'pr-3'),
           )}
         >
-          <span
-            className={cn(
-              'flex shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-[0_6px_16px_-6px_rgba(242,86,41,0.8)]',
-              variant === 'band' ? 'h-10 w-10 sm:h-11 sm:w-11' : 'h-8 w-8',
-            )}
-          >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-[0_6px_16px_-6px_rgba(242,86,41,0.8)]">
             <CalendarDays className="h-5 w-5" aria-hidden="true" />
           </span>
-          <span className={cn('min-w-0 flex-1', selected && variant === 'field' && 'pr-8')}>
-            {variant === 'band' && (
-              <span className="eyebrow block text-primary-text">{t('event_picker.eyebrow')}</span>
-            )}
-            <span
-              className={cn(
-                'block truncate font-semibold',
-                variant === 'band' ? 'text-base sm:text-lg' : 'text-sm',
-                !selected && variant === 'field' && 'font-medium text-muted-foreground',
-              )}
-            >
+          <span className={cn('min-w-0 flex-1', selected && 'pr-8')}>
+            <span className={cn('block truncate text-sm font-semibold', !selected && 'font-medium text-muted-foreground')}>
               {label}
             </span>
           </span>
@@ -99,7 +173,7 @@ export function EventPicker({ navigateTo = '/catalog', variant = 'band', classNa
           />
         </PopoverPrimitive.Trigger>
         {/* A sibling, not a child of the trigger (no button in a button). */}
-        {selected && variant === 'field' && (
+        {selected && (
           <button
             type="button"
             onClick={clearEvent}
@@ -110,13 +184,18 @@ export function EventPicker({ navigateTo = '/catalog', variant = 'band', classNa
           </button>
         )}
       </div>
+      )}
 
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
           align="start"
           sideOffset={8}
           collisionPadding={12}
-          className="z-50 w-[var(--radix-popover-trigger-width)] min-w-[min(26rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+          className={cn(
+            'z-50 min-w-[min(26rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
+            // Radix exposes the anchor's width; the band anchors to the whole card.
+            'w-[var(--radix-popper-anchor-width)]',
+          )}
         >
           <div className="border-b border-border p-3">
             <label className="flex h-11 items-center gap-2 rounded-xl bg-muted px-3 focus-within:ring-2 focus-within:ring-primary/30">
