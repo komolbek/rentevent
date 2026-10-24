@@ -35,6 +35,9 @@ export class AdminSettingsController {
       telegram_url?: string;
       app_store_url?: string | null;
       play_store_url?: string | null;
+      product_notice?: string | null;
+      product_notice_uz?: string | null;
+      product_notice_en?: string | null;
     },
   ) {
     return this.adminSettingsService.updateSettings(body);

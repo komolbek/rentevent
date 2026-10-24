@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
-import { EventsService } from './events.service';
+import { EventsService, EventPriceInput } from './events.service';
 
 interface EventBody {
   title?: string;
@@ -26,6 +26,9 @@ interface EventBody {
   start_date?: string;
   end_date?: string | null;
   website_url?: string | null;
+  delivery_date?: string | null;
+  collection_date?: string | null;
+  price_mode?: 'DAILY' | 'FLAT';
   is_active?: boolean;
   display_order?: number;
 }
@@ -55,10 +58,10 @@ export class AdminEventsController {
   }
 
   @Put(':id/prices')
-  @ApiOperation({ summary: 'Set event prices; daily_price null removes the override' })
+  @ApiOperation({ summary: 'Set event prices and picks; daily_price null = normal price' })
   async setPrices(
     @Param('id') id: string,
-    @Body() body: { prices: { product_id: string; daily_price: number | null }[] },
+    @Body() body: { prices: EventPriceInput[] },
   ) {
     return this.eventsService.setPrices(id, body.prices);
   }

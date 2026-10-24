@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { ArrowLeft, Search, Save, Percent, Eraser, RotateCcw, ImageIcon, CalendarDays } from 'lucide-react'
+import { ArrowLeft, Search, Save, Percent, Eraser, RotateCcw, ImageIcon, CalendarDays, Star } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { adminEventsApi } from '@/lib/api'
 import { useTranslation } from '@/lib/i18n/useTranslation'
@@ -14,6 +14,10 @@ interface PriceEvent {
   image_url: string | null
   start_date: string
   end_date: string | null
+  price_mode: 'DAILY' | 'FLAT'
+  /** Effective delivery → collection days (defaults applied by the API). */
+  rental_from: string
+  rental_to: string
 }
 
 interface PriceRow {
@@ -24,7 +28,9 @@ interface PriceRow {
   category_name: string
   is_active: boolean
   daily_price: number
+  /** Per day or for the whole fair, see event.price_mode. */
   event_daily_price: number | null
+  featured: boolean
 }
 
 // Format number with thousands separator (space), same as the product form
@@ -68,6 +74,7 @@ export default function EventPricesPage() {
   const [event, setEvent] = useState<PriceEvent | null>(null)
   const [rows, setRows] = useState<PriceRow[]>([])
   const [drafts, setDrafts] = useState<Record<string, string>>({})
+  const [featuredDrafts, setFeaturedDrafts] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -80,7 +87,16 @@ export default function EventPricesPage() {
     setEvent(data.event)
     setRows(data.items)
     setDrafts(Object.fromEntries(data.items.map((r) => [r.product_id, toDraft(r.event_daily_price)])))
+    setFeaturedDrafts(Object.fromEntries(data.items.map((r) => [r.product_id, r.featured])))
   }
+
+  // FLAT: one price for the whole fair, so the normal price to compare with
+  // is the daily price × the fair's days (delivery → collection, inclusive).
+  const flat = event?.price_mode === 'FLAT'
+  const fairDays = event
+    ? Math.round((new Date(event.rental_to).getTime() - new Date(event.rental_from).getTime()) / 86_400_000) + 1
+    : 1
+  const normalFor = (r: PriceRow) => (flat ? r.daily_price * fairDays : r.daily_price)
 
   useEffect(() => {
     if (!eventId) return
@@ -101,9 +117,15 @@ export default function EventPricesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId])
 
+  const isFeatured = (r: PriceRow) => featuredDrafts[r.product_id] ?? r.featured
   const changed = useMemo(
-    () => rows.filter((r) => parseDraft(drafts[r.product_id] ?? '') !== r.event_daily_price),
-    [rows, drafts],
+    () =>
+      rows.filter(
+        (r) =>
+          parseDraft(drafts[r.product_id] ?? '') !== r.event_daily_price ||
+          (featuredDrafts[r.product_id] ?? r.featured) !== r.featured,
+      ),
+    [rows, drafts, featuredDrafts],
   )
   const dirty = changed.length > 0
 
@@ -129,10 +151,10 @@ export default function EventPricesPage() {
     return rows.filter((r) => {
       if (categoryFilter && r.category_id !== categoryFilter) return false
       if (q && !r.product_name.toLowerCase().includes(q)) return false
-      if (onlyOverridden && parseDraft(drafts[r.product_id] ?? '') == null) return false
+      if (onlyOverridden && parseDraft(drafts[r.product_id] ?? '') == null && !(featuredDrafts[r.product_id] ?? r.featured)) return false
       return true
     })
-  }, [rows, search, categoryFilter, onlyOverridden, drafts])
+  }, [rows, search, categoryFilter, onlyOverridden, drafts, featuredDrafts])
 
   // Group the filtered rows by category, keeping the API's order.
   const groups = useMemo(() => {
@@ -160,7 +182,7 @@ export default function EventPricesPage() {
     setDrafts((prev) => {
       const next = { ...prev }
       for (const r of filtered) {
-        const price = Math.max(0, Math.round((r.daily_price * (1 + percentValue / 100)) / 1000) * 1000)
+        const price = Math.max(0, Math.round((normalFor(r) * (1 + percentValue / 100)) / 1000) * 1000)
         next[r.product_id] = String(price)
       }
       return next
@@ -179,6 +201,7 @@ export default function EventPricesPage() {
 
   const resetChanges = () => {
     setDrafts(Object.fromEntries(rows.map((r) => [r.product_id, toDraft(r.event_daily_price)])))
+    setFeaturedDrafts(Object.fromEntries(rows.map((r) => [r.product_id, r.featured])))
   }
 
   const handleSave = async () => {
@@ -188,6 +211,7 @@ export default function EventPricesPage() {
       const prices = changed.map((r) => ({
         product_id: r.product_id,
         daily_price: parseDraft(drafts[r.product_id] ?? ''),
+        featured: featuredDrafts[r.product_id] ?? r.featured,
       }))
       const { data } = await adminEventsApi.setPrices(eventId, { prices })
       if (data.success) {
@@ -245,6 +269,12 @@ export default function EventPricesPage() {
             <p className="text-sm text-gray-500">
               {fmtDate(event.start_date)}
               {event.end_date ? ` – ${fmtDate(event.end_date)}` : ''}
+              {' · '}
+              {t('prices.logistics', { from: fmtDate(event.rental_from), to: fmtDate(event.rental_to), days: fairDays })}
+              {' · '}
+              <span className="font-medium text-gray-700">
+                {flat ? t('events.price_mode_flat') : t('events.price_mode_daily')}
+              </span>
             </p>
           )}
         </div>
@@ -365,22 +395,28 @@ export default function EventPricesPage() {
                   <thead className="bg-gray-50">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('prices.col_product')}</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('prices.col_normal')}</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('prices.col_event')}</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                        {flat ? t('prices.col_normal_fair', { days: fairDays }) : t('prices.col_normal')}
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        {flat ? t('prices.col_event_flat') : t('prices.col_event')}
+                      </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('prices.col_diff')}</th>
+                      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">{t('prices.col_featured')}</th>
                     </tr>
                   </thead>
                   {groups.map((g) => (
                     <tbody key={g.id} className="divide-y divide-gray-200 border-t border-gray-200">
                       <tr className="bg-gray-50/70">
-                        <td colSpan={4} className="px-6 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                        <td colSpan={5} className="px-6 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                           {g.name} <span className="font-normal text-gray-400">· {g.rows.length}</span>
                         </td>
                       </tr>
                       {g.rows.map((r) => {
                         const draft = drafts[r.product_id] ?? ''
                         const draftValue = parseDraft(draft)
-                        const isChanged = draftValue !== r.event_daily_price
+                        const featured = isFeatured(r)
+                        const isChanged = draftValue !== r.event_daily_price || featured !== r.featured
                         return (
                           <tr key={r.product_id} className={isChanged ? 'bg-amber-50/60' : 'hover:bg-gray-50'}>
                             <td className="px-6 py-3">
@@ -398,7 +434,7 @@ export default function EventPricesPage() {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-3 whitespace-nowrap text-right text-sm text-gray-700">{formatPrice(r.daily_price)}</td>
+                            <td className="px-6 py-3 whitespace-nowrap text-right text-sm text-gray-700">{formatPrice(normalFor(r))}</td>
                             <td className="px-6 py-3 whitespace-nowrap">
                               <div className="relative w-40">
                                 <input
@@ -409,14 +445,26 @@ export default function EventPricesPage() {
                                     const raw = e.target.value.replace(/\D/g, '')
                                     setDrafts((prev) => ({ ...prev, [r.product_id]: raw }))
                                   }}
-                                  placeholder={formatThousands(String(r.daily_price))}
+                                  placeholder={formatThousands(String(normalFor(r)))}
                                   aria-label={t('prices.col_event')}
                                   className={`w-full px-3 py-1.5 pr-12 border rounded-lg text-sm ${isChanged ? 'border-amber-400' : 'border-gray-300'}`}
                                 />
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">сум</span>
                               </div>
                             </td>
-                            <td className="px-6 py-3 whitespace-nowrap">{diffBadge(r.daily_price, draftValue)}</td>
+                            <td className="px-6 py-3 whitespace-nowrap">{diffBadge(normalFor(r), draftValue)}</td>
+                            <td className="px-6 py-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => setFeaturedDrafts((prev) => ({ ...prev, [r.product_id]: !featured }))}
+                                aria-pressed={featured}
+                                aria-label={t('prices.col_featured')}
+                                title={t('prices.featured_hint')}
+                                className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors ${featured ? 'bg-amber-100 text-amber-600' : 'text-gray-300 hover:bg-gray-100 hover:text-gray-500'}`}
+                              >
+                                <Star className={`h-4 w-4 ${featured ? 'fill-current' : ''}`} />
+                              </button>
+                            </td>
                           </tr>
                         )
                       })}

@@ -41,14 +41,15 @@ export function formatEventRange(
 }
 
 /**
- * The rental period to pre-fill for "rent for this fair": the event's days,
- * clamped so it never starts before tomorrow (the catalog's earliest date).
- * `null` when the event is already over.
+ * The rental period to pre-fill for "rent for this fair": delivery to
+ * collection (the API's rental_from / rental_to — the day before opening to
+ * the last day unless admin set them), clamped so it never starts before
+ * tomorrow (the catalog's earliest date). `null` when the fair is over.
  */
 export function eventRentalPeriod(e: EventItem): { from: Date; to: Date } | null {
   const tomorrow = getTomorrow();
-  const start = new Date(e.start_date);
-  const end = new Date(eventLastDay(e));
+  const start = localDay(e.rental_from ?? e.start_date);
+  const end = localDay(e.rental_to ?? new Date(eventLastDay(e)).toISOString());
   if (Number.isNaN(start.getTime()) || end < tomorrow) return null;
   return { from: start < tomorrow ? tomorrow : start, to: end };
 }
@@ -60,4 +61,16 @@ export function upcomingEvents(events: EventItem[]): EventItem[] {
   return events
     .filter((e) => e.is_active !== false && eventLastDay(e) >= today.getTime())
     .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+}
+
+/** A date-only API value (UTC midnight) as that calendar day at local midnight. */
+export function localDay(iso: string): Date {
+  const d = new Date(iso);
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+
+/** Short "26 окт." style date in the UI language. */
+export function formatDay(iso: string, locale: Locale): string {
+  const loc = locale === 'uz' ? 'uz-UZ' : locale === 'en' ? 'en-US' : 'ru-RU';
+  return localDay(iso).toLocaleDateString(loc, { day: 'numeric', month: 'short' });
 }

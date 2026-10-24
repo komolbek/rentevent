@@ -18,8 +18,39 @@ interface EventInput {
   start_date?: string;
   end_date?: string | null;
   website_url?: string | null;
+  delivery_date?: string | null;
+  collection_date?: string | null;
+  price_mode?: 'DAILY' | 'FLAT';
   is_active?: boolean;
   display_order?: number;
+}
+
+export interface EventPriceInput {
+  product_id: string;
+  /** Omitted = unchanged; null = back to the normal price. */
+  daily_price?: number | null;
+  /** Omitted = unchanged. */
+  featured?: boolean;
+}
+
+const DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * The days a fair order covers: delivery (default: the day before opening)
+ * to collection (default: the last day — some rows have end < start, so the
+ * later of the two).
+ */
+export function fairRentalPeriod(e: {
+  startDate: Date;
+  endDate: Date | null;
+  deliveryDate: Date | null;
+  collectionDate: Date | null;
+}): { from: Date; to: Date } {
+  const lastDay = new Date(Math.max(e.startDate.getTime(), e.endDate?.getTime() ?? 0));
+  return {
+    from: e.deliveryDate ?? new Date(e.startDate.getTime() - DAY),
+    to: e.collectionDate ?? lastDay,
+  };
 }
 
 @Injectable()
@@ -27,6 +58,7 @@ export class EventsService {
   constructor(private readonly prisma: PrismaService) {}
 
   private toRow(e: any) {
+    const period = fairRentalPeriod(e);
     return {
       id: e.id,
       title: e.title,
@@ -41,6 +73,12 @@ export class EventsService {
       start_date: e.startDate,
       end_date: e.endDate ?? null,
       website_url: e.websiteUrl ?? null,
+      delivery_date: e.deliveryDate ?? null,
+      collection_date: e.collectionDate ?? null,
+      price_mode: e.priceMode,
+      // Effective rental period (defaults applied), what the storefront books.
+      rental_from: period.from,
+      rental_to: period.to,
       is_active: e.isActive,
       display_order: e.displayOrder,
       ...(e._count && { event_prices_count: e._count.productPrices }),
@@ -66,6 +104,16 @@ export class EventsService {
     if (body.end_date !== undefined)
       out.endDate = body.end_date ? new Date(body.end_date) : null;
     set(body.website_url ?? undefined, 'websiteUrl');
+    if (body.delivery_date !== undefined)
+      out.deliveryDate = body.delivery_date ? new Date(body.delivery_date) : null;
+    if (body.collection_date !== undefined)
+      out.collectionDate = body.collection_date ? new Date(body.collection_date) : null;
+    if (body.price_mode !== undefined) {
+      if (body.price_mode !== 'DAILY' && body.price_mode !== 'FLAT') {
+        throw new BadRequestException('price_mode must be DAILY or FLAT');
+      }
+      out.priceMode = body.price_mode;
+    }
     set(body.is_active, 'isActive');
     set(body.display_order, 'displayOrder');
     return out;
@@ -149,7 +197,7 @@ export class EventsService {
       }),
       this.prisma.eventProductPrice.findMany({ where: { eventId: id } }),
     ]);
-    const byProduct = new Map(prices.map((p) => [p.productId, p.dailyPrice]));
+    const byProduct = new Map(prices.map((p) => [p.productId, p]));
     return {
       event: this.toRow(event),
       items: products.map((p) => ({
@@ -160,16 +208,19 @@ export class EventsService {
         category_name: p.category.name,
         is_active: p.isActive,
         daily_price: p.dailyPrice,
-        event_daily_price: byProduct.get(p.id) ?? null,
+        // Per day or for the whole fair — see event.price_mode.
+        event_daily_price: byProduct.get(p.id)?.price ?? null,
+        featured: byProduct.get(p.id)?.featured ?? false,
       })),
     };
   }
 
   /**
-   * Upsert event prices; a null/empty price removes the override so the
-   * product falls back to its normal price. Only the rows sent are touched.
+   * Upsert event prices and picks. Only the rows sent are touched, and only
+   * the fields sent: a null price goes back to the normal price, and a row
+   * with neither a price nor `featured` is removed.
    */
-  async setPrices(id: string, prices: { product_id: string; daily_price: number | null }[]) {
+  async setPrices(id: string, prices: EventPriceInput[]) {
     const event = await this.prisma.event.findUnique({ where: { id } });
     if (!event) throw new NotFoundException('Event not found');
     if (!Array.isArray(prices)) throw new BadRequestException('prices must be an array');
@@ -179,18 +230,33 @@ export class EventsService {
         throw new BadRequestException('daily_price must be a non-negative integer');
       }
     }
+    const known = await this.prisma.product.count({
+      where: { id: { in: [...new Set(prices.map((p) => p.product_id))] } },
+    });
+    if (known !== new Set(prices.map((p) => p.product_id)).size) {
+      throw new BadRequestException('Unknown product_id');
+    }
+    const existing = await this.prisma.eventProductPrice.findMany({
+      where: { eventId: id, productId: { in: prices.map((p) => p.product_id) } },
+    });
+    const current = new Map(existing.map((r) => [r.productId, r]));
+
     await this.prisma.$transaction(
-      prices.map((p) =>
-        p.daily_price == null
-          ? this.prisma.eventProductPrice.deleteMany({
-              where: { eventId: id, productId: p.product_id },
-            })
-          : this.prisma.eventProductPrice.upsert({
-              where: { eventId_productId: { eventId: id, productId: p.product_id } },
-              create: { eventId: id, productId: p.product_id, dailyPrice: p.daily_price },
-              update: { dailyPrice: p.daily_price },
-            }),
-      ),
+      prices.map((p) => {
+        const before = current.get(p.product_id);
+        const price = p.daily_price !== undefined ? p.daily_price : (before?.price ?? null);
+        const featured = p.featured !== undefined ? p.featured : (before?.featured ?? false);
+        if (price == null && !featured) {
+          return this.prisma.eventProductPrice.deleteMany({
+            where: { eventId: id, productId: p.product_id },
+          });
+        }
+        return this.prisma.eventProductPrice.upsert({
+          where: { eventId_productId: { eventId: id, productId: p.product_id } },
+          create: { eventId: id, productId: p.product_id, price, featured },
+          update: { price, featured },
+        });
+      }),
     );
     return this.getPrices(id);
   }

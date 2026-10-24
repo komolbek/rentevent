@@ -32,8 +32,10 @@ export class ProductsService {
     start_date?: string;
     end_date?: string;
     event_id?: string;
+    /** With event_id: only the products recommended for that event. */
+    event_featured?: boolean;
   }) {
-    const { page, limit, category_id, search, sort, start_date, end_date, event_id } = params;
+    const { page, limit, category_id, search, sort, start_date, end_date, event_id, event_featured } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.ProductWhereInput = {
@@ -57,6 +59,10 @@ export class ProductsService {
       if (soldOut.length > 0) {
         where.id = { notIn: soldOut };
       }
+    }
+
+    if (event_id && event_featured) {
+      where.eventPrices = { some: { eventId: event_id, featured: true } };
     }
 
     if (search) {
@@ -121,7 +127,7 @@ export class ProductsService {
       this.prisma.product.count({ where }),
     ]);
 
-    const eventPrices = event_id ? await this.eventPriceMap(event_id) : null;
+    const event = event_id ? await this.eventTerms(event_id) : null;
 
     return {
       items: items.map((p) => ({
@@ -129,7 +135,7 @@ export class ProductsService {
         ...(availableById && {
           availableStock: Math.max(0, availableById.get(p.id) ?? p.totalStock),
         }),
-        ...(eventPrices && { eventPrice: eventPrices.get(p.id) ?? null }),
+        ...(event && this.eventFields(p.id, event)),
       })),
       meta: {
         page,
@@ -140,17 +146,37 @@ export class ProductsService {
     };
   }
 
-  /** Daily price per product for one active event; empty for an unknown event. */
-  private async eventPriceMap(eventId: string, productIds?: string[]): Promise<Map<string, number>> {
-    const rows = await this.prisma.eventProductPrice.findMany({
-      where: {
-        eventId,
-        event: { isActive: true },
-        ...(productIds && { productId: { in: productIds } }),
-      },
-      select: { productId: true, dailyPrice: true },
+  /**
+   * One active event's terms per product (price + pick flag) and how its
+   * prices read (per day / whole fair). Empty map for an unknown event.
+   */
+  private async eventTerms(eventId: string, productIds?: string[]) {
+    const event = await this.prisma.event.findFirst({
+      where: { id: eventId, isActive: true },
+      select: { priceMode: true },
     });
-    return new Map(rows.map((r) => [r.productId, r.dailyPrice]));
+    if (!event) return { mode: 'DAILY' as const, terms: new Map<string, { price: number | null; featured: boolean }>() };
+    const rows = await this.prisma.eventProductPrice.findMany({
+      where: { eventId, ...(productIds && { productId: { in: productIds } }) },
+      select: { productId: true, price: true, featured: true },
+    });
+    return {
+      mode: event.priceMode,
+      terms: new Map(rows.map((r) => [r.productId, { price: r.price, featured: r.featured }])),
+    };
+  }
+
+  /** The event fields added to a product when the request names an event. */
+  private eventFields(
+    id: string,
+    e: { mode: 'DAILY' | 'FLAT'; terms: Map<string, { price: number | null; featured: boolean }> },
+  ) {
+    const t = e.terms.get(id);
+    return {
+      eventPrice: t?.price ?? null,
+      eventPriceMode: e.mode,
+      eventFeatured: t?.featured ?? false,
+    };
   }
 
   /**
@@ -239,12 +265,12 @@ export class ProductsService {
       _avg: { rating: true },
     });
 
-    const eventPrices = eventId ? await this.eventPriceMap(eventId, [id]) : null;
+    const event = eventId ? await this.eventTerms(eventId, [id]) : null;
 
     return {
       ...product,
       averageRating: ratingAgg._avg.rating ? Number(ratingAgg._avg.rating.toFixed(1)) : null,
-      ...(eventPrices && { eventPrice: eventPrices.get(id) ?? null }),
+      ...(event && this.eventFields(id, event)),
     };
   }
 

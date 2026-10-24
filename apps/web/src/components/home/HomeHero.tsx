@@ -2,13 +2,14 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useState } from 'react';
 import { ArrowRight, PackageCheck, CalendarClock, Truck, Undo2 } from 'lucide-react';
 import type { Product } from '@/types';
 import { Button } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { localizedName } from '@/lib/i18n/product';
+import { CollageCard } from './CollageCard';
 
 interface HomeHeroSlideProps {
   products: Product[];
@@ -23,7 +24,7 @@ interface HomeHeroSlideProps {
  */
 export function HomeHeroSlide({ products, productTotal }: HomeHeroSlideProps) {
   const { t, locale } = useTranslation();
-  const reduceMotion = useReducedMotion();
+  const [hovered, setHovered] = useState<number | null>(null);
 
   const collage = products.filter((p) => p.photos?.[0]).slice(0, 3);
 
@@ -99,53 +100,48 @@ export function HomeHeroSlide({ products, productTotal }: HomeHeroSlideProps) {
             </ul>
           </div>
 
-          {/* Product collage — three real items, each linking to its page. */}
+          {/* Product collage — three real items, each linking to its page. The
+              position lives on a plain wrapper; CollageCard owns the motion. */}
           {collage.length === 3 && (
-            <div className="relative h-[13rem] sm:h-[15rem] lg:h-[19rem]">
+            <div className="relative h-[13rem] sm:h-[15rem] lg:h-[19rem]" onPointerLeave={() => setHovered(null)}>
               {[
                 {
-                  card: 'left-0 top-2 h-[8rem] w-[9.5rem] -rotate-3 sm:h-[10rem] sm:w-[12rem] lg:h-[11rem] lg:w-[13rem]',
-                  price: 'left-2 top-2',
+                  box: 'left-0 top-2 h-[8rem] w-[9.5rem] sm:h-[10rem] sm:w-[12rem] lg:h-[11rem] lg:w-[13rem]',
+                  rotate: -3,
+                  price: 'left-2 bottom-2',
                 },
                 {
-                  card: 'right-0 top-0 h-[9rem] w-[10.5rem] rotate-2 sm:h-[11.5rem] sm:w-[13.5rem] lg:h-[12.5rem] lg:w-[14.5rem]',
-                  price: 'right-2 bottom-2',
+                  box: 'right-0 top-0 h-[9rem] w-[10.5rem] sm:h-[11.5rem] sm:w-[13.5rem] lg:h-[12.5rem] lg:w-[14.5rem]',
+                  rotate: 2,
+                  price: 'left-2 bottom-2',
                 },
                 {
-                  card: 'bottom-0 left-1/2 h-[8.5rem] w-[10.5rem] -translate-x-1/2 rotate-1 sm:h-[10.5rem] sm:w-[13.5rem] lg:h-[11.5rem] lg:w-[15rem]',
+                  box: 'bottom-0 left-1/2 h-[8.5rem] w-[10.5rem] -translate-x-1/2 sm:h-[10.5rem] sm:w-[13.5rem] lg:h-[11.5rem] lg:w-[15rem]',
+                  rotate: 1,
                   price: 'left-2 bottom-2',
                 },
               ].map((position, index) => {
                 const product = collage[index];
                 return (
-                  <motion.div
+                  <div
                     key={product.id}
-                    // Above the fold: transform only, never from opacity 0.
-                    initial={reduceMotion ? false : { y: 18, scale: 0.96 }}
-                    animate={{ y: 0, scale: 1 }}
-                    transition={{ delay: 0.1 + index * 0.08, ease: [0.16, 1, 0.3, 1], duration: 0.45 }}
-                    className={`absolute ${position.card}`}
+                    className={`absolute ${position.box}`}
+                    style={{ zIndex: hovered === index ? 30 : 10 + index }}
                   >
-                    <Link
+                    <CollageCard
                       href={`/product/${product.id}`}
-                      className="group block h-full w-full overflow-hidden rounded-2xl bg-white shadow-[0_18px_40px_-14px_rgba(60,15,5,0.55)] ring-1 ring-black/5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:rotate-0"
-                      aria-label={localizedName(product, locale)}
-                    >
-                      <Image
-                        src={product.photos[0]}
-                        alt=""
-                        fill
-                        sizes="(max-width: 640px) 45vw, 240px"
-                        priority
-                        className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
-                      />
-                      <span
-                        className={`absolute rounded-full bg-brand-graphite/85 px-2.5 py-1 text-[0.6875rem] font-medium text-white backdrop-blur-sm ${position.price}`}
-                      >
-                        {t('home.collage_price', { price: formatPrice(product.dailyPrice) })}
-                      </span>
-                    </Link>
-                  </motion.div>
+                      photo={product.photos[0]}
+                      name={localizedName(product, locale)}
+                      priceLabel={t('home.collage_price', { price: formatPrice(product.dailyPrice) })}
+                      ctaLabel={t('home.collage_cta')}
+                      restRotate={position.rotate}
+                      pricePosition={position.price}
+                      active={hovered === index}
+                      dimmed={hovered !== null && hovered !== index}
+                      onHoverChange={(on) => setHovered((cur) => (on ? index : cur === index ? null : cur))}
+                      entranceDelay={0.1 + index * 0.08}
+                    />
+                  </div>
                 );
               })}
             </div>

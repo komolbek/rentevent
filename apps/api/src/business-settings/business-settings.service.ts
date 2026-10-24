@@ -29,6 +29,9 @@ export class BusinessSettingsService {
       telegramUrl: settings?.telegramUrl ?? null,
       appStoreUrl: settings?.appStoreUrl ?? null,
       playStoreUrl: settings?.playStoreUrl ?? null,
+      productNotice: settings?.productNotice ?? null,
+      productNoticeUz: settings?.productNoticeUz ?? null,
+      productNoticeEn: settings?.productNoticeEn ?? null,
       deliveryZones,
     };
   }

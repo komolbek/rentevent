@@ -21,6 +21,9 @@ interface EventItem {
   start_date: string
   end_date: string | null
   website_url: string | null
+  delivery_date: string | null
+  collection_date: string | null
+  price_mode: 'DAILY' | 'FLAT'
   is_active: boolean
   display_order: number
   event_prices_count?: number
@@ -39,6 +42,9 @@ const emptyForm = {
   start_date: '',
   end_date: '',
   website_url: '',
+  delivery_date: '',
+  collection_date: '',
+  price_mode: 'DAILY' as 'DAILY' | 'FLAT',
   is_active: true,
 }
 
@@ -104,6 +110,9 @@ export default function EventsPage() {
       start_date: e.start_date ? e.start_date.slice(0, 10) : '',
       end_date: e.end_date ? e.end_date.slice(0, 10) : '',
       website_url: e.website_url || '',
+      delivery_date: e.delivery_date ? e.delivery_date.slice(0, 10) : '',
+      collection_date: e.collection_date ? e.collection_date.slice(0, 10) : '',
+      price_mode: e.price_mode ?? 'DAILY',
       is_active: e.is_active,
     })
     setError(null)
@@ -136,6 +145,9 @@ export default function EventsPage() {
         image_url: form.image_url || null,
         end_date: form.end_date || null,
         website_url: form.website_url || null,
+        delivery_date: form.delivery_date || null,
+        collection_date: form.collection_date || null,
+        price_mode: form.price_mode,
       }
       const { data } = editing
         ? await adminEventsApi.update(editing.id, body)
@@ -370,6 +382,30 @@ export default function EventsPage() {
               <label className="block text-sm text-gray-600 mb-1">Дата окончания</label>
               <input type="date" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} className={field} />
             </div>
+          </div>
+          {/* Stand logistics: these two bound a fair order's rental period. */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">{t('events.delivery_date')}</label>
+              <input type="date" value={form.delivery_date} onChange={(e) => setForm({ ...form, delivery_date: e.target.value })} className={field} />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">{t('events.collection_date')}</label>
+              <input type="date" value={form.collection_date} onChange={(e) => setForm({ ...form, collection_date: e.target.value })} className={field} />
+            </div>
+          </div>
+          <p className="-mt-2 text-xs text-gray-500">{t('events.logistics_hint')}</p>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">{t('events.price_mode')}</label>
+            <select
+              value={form.price_mode}
+              onChange={(e) => setForm({ ...form, price_mode: e.target.value as 'DAILY' | 'FLAT' })}
+              className={field}
+            >
+              <option value="DAILY">{t('events.price_mode_daily')}</option>
+              <option value="FLAT">{t('events.price_mode_flat')}</option>
+            </select>
+            <p className="mt-1 text-xs text-gray-500">{t('events.price_mode_hint')}</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

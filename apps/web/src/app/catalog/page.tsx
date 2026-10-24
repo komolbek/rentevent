@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
@@ -100,6 +101,15 @@ function CatalogPageContent() {
       }),
     // Wait for the stored period so the first fetch is already the right one.
     enabled: mounted,
+  });
+
+  // Recommended for the chosen fair (admin → Мероприятия → Цены → ★). An
+  // extra row above the full catalog, never a filter: everything else stays.
+  const showPicks = !!eventId && !categoryId && !search && page === 1;
+  const { data: picks } = useQuery({
+    queryKey: ['products', 'event-picks', eventId],
+    queryFn: () => productsApi.getAll({ event_id: eventId, event_featured: true, limit: 8, sort: 'recommended' }),
+    enabled: showPicks,
   });
 
   const selectedCategory = categories?.find((c) => c.id === categoryId);
@@ -324,6 +334,30 @@ function CatalogPageContent() {
             </button>
           )}
         </div>
+      )}
+
+      {showPicks && (picks?.items.length ?? 0) > 0 && (
+        <section className="mb-10 rounded-3xl bg-primary-50 p-4 dark:bg-primary/10 sm:p-6">
+          <div className="mb-4 flex items-end justify-between gap-3">
+            <div>
+              <p className="eyebrow text-primary-text">{t('catalog.picks_eyebrow')}</p>
+              <h2 className="mt-1 font-display text-xl font-semibold sm:text-2xl">
+                {t('catalog.picks_title', { event: selectedEvent?.title ?? '' })}
+              </h2>
+            </div>
+            <Link
+              href={`/events/${eventId}`}
+              className="hidden shrink-0 text-sm font-medium text-muted-foreground hover:text-foreground sm:inline"
+            >
+              {t('catalog.picks_fair_page')}
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {picks!.items.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Products Grid */}

@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, CalendarDays, MapPin } from 'lucide-react';
 import { eventsApi } from '@/lib/api';
@@ -76,7 +77,9 @@ export function EventsRail() {
                     </div>
                     <div className="flex flex-1 flex-col p-4 sm:p-5">
                       <h3 className="font-display line-clamp-2 text-base font-semibold leading-snug sm:text-lg">
-                        {title}
+                        <Link href={`/events/${e.id}`} className="hover:text-primary-text hover:underline">
+                          {title}
+                        </Link>
                       </h3>
                       {place && (
                         <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">

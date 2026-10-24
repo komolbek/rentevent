@@ -164,8 +164,10 @@ export const productsApi = {
     /** YYYY-MM-DD; with end_date, filters to products free for the whole period. */
     start_date?: string;
     end_date?: string;
-    /** Adds each product's `eventPrice` for this fair. */
+    /** Adds each product's `eventPrice` / `eventPriceMode` / `eventFeatured` for this fair. */
     event_id?: string;
+    /** With event_id: only the products recommended for that fair. */
+    event_featured?: boolean;
   }) {
     return api.get<PaginatedResponse<IProduct>>('/products', { params });
   },
@@ -204,6 +206,13 @@ export interface EventItem {
   start_date: string;
   end_date: string | null;
   website_url: string | null;
+  delivery_date: string | null;
+  collection_date: string | null;
+  /** How this fair's prices read: per day, or one price for the whole fair. */
+  price_mode?: 'DAILY' | 'FLAT';
+  /** Delivery → collection, defaults applied by the API: the fair's rental period. */
+  rental_from?: string;
+  rental_to?: string;
   is_active: boolean;
 }
 

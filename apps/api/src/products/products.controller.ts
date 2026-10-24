@@ -30,8 +30,9 @@ export class ProductsController {
     name: 'event_id',
     required: false,
     type: String,
-    description: "Adds eventPrice (that event's daily price, or null) to each item",
+    description: "Adds eventPrice (or null), eventPriceMode (DAILY|FLAT) and eventFeatured to each item",
   })
+  @ApiQuery({ name: 'event_featured', required: false, type: Boolean, description: 'With event_id: only products recommended for it' })
   async findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
@@ -41,6 +42,7 @@ export class ProductsController {
     @Query('start_date') startDate?: string,
     @Query('end_date') endDate?: string,
     @Query('event_id') eventId?: string,
+    @Query('event_featured') eventFeatured?: string,
   ) {
     return this.productsService.findAll({
       page,
@@ -51,6 +53,7 @@ export class ProductsController {
       start_date: startDate,
       end_date: endDate,
       event_id: eventId,
+      event_featured: eventFeatured === 'true' || eventFeatured === '1',
     });
   }
 

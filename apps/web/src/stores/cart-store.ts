@@ -77,10 +77,13 @@ const calculateItemPrice = (
 ): Pick<CartItem, 'rentalDays' | 'dailyPrice' | 'totalPrice' | 'savings'> => {
   const rentalDays = calculateRentalDays(startDate, endDate);
   if (eventId && product.eventPrice != null) {
+    // FLAT: one price per item for the whole fair, whatever the day count.
+    const flat = product.eventPriceMode === 'FLAT';
+    const totalPrice = flat ? product.eventPrice * quantity : product.eventPrice * rentalDays * quantity;
     return {
       rentalDays,
-      dailyPrice: product.eventPrice,
-      totalPrice: product.eventPrice * rentalDays * quantity,
+      dailyPrice: flat ? Math.round(product.eventPrice / rentalDays) : product.eventPrice,
+      totalPrice,
       savings: 0,
     };
   }

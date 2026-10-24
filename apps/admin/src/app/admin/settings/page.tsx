@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react'
-import { Save, Building2, Phone, MapPin, Clock, MessageCircle, Navigation, Smartphone } from 'lucide-react'
+import { Save, Building2, Phone, MapPin, Clock, MessageCircle, Navigation, Smartphone, AlertTriangle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { adminSettingsApi } from '@/lib/api'
 import { useTranslation } from '@/lib/i18n/useTranslation'
@@ -16,6 +16,9 @@ interface Settings {
   telegram_url: string | null
   app_store_url: string
   play_store_url: string
+  product_notice: string
+  product_notice_uz: string
+  product_notice_en: string
 }
 
 // GET /admin/settings answers `{ settings: {...} }` with camelCase fields;
@@ -38,6 +41,9 @@ export default function SettingsPage() {
     telegram_url: '',
     app_store_url: '',
     play_store_url: '',
+    product_notice: '',
+    product_notice_uz: '',
+    product_notice_en: '',
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -63,6 +69,9 @@ export default function SettingsPage() {
           telegram_url: pick(s, 'telegram_url', 'telegramUrl'),
           app_store_url: pick(s, 'app_store_url', 'appStoreUrl'),
           play_store_url: pick(s, 'play_store_url', 'playStoreUrl'),
+          product_notice: pick(s, 'product_notice', 'productNotice'),
+          product_notice_uz: pick(s, 'product_notice_uz', 'productNoticeUz'),
+          product_notice_en: pick(s, 'product_notice_en', 'productNoticeEn'),
         })
       }
     } catch (err) {
@@ -88,6 +97,9 @@ export default function SettingsPage() {
         telegram_url: settings.telegram_url || null,
         app_store_url: settings.app_store_url.trim() || null,
         play_store_url: settings.play_store_url.trim() || null,
+        product_notice: settings.product_notice.trim() || null,
+        product_notice_uz: settings.product_notice_uz.trim() || null,
+        product_notice_en: settings.product_notice_en.trim() || null,
       })
       if (data.success) {
         setSaved(true)
@@ -252,6 +264,39 @@ export default function SettingsPage() {
                       placeholder="https://play.google.com/store/apps/details?id=..."
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Red "!" notice shown on every product page */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <AlertTriangle className="h-4 w-4 mr-2 text-red-600" />
+                  {t('settings.product_notice')}
+                </label>
+                <p className="text-xs text-gray-500 mb-2">{t('settings.product_notice_hint')}</p>
+                <div className="space-y-3">
+                  {([
+                    ['product_notice', 'RU'],
+                    ['product_notice_uz', 'UZ'],
+                    ['product_notice_en', 'EN'],
+                  ] as const).map(([key, lang]) => (
+                    <div key={key}>
+                      <label className="block text-xs text-gray-500 mb-1">{lang}</label>
+                      <textarea
+                        rows={2}
+                        value={settings[key]}
+                        onChange={(e) => setSettings({ ...settings, [key]: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder={lang === 'RU' ? t('settings.product_notice_placeholder') : ''}
+                      />
+                    </div>
+                  ))}
+                  {settings.product_notice.trim() && (
+                    <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                      <AlertTriangle className="h-5 w-5 shrink-0" />
+                      <span className="whitespace-pre-line">{settings.product_notice}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

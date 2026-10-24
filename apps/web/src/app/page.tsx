@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Truck, Shield, Clock, Phone, PackageCheck, Send, CalendarDays, Sofa, Timer, Undo2 } from 'lucide-react';
+import { Truck, Shield, Clock, Phone, PackageCheck, Send, CalendarDays, Sofa, Timer } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { HomeHeroSlide } from '@/components/home/HomeHero';
 import { HeroSlider } from '@/components/home/HeroSlider';
@@ -115,7 +115,7 @@ export default function HomePage() {
 
       {/* ================= FACTS STRIP ================= */}
       <section className="container mx-auto px-4 pt-10 sm:pt-14">
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {[
             {
               icon: Sofa,
@@ -128,13 +128,12 @@ export default function HomePage() {
               label: t('home.fact_events'),
             },
             { icon: Timer, value: t('home.fact_min_value'), label: t('home.fact_min') },
-            { icon: Undo2, value: t('home.fact_cancel_value'), label: t('home.fact_cancel') },
           ].map(({ icon: Icon, value, label }, i) => (
             <Reveal key={label} delay={i * 0.05}>
-              <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary-50 to-accent-100/70 p-5 ring-1 ring-primary/10 dark:from-primary/15 dark:to-accent/10 sm:p-6">
+              <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary-50 to-accent-100/70 p-3.5 ring-1 ring-primary/10 dark:from-primary/15 dark:to-accent/10 sm:p-6">
                 <Icon className="absolute -bottom-3 -right-3 h-20 w-20 text-primary/10" aria-hidden="true" />
-                <p className="font-display text-3xl font-bold tracking-tight text-primary-text sm:text-4xl">{value}</p>
-                <p className="mt-1 text-sm font-medium text-foreground/75">{label}</p>
+                <p className="font-display text-2xl font-bold tracking-tight text-primary-text sm:text-4xl">{value}</p>
+                <p className="mt-1 text-xs font-medium text-foreground/75 sm:text-sm">{label}</p>
               </div>
             </Reveal>
           ))}

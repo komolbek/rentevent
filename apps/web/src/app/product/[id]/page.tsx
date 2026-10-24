@@ -16,10 +16,11 @@ import {
   Shield,
   CalendarDays,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import type { DateRange } from 'react-day-picker';
-import { productsApi } from '@/lib/api';
+import { productsApi, settingsApi } from '@/lib/api';
 import {
   Button,
   Card,
@@ -90,6 +91,21 @@ export default function ProductDetailPage() {
   });
   const eventPrice = selectedEvent ? product?.eventPrice ?? null : null;
 
+  // Admin → Настройки: a red "!" notice shown on every product (e.g. who is
+  // responsible for the furniture once it is received).
+  const { data: business } = useQuery({
+    queryKey: ['businessSettings'],
+    queryFn: () => settingsApi.getBusinessInfo(),
+    staleTime: 10 * 60 * 1000,
+  });
+  const notice = (
+    (locale === 'uz' ? business?.productNoticeUz : locale === 'en' ? business?.productNoticeEn : null) ||
+    business?.productNotice ||
+    ''
+  ).trim();
+  // FLAT: one price per item for the whole fair, whatever the day count.
+  const eventFlat = eventPrice != null && product?.eventPriceMode === 'FLAT';
+
   // Ask for one more than the grid shows: the current product is in its own
   // category and gets filtered out.
   const { data: relatedProducts } = useQuery({
@@ -131,7 +147,9 @@ export default function ProductDetailPage() {
   const priceInfo = useMemo(() => {
     if (!product) return { totalPrice: 0, dailyPriceUsed: 0, savings: 0 };
     if (eventPrice != null) {
-      return { totalPrice: eventPrice * rentalDays * quantity, dailyPriceUsed: eventPrice, savings: 0 };
+      return eventFlat
+        ? { totalPrice: eventPrice * quantity, dailyPriceUsed: Math.round(eventPrice / rentalDays), savings: 0 }
+        : { totalPrice: eventPrice * rentalDays * quantity, dailyPriceUsed: eventPrice, savings: 0 };
     }
     return calculatePrice(
       product.dailyPrice,
@@ -140,7 +158,7 @@ export default function ProductDetailPage() {
       product.pricingTiers,
       product.quantityPricing
     );
-  }, [product, rentalDays, quantity, eventPrice]);
+  }, [product, rentalDays, quantity, eventPrice, eventFlat]);
 
   const handleAddToCart = () => {
     if (!product || !dateRange?.from || !dateRange?.to) {
@@ -374,6 +392,18 @@ export default function ProductDetailPage() {
             </p>
           )}
 
+          {notice && (
+            <div
+              role="note"
+              className="flex gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium leading-relaxed text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+            >
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-600 text-white">
+                <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+              </span>
+              <p className="whitespace-pre-line">{notice}</p>
+            </div>
+          )}
+
           {/* Price */}
           <Card className="p-4">
             {selectedEvent && (
@@ -398,14 +428,16 @@ export default function ProductDetailPage() {
               <span className="text-3xl font-bold text-primary">
                 {formatPrice(priceInfo.totalPrice)} {t('common.currency')}
               </span>
-              {(priceInfo.savings > 0 || (eventPrice != null && eventPrice < product.dailyPrice)) && (
+              {(priceInfo.savings > 0 || (eventPrice != null && priceInfo.totalPrice < product.dailyPrice * rentalDays * quantity)) && (
                 <span className="text-lg text-muted-foreground line-through">
                   {formatPrice(product.dailyPrice * rentalDays * quantity)} {t('common.currency')}
                 </span>
               )}
             </div>
             <p className="text-muted-foreground">
-              {t('product.price_breakdown', { price: formatPrice(priceInfo.dailyPriceUsed), days: rentalDays, qty: quantity })}
+              {eventFlat
+                ? t('product.price_breakdown_fair', { price: formatPrice(eventPrice!), qty: quantity })
+                : t('product.price_breakdown', { price: formatPrice(priceInfo.dailyPriceUsed), days: rentalDays, qty: quantity })}
             </p>
             {priceInfo.savings > 0 && (
               <p className="text-green-600 dark:text-green-400 font-medium mt-1">

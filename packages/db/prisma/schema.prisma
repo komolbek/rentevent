@@ -206,6 +206,12 @@ model Event {
   startDate     DateTime  @map("start_date")
   endDate       DateTime? @map("end_date")
   websiteUrl    String?   @map("website_url")
+  /// Stand furniture arrives / leaves. Null = the day before opening / the
+  /// last day; these two bound the rental period of a fair order.
+  deliveryDate   DateTime?      @map("delivery_date")
+  collectionDate DateTime?      @map("collection_date")
+  /// How this fair's product prices read: per day, or one price for the fair.
+  priceMode     EventPriceMode @default(DAILY) @map("price_mode")
   isActive      Boolean   @default(true) @map("is_active")
   displayOrder  Int       @default(0) @map("display_order")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -219,14 +225,22 @@ model Event {
   @@map("events")
 }
 
-/// A product's daily price while renting for one event. Products without a
-/// row here use their normal `dailyPrice`; quantity/day tiers are not applied
-/// on top of an event price.
+enum EventPriceMode {
+  DAILY
+  FLAT
+}
+
+/// A product's terms for one event: its price there (per day or for the whole
+/// fair, see Event.priceMode) and/or whether it is recommended for the fair.
+/// Products without a price use their normal `dailyPrice`; quantity/day tiers
+/// are not applied on top of an event price.
 model EventProductPrice {
   id         String   @id @default(cuid())
   eventId    String   @map("event_id")
   productId  String   @map("product_id")
-  dailyPrice Int      @map("daily_price")
+  /// Column keeps its first name; holds a per-day or per-fair price.
+  price      Int?     @map("daily_price")
+  featured   Boolean  @default(false)
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
@@ -458,6 +472,11 @@ model BusinessSettings {
   telegramUrl  String?  @map("telegram_url")
   appStoreUrl  String?  @map("app_store_url")
   playStoreUrl String?  @map("play_store_url")
+  /// Red "!" notice on every product page (e.g. the client's responsibility
+  /// for furniture once received). Empty = no notice.
+  productNotice   String? @map("product_notice")
+  productNoticeUz String? @map("product_notice_uz")
+  productNoticeEn String? @map("product_notice_en")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
   @@map("business_settings")

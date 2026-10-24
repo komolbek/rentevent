@@ -115,9 +115,14 @@ export class OrdersService {
         if (dto.event_id && !event) {
           throw new BadRequestException('Event not found');
         }
+        // Only rows with a price — a row may just mark a product as recommended.
         const eventPriceMap = new Map(
-          (event?.productPrices ?? []).map((ep) => [ep.productId, ep.dailyPrice]),
+          (event?.productPrices ?? [])
+            .filter((ep) => ep.price != null)
+            .map((ep) => [ep.productId, ep.price as number]),
         );
+        // FLAT: the event price covers the whole fair, whatever the day count.
+        const flat = event?.priceMode === 'FLAT';
 
         // Check availability for each day in rental period
         for (const item of dto.items) {
@@ -186,14 +191,17 @@ export class OrdersService {
 
           const eventPrice = eventPriceMap.get(product.id);
           if (eventPrice !== undefined) {
-            const itemTotal = eventPrice * rentalDays * item.quantity;
+            const itemTotal = flat
+              ? eventPrice * item.quantity
+              : eventPrice * rentalDays * item.quantity;
             subtotal += itemTotal;
             orderItemsData.push({
               productId: product.id,
               productName: product.name,
               productPhoto: product.photos[0] || null,
               quantity: item.quantity,
-              dailyPrice: eventPrice,
+              // Per-day equivalent, so "qty × daily × days" still adds up in admin.
+              dailyPrice: flat ? Math.round(eventPrice / rentalDays) : eventPrice,
               totalPrice: itemTotal,
               savings: 0,
             });

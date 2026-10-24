@@ -20,6 +20,9 @@ export class AdminSettingsService {
         telegramUrl: null,
         appStoreUrl: null,
         playStoreUrl: null,
+        productNotice: null,
+        productNoticeUz: null,
+        productNoticeEn: null,
       },
     };
   }
@@ -34,6 +37,9 @@ export class AdminSettingsService {
     telegram_url?: string;
     app_store_url?: string | null;
     play_store_url?: string | null;
+    product_notice?: string | null;
+    product_notice_uz?: string | null;
+    product_notice_en?: string | null;
   }) {
     const settings = await this.prisma.businessSettings.upsert({
       where: { id: 'default' },
@@ -48,6 +54,9 @@ export class AdminSettingsService {
         ...(data.telegram_url !== undefined && { telegramUrl: data.telegram_url }),
         ...(data.app_store_url !== undefined && { appStoreUrl: data.app_store_url || null }),
         ...(data.play_store_url !== undefined && { playStoreUrl: data.play_store_url || null }),
+        ...(data.product_notice !== undefined && { productNotice: data.product_notice?.trim() || null }),
+        ...(data.product_notice_uz !== undefined && { productNoticeUz: data.product_notice_uz?.trim() || null }),
+        ...(data.product_notice_en !== undefined && { productNoticeEn: data.product_notice_en?.trim() || null }),
       },
       update: {
         ...(data.name !== undefined && { name: data.name }),
@@ -59,6 +68,9 @@ export class AdminSettingsService {
         ...(data.telegram_url !== undefined && { telegramUrl: data.telegram_url }),
         ...(data.app_store_url !== undefined && { appStoreUrl: data.app_store_url || null }),
         ...(data.play_store_url !== undefined && { playStoreUrl: data.play_store_url || null }),
+        ...(data.product_notice !== undefined && { productNotice: data.product_notice?.trim() || null }),
+        ...(data.product_notice_uz !== undefined && { productNoticeUz: data.product_notice_uz?.trim() || null }),
+        ...(data.product_notice_en !== undefined && { productNoticeEn: data.product_notice_en?.trim() || null }),
       },
     });
 

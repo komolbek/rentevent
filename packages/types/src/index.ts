@@ -171,6 +171,10 @@ export interface IProduct {
    * event uses the normal price. Absent when no event was asked for.
    */
   eventPrice?: number | null;
+  /** How `eventPrice` reads: per day, or one price for the whole fair. */
+  eventPriceMode?: 'DAILY' | 'FLAT';
+  /** Recommended for the event asked for with `event_id`. */
+  eventFeatured?: boolean;
   /** Pinned by the admin: listed first. */
   isPinned?: boolean;
   isActive: boolean;
@@ -267,6 +271,10 @@ export interface IBusinessSettings {
   telegramUrl: string | null;
   appStoreUrl?: string | null;
   playStoreUrl?: string | null;
+  /** Red "!" notice on product pages, per language; empty = none. */
+  productNotice?: string | null;
+  productNoticeUz?: string | null;
+  productNoticeEn?: string | null;
 }
 
 // ==================== Reviews ====================

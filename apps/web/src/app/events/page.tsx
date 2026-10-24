@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, MapPin, ArrowUpRight } from 'lucide-react';
 import { eventsApi } from '@/lib/api';
@@ -70,7 +71,11 @@ export default function EventsPage() {
                     </div>
                   </div>
                   <div className="flex flex-1 flex-col p-5">
-                    <h3 className="font-semibold leading-snug line-clamp-2">{title}</h3>
+                    <h3 className="font-semibold leading-snug line-clamp-2">
+                      <Link href={`/events/${e.id}`} className="hover:text-primary-text hover:underline">
+                        {title}
+                      </Link>
+                    </h3>
                     {(e.venue || e.city) && (
                       <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                         <MapPin className="h-3.5 w-3.5" />

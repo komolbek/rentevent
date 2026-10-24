@@ -178,7 +178,7 @@ export const adminEventsApi = {
   getPrices: (id: string) => api.get(`/admin/events/${id}/prices`),
   setPrices: (
     id: string,
-    data: { prices: { product_id: string; daily_price: number | null }[] },
+    data: { prices: { product_id: string; daily_price?: number | null; featured?: boolean }[] },
   ) => api.put(`/admin/events/${id}/prices`, data),
 };
 

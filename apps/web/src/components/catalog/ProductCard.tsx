@@ -32,6 +32,9 @@ export const ProductCard = memo(function ProductCard({ product, className }: Pro
   // Asked for with a fair: its price replaces the normal one.
   const hasEventPrice = product.eventPrice != null;
   const price = hasEventPrice ? product.eventPrice! : product.dailyPrice;
+  // A FLAT fair price covers the whole fair, so it is not "per day".
+  const perLabel =
+    hasEventPrice && product.eventPriceMode === 'FLAT' ? t('product_card.per_fair') : t('product_card.per_day');
 
   const isFav = isFavorite(product.id);
   const hasDiscount = (product.pricingTiers?.length ?? 0) > 0 || (product.quantityPricing?.length ?? 0) > 0;
@@ -60,7 +63,7 @@ export const ProductCard = memo(function ProductCard({ product, className }: Pro
   return (
     <Link
       href={`/product/${product.id}`}
-      aria-label={`${name} - ${formatPrice(price)} ${t('common.currency')} ${t('product_card.per_day')}`}
+      aria-label={`${name} - ${formatPrice(price)} ${t('common.currency')} ${perLabel}`}
     >
       <motion.div whileHover={{ y: -5 }} whileTap={{ scale: 0.98 }}>
         <Card hover className={cn('overflow-hidden group', className)}>
@@ -141,9 +144,9 @@ export const ProductCard = memo(function ProductCard({ product, className }: Pro
               <p className="min-w-0 truncate text-base font-semibold text-foreground">
                 {formatPrice(price)}
                 <span className="ml-1 text-sm font-normal text-muted-foreground">
-                  {t('common.currency')} / {t('product_card.per_day')}
+                  {t('common.currency')} / {perLabel}
                 </span>
-                {hasEventPrice && product.eventPrice !== product.dailyPrice && (
+                {hasEventPrice && product.eventPriceMode !== 'FLAT' && product.eventPrice !== product.dailyPrice && (
                   <span className="ml-1.5 text-xs font-normal text-muted-foreground line-through">
                     {formatPrice(product.dailyPrice)}
                   </span>
