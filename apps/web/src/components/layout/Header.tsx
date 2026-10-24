@@ -142,7 +142,7 @@ export function Header() {
       role="banner"
     >
       <div className="container relative mx-auto px-4">
-        <div className="flex h-16 items-center gap-6 lg:h-20 lg:items-stretch">
+        <div className="flex h-16 items-center gap-6 lg:h-auto lg:items-stretch lg:py-4">
           {/* Logo lockup — the mark plus the name, so a first-time visitor
               can tell what the site is without reading the hero. */}
           <Link
@@ -154,8 +154,8 @@ export function Header() {
           </Link>
 
           {/* Centre column — nav over search (desktop) */}
-          <div className="hidden flex-1 flex-col items-center justify-center gap-2.5 lg:flex">
-            <nav className="flex items-center gap-7" aria-label="Main navigation">
+          <div className="hidden flex-1 flex-col items-center justify-center gap-3.5 lg:flex">
+            <nav className="flex items-center gap-8 pt-1" aria-label="Main navigation">
               {navLinks.map((link) => {
                 const active = isActive(link.href);
                 return (
