@@ -68,7 +68,7 @@ export function EventPicker({ navigateTo = '/catalog', variant = 'band', classNa
             'focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
             variant === 'band'
               ? 'min-h-16 rounded-2xl bg-card px-4 shadow-[0_18px_50px_-20px_rgba(23,23,23,0.45)] ring-1 ring-border hover:ring-primary/60 sm:min-h-[4.5rem] sm:px-6'
-              : 'min-h-12 rounded-xl border-2 border-input bg-card px-4 hover:border-primary/50',
+              : cn('min-h-12 rounded-xl border-2 border-input bg-card px-4 hover:border-primary/50', selected && 'pr-3'),
           )}
         >
           <span
@@ -79,7 +79,7 @@ export function EventPicker({ navigateTo = '/catalog', variant = 'band', classNa
           >
             <CalendarDays className="h-5 w-5" aria-hidden="true" />
           </span>
-          <span className="min-w-0 flex-1">
+          <span className={cn('min-w-0 flex-1', selected && variant === 'field' && 'pr-8')}>
             {variant === 'band' && (
               <span className="eyebrow block text-primary-text">{t('event_picker.eyebrow')}</span>
             )}
@@ -116,7 +116,7 @@ export function EventPicker({ navigateTo = '/catalog', variant = 'band', classNa
           align="start"
           sideOffset={8}
           collisionPadding={12}
-          className="z-50 w-[var(--radix-popover-trigger-width)] min-w-[18rem] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+          className="z-50 w-[var(--radix-popover-trigger-width)] min-w-[min(26rem,calc(100vw-1.5rem))] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-border bg-card shadow-2xl data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
         >
           <div className="border-b border-border p-3">
             <label className="flex h-11 items-center gap-2 rounded-xl bg-muted px-3 focus-within:ring-2 focus-within:ring-primary/30">
@@ -157,20 +157,18 @@ export function EventPicker({ navigateTo = '/catalog', variant = 'band', classNa
                         <CalendarDays className="h-5 w-5 text-primary/60" aria-hidden="true" />
                       )}
                     </span>
+                    {/* Title, then dates (never wrapped), then venue on its own line. */}
                     <span className="min-w-0 flex-1">
-                      <span className="line-clamp-1 text-sm font-semibold">{localizeEvent(e, locale, 'title')}</span>
-                      <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <span className="font-semibold text-primary-text">
-                          {formatEventRange(e.start_date, e.end_date, locale, 'short')}
-                        </span>
-                        {place && (
-                          <>
-                            <span aria-hidden="true">·</span>
-                            <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
-                            <span className="truncate">{place}</span>
-                          </>
-                        )}
+                      <span className="line-clamp-2 text-sm font-semibold leading-snug">{localizeEvent(e, locale, 'title')}</span>
+                      <span className="mt-1 block whitespace-nowrap text-xs font-semibold text-primary-text">
+                        {formatEventRange(e.start_date, e.end_date, locale, 'short')}
                       </span>
+                      {place && (
+                        <span className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+                          <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
+                          <span className="truncate">{place}</span>
+                        </span>
+                      )}
                     </span>
                     {isSelected && <Check className="h-4 w-4 shrink-0 text-primary-text" aria-hidden="true" />}
                   </button>

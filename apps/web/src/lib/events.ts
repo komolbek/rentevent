@@ -27,8 +27,10 @@ export function formatEventRange(
     style === 'short' ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'long', year: 'numeric' };
   try {
     const s = new Date(start);
-    if (!end) return s.toLocaleDateString(loc, opts);
-    const e = new Date(end);
+    const e = end ? new Date(end) : null;
+    // Some rows have end < start (data entry slips); show the start day
+    // rather than a backwards range like "10 нояб. – 12 сент.".
+    if (!e || e.getTime() <= s.getTime()) return s.toLocaleDateString(loc, opts);
     if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
       return `${s.getDate()}–${e.toLocaleDateString(loc, opts)}`;
     }
