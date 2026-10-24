@@ -34,7 +34,9 @@ export function RangeCalendar({ value, onChange, minDate, maxDate, months = 1 }:
       locale={dateFnsLocale(locale)}
       disabled={{ before: minDate ?? new Date(), after: maxDate }}
       numberOfMonths={months}
-      showOutsideDays
+      // Off: with two months side by side, the grey spill-over days repeated
+      // the selection (27–29 Oct showed again at the top of November).
+      showOutsideDays={false}
       classNames={{
         months: 'flex gap-6',
         month: 'space-y-4',
