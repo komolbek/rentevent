@@ -63,11 +63,6 @@ export function HomeHeroSlide({ products, productTotal }: HomeHeroSlideProps) {
 
         <div className="relative z-10 grid w-full items-center gap-8 px-5 pb-28 pt-8 sm:px-10 sm:pt-10 md:px-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:pb-28 lg:pt-14">
           <div>
-            <p className="eyebrow mb-4 inline-flex items-center gap-2 text-white/85">
-              <span className="h-1.5 w-1.5 rounded-full bg-white" />
-              {t('home.hero_badge')}
-            </p>
-
             <h1 className="font-display max-w-2xl text-[1.85rem] font-semibold leading-[1.08] tracking-tight sm:text-4xl lg:text-[3.25rem]">
               {t('home.hero_title')}
             </h1>
