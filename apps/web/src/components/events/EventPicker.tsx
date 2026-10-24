@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -35,6 +35,16 @@ export function EventPicker({ navigateTo = '/catalog', variant = 'band', classNa
   const clearEvent = useRentalPeriodStore((s) => s.clearEvent);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
+
+  // Close on page scroll, like a native select: an open list otherwise
+  // drifts with the page and slides over the sticky header. Scrolling inside
+  // the list doesn't reach window (scroll events don't bubble).
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener('scroll', close, { passive: true });
+    return () => window.removeEventListener('scroll', close);
+  }, [open]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['events', 'picker'],

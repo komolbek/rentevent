@@ -2,7 +2,18 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "../../Dockerfile"
+    "dockerfilePath": "../../Dockerfile",
+    "watchPatterns": [
+      "apps/api/**",
+      "packages/db/**",
+      "Dockerfile",
+      "packages/types/**",
+      "packages/validators/**",
+      "package.json",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "turbo.json"
+    ]
   },
   "deploy": {
     "healthcheckPath": "/api",
