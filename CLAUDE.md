@@ -1,6 +1,6 @@
 # RentEvent
 Event-equipment rental platform: storefront (rentevent.uz), admin panel (admin.rentevent.uz) and
-API (api.rentevent.uz/api). Stage: MVP, storefront gated. Client: a client project, name to be recorded (see STATUS); the owner may get a share later.
+API (api.rentevent.uz/api). Stage: MVP, storefront gated. Client: Raad Exhibition (the owner may get a share later); see `docs/client/brief.md`.
 
 ## Stack
 pnpm 10 + Turborepo monorepo. `apps/web` and `apps/admin`: Next.js. `apps/api`: NestJS.

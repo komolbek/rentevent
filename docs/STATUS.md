@@ -25,8 +25,7 @@ Updated: 2026-10-29
 ## Waiting on
 - Owner: CI uses `pnpm install --no-frozen-lockfile` and the Dockerfiles likewise; frozen
   lockfile passes locally. Switch? (deploy/CI config, not done here)
-- Owner: client company name and contact (it is a client project; the owner may get a share later),
-  then fill `docs/client/brief.md`. Confirm CLAUDE.md rules 1, 2 and 7; rules 3–6 come from the old HANDOFF.
+- Owner: client contact person, language and contract terms for `docs/client/brief.md`. Confirm CLAUDE.md rules 1, 2 and 7; rules 3–6 come from the old HANDOFF.
 - Owner OK needed before any schema change reaches prod DB (see CLAUDE.md rule 3).
 
 ## Known issues
