@@ -4,6 +4,7 @@ Updated: 2026-10-29
 **Stage:** MVP (production services live on Railway; storefront behind a "coming soon" gate)
 
 ## Recently done
+- 2026-10-29: owner confirmed the CLAUDE.md rules
 - Aug–Oct 2026: multilingual products (RU/UZ/EN), category reorder, Events (15 CAEx fairs seeded),
   Sets (bundles expand into products in the cart), UploadThing image upload, orders 500 fixed.
 - Sep 2026 storefront UX pass: header rebuilt to the client's reference (fair.rent), date-range
@@ -25,7 +26,7 @@ Updated: 2026-10-29
 ## Waiting on
 - Owner: CI uses `pnpm install --no-frozen-lockfile` and the Dockerfiles likewise; frozen
   lockfile passes locally. Switch? (deploy/CI config, not done here)
-- Owner: client contact person, language and contract terms for `docs/client/brief.md`. Confirm CLAUDE.md rule 1; rules 2–5 come from the old HANDOFF.
+- Owner: client contact person, language and contract terms for `docs/client/brief.md`.
 - Owner OK needed before any schema change reaches prod DB (see CLAUDE.md rule 2).
 
 ## Known issues
