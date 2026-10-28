@@ -1,54 +1,25 @@
-# RentEvent Backend
+# RentEvent
 
-Event equipment rental platform with web frontend and Next.js backend.
+Event-equipment rental platform: storefront (rentevent.uz), admin panel (admin.rentevent.uz)
+and API (api.rentevent.uz/api).
 
-## Project Structure
+pnpm + Turborepo monorepo:
 
-```
-rentevent-backend/
-├── rentevent-server/    # Backend (Next.js API + Admin Panel)
-├── rentevent-web/       # Frontend Website (Vite + React)
-└── README.md
-```
+- `apps/web` — storefront (Next.js)
+- `apps/admin` — admin panel (Next.js)
+- `apps/api` — API (NestJS)
+- `packages/db` — Prisma schema and client; `packages/types`, `packages/validators` — shared code
 
-## Backend (rentevent-server)
+## Run
 
-Next.js application serving as API backend and admin panel.
-
-### Setup
-```bash
-cd rentevent-server
-pnpm install
-pnpm run dev
+```sh
+pnpm install --frozen-lockfile
+pnpm db:generate
+pnpm dev            # or dev:api, dev:web, dev:admin
+scripts/check.sh    # install, generate, lint, test, build
 ```
 
-Runs on `http://localhost:3001`
+## Deploy
 
-### Environment Variables
-See `rentevent-server/.env.example` for required variables.
-
-## Frontend (rentevent-web)
-
-Modern React website built with Vite, Tailwind CSS, and Framer Motion.
-
-### Setup
-```bash
-cd rentevent-web
-pnpm install
-pnpm run dev
-```
-
-Runs on `http://localhost:3000`
-
-### Environment Variables
-- `VITE_API_URL` - Backend API URL (default: `/api` with proxy in dev)
-
-## Deployment (Railway)
-
-Both services can be deployed from this monorepo:
-
-1. **Backend Service**: Set Root Directory to `rentevent-server`
-2. **Frontend Service**: Set Root Directory to `rentevent-web`
-
-Configure `FRONTEND_URL` on backend for CORS.
-Configure `VITE_API_URL` on frontend pointing to backend URL.
+Railway project "RentEvent" (Web, Admin, API, Postgres). Every push to `main` deploys the
+affected services from the root `Dockerfile`. See `CLAUDE.md` and `docs/STATUS.md`.

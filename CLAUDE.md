@@ -9,9 +9,7 @@ UploadThing (images), Payme and Click (payments), sms-gateway / Eskiz (OTP), Res
 Locales: RU (default, no suffix), UZ (`*_uz`), EN (`*_en`).
 
 ## Where things are
-- `rentevent-server/`, `rentevent-web/`: legacy, not deployed, not part of the workspace; do not
-  edit or build them (removal pending, see STATUS).
-- Deploy files: root `Dockerfile*`, `.railway/railway.ts`, `nixpacks.toml`: do not touch without OK.
+- Deploy files: root `Dockerfile*`, `.railway/railway.ts`: do not touch without OK.
 - Specs and UX audits: `docs/design/`. Shared i18n for the storefront: `apps/web/src/lib/i18n/`.
 - Dev servers for the preview pane: `.claude/launch.json` (api 4000, web 3002, admin 3003).
 

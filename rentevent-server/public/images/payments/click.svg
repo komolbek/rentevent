@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
-  <rect width="200" height="60" rx="8" fill="#FFFFFF"/>
-  <!-- Click logo icon -->
-  <path d="M30 30C30 21.716 36.716 15 45 15C53.284 15 60 21.716 60 30C60 38.284 53.284 45 45 45C36.716 45 30 38.284 30 30Z" fill="#0085FF"/>
-  <circle cx="45" cy="30" r="6" fill="white"/>
-  <!-- Click text -->
-  <text x="120" y="38" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#1A1A1A" text-anchor="middle">click</text>
-</svg>

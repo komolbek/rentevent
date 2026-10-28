@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
-  <rect width="200" height="60" rx="8" fill="#FFFFFF"/>
-  <!-- Uzum logo - stylized U shape -->
-  <circle cx="45" cy="30" r="22" fill="#BFFF00"/>
-  <path d="M35 22C35 22 35 35 45 38C55 35 55 22 55 22" stroke="#7C3AED" stroke-width="6" stroke-linecap="round" fill="none"/>
-  <circle cx="45" cy="22" r="4" fill="#7C3AED"/>
-  <!-- Uzum text -->
-  <text x="125" y="38" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#7C3AED" text-anchor="middle">uzum</text>
-</svg>

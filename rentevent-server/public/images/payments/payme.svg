@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
-  <rect width="200" height="60" rx="8" fill="#12D8D8"/>
-  <path d="M35 15H165V45H35V15Z" fill="#FFEC00"/>
-  <path d="M165 15L175 30L165 45V15Z" fill="#FFEC00"/>
-  <text x="100" y="36" font-family="Arial, sans-serif" font-size="22" font-weight="bold" fill="#2D3748" text-anchor="middle">payme</text>
-</svg>
