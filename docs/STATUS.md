@@ -20,13 +20,13 @@ Updated: 2026-10-29
 ## Next
 - Decide go-live: set `SITE_GATE_ENABLED=false` on the RentEvent Web service.
 - Populate content: Sets in admin, UZ/EN translations for products/sets/events.
-- Migration tracking for prod DB (today `prisma db push` by hand, see CLAUDE.md rule 3).
+- Migration tracking for prod DB (today `prisma db push` by hand, see CLAUDE.md rule 2).
 
 ## Waiting on
 - Owner: CI uses `pnpm install --no-frozen-lockfile` and the Dockerfiles likewise; frozen
   lockfile passes locally. Switch? (deploy/CI config, not done here)
-- Owner: client contact person, language and contract terms for `docs/client/brief.md`. Confirm CLAUDE.md rules 1, 2 and 7; rules 3–6 come from the old HANDOFF.
-- Owner OK needed before any schema change reaches prod DB (see CLAUDE.md rule 3).
+- Owner: client contact person, language and contract terms for `docs/client/brief.md`. Confirm CLAUDE.md rule 1; rules 2–5 come from the old HANDOFF.
+- Owner OK needed before any schema change reaches prod DB (see CLAUDE.md rule 2).
 
 ## Known issues
 - No root `typecheck` script; `build` (nest build / next build) is the type check.

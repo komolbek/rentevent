@@ -25,14 +25,12 @@ Railway project "RentEvent": Web, Admin, API, Postgres. Every push to `main` aut
 
 ## Rules (do not break)
 1. Payments code (Payme, Click) does not change without explicit owner OK.
-2. Production DB is read-only unless the owner says otherwise; never run migrate against Railway.
-3. Schema is managed with `prisma db push`, not `migrate`. Before pushing a schema change to
+2. Schema is managed with `prisma db push`, not `migrate`. Before pushing a schema change to
    `main`, apply it to prod Postgres first (with the owner's OK) from `packages/db`, then verify
    `https://api.rentevent.uz/api/products?limit=1` returns 200. Otherwise the API fails with P2022.
-4. Admin sends snake_case + REST; every admin endpoint maps snake↔camel itself (no global transform).
-5. Never hardcode the currency ("UZS"); use `t('common.currency')`.
-6. Never reference the exported zustand store inside `onRehydrateStorage`; use `merge()`.
-7. Webhooks and callbacks verify signatures and stay idempotent; secrets only in env vars.
+3. Admin sends snake_case + REST; every admin endpoint maps snake↔camel itself (no global transform).
+4. Never hardcode the currency ("UZS"); use `t('common.currency')`.
+5. Never reference the exported zustand store inside `onRehydrateStorage`; use `merge()`.
 
 ## Related projects
 - `rentevent-ios`: iOS client of this API.
