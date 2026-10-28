@@ -17,6 +17,8 @@ out/
 .env.development.local
 .env.test.local
 .env.production.local
+.env*
+!.env.example
 
 # Debug logs
 npm-debug.log*
@@ -34,7 +36,7 @@ yarn-error.log*
 Thumbs.db
 
 # Claude
-.claude/
+.claude/worktrees/
 
 # iOS
 *.xcuserstate
@@ -59,6 +61,18 @@ Pods/
 *.moved-aside
 *.xccheckout
 *.xcscmblueprint
+
+# Backups, dumps, signing keys
+backups/
+*.dump
+*.sql.gz
+*.p8
+*.p12
+*.mobileprovision
+
+# Turborepo / generated
+.turbo/
+apps/admin/next-env.d.ts
 
 # Prisma
 prisma/migrations/
