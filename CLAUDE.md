@@ -36,5 +36,8 @@ Railway project "RentEvent": Web, Admin, API, Postgres. Every push to `main` aut
 - `rentevent-ios`: iOS client of this API.
 - `sms-gateway`: OTP delivery (`SMS_GATEWAY_URL`, `SMS_GATEWAY_API_KEY`).
 
+## Agents
+Shared roles from `~/.claude/agents/` (what each does and where it writes: STANDARD.md § Agents). No project overrides.
+
 Standard: `~/Projects/komolbek/STANDARD.md`. Current state (loaded into every session):
 @docs/STATUS.md
