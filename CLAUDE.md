@@ -37,7 +37,7 @@ Railway project "RentEvent": Web, Admin, API, Postgres. Every push to `main` aut
 - `sms-gateway`: OTP delivery (`SMS_GATEWAY_URL`, `SMS_GATEWAY_API_KEY`).
 
 ## Agents
-Shared roles from `~/.claude/agents/` (what each does and where it writes: STANDARD.md § Agents). No project overrides.
+Shared from `~/.claude/agents/`: `pm`, `architect`, `designer`, `coder`, `tester`, `reviewer`, `explorer`, `client-manager`, `security`, `legal` (jobs and output folders: STANDARD.md § Agents). No project overrides.
 
 Standard: `~/Projects/komolbek/STANDARD.md`. Current state (loaded into every session):
 @docs/STATUS.md
