@@ -6,7 +6,6 @@ import type {
   IProduct,
   IOrder,
   IAddress,
-  ICard,
   IReview,
   IReviewStats,
   IBusinessSettings,
@@ -363,28 +362,6 @@ export const userApi = {
 
   setDefaultAddress(addressId: string) {
     return api.post<void>(`/user/addresses/${addressId}/default`);
-  },
-
-  // Cards
-  getCards() {
-    return api.get<ICard[]>('/user/cards');
-  },
-
-  addCard(data: {
-    card_number: string;
-    card_holder: string;
-    expiry_month: number;
-    expiry_year: number;
-  }) {
-    return api.post<ICard>('/user/cards', data);
-  },
-
-  deleteCard(cardId: string) {
-    return api.delete<void>(`/user/cards/${cardId}`);
-  },
-
-  setDefaultCard(cardId: string) {
-    return api.post<void>(`/user/cards/${cardId}/default`);
   },
 
   // Favorites

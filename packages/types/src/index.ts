@@ -65,8 +65,6 @@ export enum ExtensionStatus {
   CANCELLED = 'CANCELLED',
 }
 
-export type CardType = 'VISA' | 'MASTERCARD' | 'HUMO' | 'UZCARD' | 'UNKNOWN';
-
 // ==================== User & Auth ====================
 
 export interface IUser {
@@ -75,18 +73,6 @@ export interface IUser {
   name: string | null;
   language: string;
   isActive: boolean;
-  createdAt: string;
-}
-
-export interface ICard {
-  id: string;
-  userId: string;
-  cardNumber: string;
-  cardHolder: string;
-  expiryMonth: number;
-  expiryYear: number;
-  cardType: string;
-  isDefault: boolean;
   createdAt: string;
 }
 

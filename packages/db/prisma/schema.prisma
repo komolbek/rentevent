@@ -48,29 +48,11 @@ model User {
   addresses Address[]
   orders    Order[]
   favorites Favorite[]
-  cards     Card[]
   reviews   Review[]
   returnRequests ReturnRequest[]
   rentalExtensions RentalExtension[]
 
   @@map("users")
-}
-
-model Card {
-  id           String   @id @default(cuid())
-  userId       String   @map("user_id")
-  cardNumber   String   @map("card_number")
-  cardHolder   String   @map("card_holder")
-  expiryMonth  Int      @map("expiry_month")
-  expiryYear   Int      @map("expiry_year")
-  cardType     String   @default("unknown") @map("card_type")
-  isDefault    Boolean  @default(false) @map("is_default")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("cards")
 }
 
 model Session {

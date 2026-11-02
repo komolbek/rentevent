@@ -6,18 +6,29 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { Prisma, OrderStatus, PaymentMethod } from '@rentevent/db';
+import { priceOrder } from './order-pricing';
 
-interface CreateOrderDto {
+const MAX_ORDER_ITEMS = 100;
+const MAX_ITEM_QUANTITY = 10000;
+const MAX_RENTAL_DAYS = 90;
+
+/** The part of an order body that decides availability and price. */
+interface CartDto {
   items: { product_id: string; quantity: number }[];
   rental_start_date: string;
   rental_end_date: string;
+  /** The fair the order is for: its per-product event prices apply. */
+  event_id?: string;
+}
+
+export type QuoteOrderDto = CartDto;
+
+interface CreateOrderDto extends CartDto {
   delivery_type: 'DELIVERY' | 'SELF_PICKUP';
   delivery_address_id?: string;
   payment_method: string;
   company_name?: string;
   company_inn?: string;
-  /** The fair the order is for: its per-product event prices apply. */
-  event_id?: string;
   notes?: string;
 }
 
@@ -31,33 +42,34 @@ interface ListOrdersDto {
 export class OrdersService {
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Prices a cart exactly as createOrder would, without writing anything:
+   * same item/date validation, same availability check, same pricing code.
+   * Fields that only matter when placing the order (delivery, payment,
+   * company) are not needed here and are ignored.
+   */
+  async quoteOrder(dto: QuoteOrderDto) {
+    const { startDate, rentalDays } = this.parseCart(dto);
+    const priced = await this.priceCart(this.prisma, dto, startDate, rentalDays);
+    return {
+      items: priced.items.map((i) => ({
+        productId: i.productId,
+        quantity: i.quantity,
+        dailyPrice: i.dailyPrice,
+        totalPrice: i.totalPrice,
+        savings: i.savings,
+      })),
+      rentalDays,
+      subtotal: priced.subtotal,
+      deliveryFee: 0,
+      totalAmount: priced.totalAmount,
+      totalSavings: priced.totalSavings,
+    };
+  }
+
   async createOrder(userId: string, dto: CreateOrderDto) {
     // --- Validate inputs ---
-    if (!dto.items || dto.items.length === 0) {
-      throw new BadRequestException('Order must contain at least one item');
-    }
-
-    const startDate = new Date(dto.rental_start_date);
-    const endDate = new Date(dto.rental_end_date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      throw new BadRequestException('Invalid date format');
-    }
-
-    const startDay = new Date(startDate);
-    startDay.setHours(0, 0, 0, 0);
-
-    if (startDay < today) {
-      throw new BadRequestException('Rental start date must be today or later');
-    }
-
-    // Rental dates are whole days and both ends are included — the way the
-    // storefront counts them — so a one-day rental has start == end.
-    if (endDate < startDate) {
-      throw new BadRequestException('Rental end date must not be before start date');
-    }
+    const { startDate, endDate, rentalDays } = this.parseCart(dto);
 
     if (dto.delivery_type === 'DELIVERY' && !dto.delivery_address_id) {
       throw new BadRequestException(
@@ -83,173 +95,11 @@ export class OrdersService {
       }
     }
 
-    const rentalDays =
-      Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-
     // --- Execute in SERIALIZABLE transaction ---
     return this.prisma.$transaction(
       async (tx) => {
-        // Load and lock products
-        const productIds = dto.items.map((i) => i.product_id);
-        const products = await tx.product.findMany({
-          where: { id: { in: productIds }, isActive: true, deletedAt: null },
-          include: { pricingTiers: true, quantityPricing: true },
-        });
-
-        if (products.length !== productIds.length) {
-          throw new BadRequestException(
-            'One or more products not found or inactive',
-          );
-        }
-
-        const productMap = new Map(products.map((p) => [p.id, p]));
-
-        // Event prices replace the product's own price (and its tiers) for
-        // the products the event lists; everything else keeps normal pricing.
-        const event = dto.event_id
-          ? await tx.event.findFirst({
-              where: { id: dto.event_id, isActive: true },
-              include: { productPrices: { where: { productId: { in: productIds } } } },
-            })
-          : null;
-        if (dto.event_id && !event) {
-          throw new BadRequestException('Event not found');
-        }
-        // Only rows with a price — a row may just mark a product as recommended.
-        const eventPriceMap = new Map(
-          (event?.productPrices ?? [])
-            .filter((ep) => ep.price != null)
-            .map((ep) => [ep.productId, ep.price as number]),
-        );
-        // FLAT: the event price covers the whole fair, whatever the day count.
-        const flat = event?.priceMode === 'FLAT';
-
-        // Check availability for each day in rental period
-        for (const item of dto.items) {
-          const product = productMap.get(item.product_id)!;
-
-          if (rentalDays < product.minRentalDays) {
-            throw new BadRequestException(
-              `Minimum rental period for "${product.name}" is ${product.minRentalDays} day(s)`,
-            );
-          }
-          if (rentalDays > product.maxRentalDays) {
-            throw new BadRequestException(
-              `Maximum rental period for "${product.name}" is ${product.maxRentalDays} day(s)`,
-            );
-          }
-
-          // Check stock for each day in the rental window
-          for (let d = 0; d < rentalDays; d++) {
-            const checkDate = new Date(startDate);
-            checkDate.setDate(checkDate.getDate() + d);
-
-            const dayStart = new Date(checkDate);
-            dayStart.setHours(0, 0, 0, 0);
-            const dayEnd = new Date(checkDate);
-            dayEnd.setHours(23, 59, 59, 999);
-
-            const reservedResult = await tx.orderItem.aggregate({
-              where: {
-                productId: product.id,
-                order: {
-                  status: { notIn: ['CANCELLED', 'RETURNED'] },
-                  rentalStartDate: { lte: dayEnd },
-                  // Inclusive end: an order ending today still holds its units today.
-                  rentalEndDate: { gte: dayStart },
-                },
-              },
-              _sum: { quantity: true },
-            });
-
-            const reserved = reservedResult._sum.quantity || 0;
-            const available = product.totalStock - reserved;
-
-            if (item.quantity > available) {
-              throw new BadRequestException(
-                `Not enough stock for "${product.name}" on ${dayStart.toISOString().split('T')[0]}. Available: ${available}, requested: ${item.quantity}`,
-              );
-            }
-          }
-        }
-
-        // Calculate prices
-        let subtotal = 0;
-        let totalSavings = 0;
-        const orderItemsData: {
-          productId: string;
-          productName: string;
-          productPhoto: string | null;
-          quantity: number;
-          dailyPrice: number;
-          totalPrice: number;
-          savings: number;
-        }[] = [];
-
-        for (const item of dto.items) {
-          const product = productMap.get(item.product_id)!;
-
-          const eventPrice = eventPriceMap.get(product.id);
-          if (eventPrice !== undefined) {
-            const itemTotal = flat
-              ? eventPrice * item.quantity
-              : eventPrice * rentalDays * item.quantity;
-            subtotal += itemTotal;
-            orderItemsData.push({
-              productId: product.id,
-              productName: product.name,
-              productPhoto: product.photos[0] || null,
-              quantity: item.quantity,
-              // Per-day equivalent, so "qty × daily × days" still adds up in admin.
-              dailyPrice: flat ? Math.round(eventPrice / rentalDays) : eventPrice,
-              totalPrice: itemTotal,
-              savings: 0,
-            });
-            continue;
-          }
-
-          // Determine per-unit price from pricing tiers
-          let unitPrice: number;
-          const matchingTier = product.pricingTiers
-            .filter((t) => t.days <= rentalDays)
-            .sort((a, b) => b.days - a.days)[0];
-
-          if (matchingTier) {
-            unitPrice = matchingTier.totalPrice;
-          } else {
-            unitPrice = product.dailyPrice * rentalDays;
-          }
-
-          // Apply quantity pricing discount
-          const matchingQty = product.quantityPricing
-            .filter((q) => q.quantity <= item.quantity)
-            .sort((a, b) => b.quantity - a.quantity)[0];
-
-          let itemTotal: number;
-          const baseTotal = unitPrice * item.quantity;
-
-          if (matchingQty) {
-            itemTotal = matchingQty.totalPrice * rentalDays;
-          } else {
-            itemTotal = baseTotal;
-          }
-
-          const savings = baseTotal - itemTotal;
-          subtotal += itemTotal;
-          totalSavings += savings;
-
-          orderItemsData.push({
-            productId: product.id,
-            productName: product.name,
-            productPhoto: product.photos[0] || null,
-            quantity: item.quantity,
-            dailyPrice: product.dailyPrice,
-            totalPrice: itemTotal,
-            savings,
-          });
-        }
-
-        const totalAmount = subtotal;
+        const { subtotal, totalAmount, totalSavings, items: orderItemsData, eventId } =
+          await this.priceCart(tx, dto, startDate, rentalDays);
 
         // Generate order number: RE-YYYYMMDD-NNN
         const dateStr = new Date()
@@ -294,7 +144,7 @@ export class OrdersService {
             companyName: companyName || null,
             companyInn: companyInn || null,
             corporateInvoiceStatus: isBankTransfer ? 'PENDING' : null,
-            eventId: event?.id ?? null,
+            eventId,
             notes: dto.notes || null,
             items: {
               create: orderItemsData,
@@ -318,6 +168,162 @@ export class OrdersService {
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       },
     );
+  }
+
+  /** Validates the items and the rental period shared by create and quote. */
+  private parseCart(dto: CartDto) {
+    if (!Array.isArray(dto.items) || dto.items.length === 0) {
+      throw new BadRequestException('Order must contain at least one item');
+    }
+    if (dto.items.length > MAX_ORDER_ITEMS) {
+      throw new BadRequestException(`An order can have at most ${MAX_ORDER_ITEMS} items`);
+    }
+    for (const item of dto.items) {
+      if (!item || typeof item.product_id !== 'string' || !item.product_id) {
+        throw new BadRequestException('Each item needs a product_id');
+      }
+      if (
+        !Number.isInteger(item.quantity) ||
+        item.quantity < 1 ||
+        item.quantity > MAX_ITEM_QUANTITY
+      ) {
+        throw new BadRequestException(
+          `Quantity must be a whole number from 1 to ${MAX_ITEM_QUANTITY}`,
+        );
+      }
+    }
+
+    const startDate = new Date(dto.rental_start_date);
+    const endDate = new Date(dto.rental_end_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      throw new BadRequestException('Invalid date format');
+    }
+
+    const startDay = new Date(startDate);
+    startDay.setHours(0, 0, 0, 0);
+
+    if (startDay < today) {
+      throw new BadRequestException('Rental start date must be today or later');
+    }
+
+    // Rental dates are whole days and both ends are included — the way the
+    // storefront counts them — so a one-day rental has start == end.
+    if (endDate < startDate) {
+      throw new BadRequestException('Rental end date must not be before start date');
+    }
+
+    const rentalDays =
+      Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    // Bounds the per-day stock check (items × days queries).
+    if (rentalDays > MAX_RENTAL_DAYS) {
+      throw new BadRequestException(`Rental period can be at most ${MAX_RENTAL_DAYS} days`);
+    }
+
+    return { startDate, endDate, rentalDays };
+  }
+
+  /**
+   * Loads products and the event, checks rental limits and stock for every
+   * day, then prices the cart. Read-only: createOrder runs it inside its
+   * transaction, quoteOrder on the plain client.
+   */
+  private async priceCart(
+    db: Prisma.TransactionClient,
+    dto: CartDto,
+    startDate: Date,
+    rentalDays: number,
+  ) {
+    const productIds = dto.items.map((i) => i.product_id);
+    const products = await db.product.findMany({
+      where: { id: { in: productIds }, isActive: true, deletedAt: null },
+      include: { pricingTiers: true, quantityPricing: true },
+    });
+
+    if (products.length !== productIds.length) {
+      throw new BadRequestException(
+        'One or more products not found or inactive',
+      );
+    }
+
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    const event = dto.event_id
+      ? await db.event.findFirst({
+          where: { id: dto.event_id, isActive: true },
+          include: { productPrices: { where: { productId: { in: productIds } } } },
+        })
+      : null;
+    if (dto.event_id && !event) {
+      throw new BadRequestException('Event not found');
+    }
+    // Only rows with a price — a row may just mark a product as recommended.
+    const eventPrices = new Map(
+      (event?.productPrices ?? [])
+        .filter((ep) => ep.price != null)
+        .map((ep) => [ep.productId, ep.price as number]),
+    );
+
+    // Check availability for each day in rental period
+    for (const item of dto.items) {
+      const product = productMap.get(item.product_id)!;
+
+      if (rentalDays < product.minRentalDays) {
+        throw new BadRequestException(
+          `Minimum rental period for "${product.name}" is ${product.minRentalDays} day(s)`,
+        );
+      }
+      if (rentalDays > product.maxRentalDays) {
+        throw new BadRequestException(
+          `Maximum rental period for "${product.name}" is ${product.maxRentalDays} day(s)`,
+        );
+      }
+
+      // Check stock for each day in the rental window
+      for (let d = 0; d < rentalDays; d++) {
+        const checkDate = new Date(startDate);
+        checkDate.setDate(checkDate.getDate() + d);
+
+        const dayStart = new Date(checkDate);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(checkDate);
+        dayEnd.setHours(23, 59, 59, 999);
+
+        const reservedResult = await db.orderItem.aggregate({
+          where: {
+            productId: product.id,
+            order: {
+              status: { notIn: ['CANCELLED', 'RETURNED'] },
+              rentalStartDate: { lte: dayEnd },
+              // Inclusive end: an order ending today still holds its units today.
+              rentalEndDate: { gte: dayStart },
+            },
+          },
+          _sum: { quantity: true },
+        });
+
+        const reserved = reservedResult._sum.quantity || 0;
+        const available = product.totalStock - reserved;
+
+        if (item.quantity > available) {
+          throw new BadRequestException(
+            `Not enough stock for "${product.name}" on ${dayStart.toISOString().split('T')[0]}. Available: ${available}, requested: ${item.quantity}`,
+          );
+        }
+      }
+    }
+
+    const priced = priceOrder({
+      items: dto.items,
+      products: productMap,
+      rentalDays,
+      eventPrices,
+      flat: event?.priceMode === 'FLAT',
+    });
+
+    return { ...priced, eventId: event?.id ?? null };
   }
 
   async getMyOrders(

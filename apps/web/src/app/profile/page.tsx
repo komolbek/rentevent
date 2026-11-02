@@ -7,7 +7,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   User,
   MapPin,
-  CreditCard,
   Heart,
   Package,
   ChevronRight,
@@ -45,12 +44,6 @@ function ProfilePageContent() {
   const { data: addresses, isLoading: addressesLoading } = useQuery({
     queryKey: ['addresses'],
     queryFn: userApi.getAddresses,
-  });
-
-  // Fetch cards
-  const { data: cards, isLoading: cardsLoading } = useQuery({
-    queryKey: ['cards'],
-    queryFn: userApi.getCards,
   });
 
   // Delete address mutation
@@ -264,49 +257,6 @@ function ProfilePageContent() {
                 >
                   {t('profile.add_address')}
                 </Button>
-              </Card>
-            )}
-          </Reveal>
-
-          {/* Cards */}
-          <Reveal>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">{t('profile.payment_methods')}</h3>
-            </div>
-
-            {cardsLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-20" />
-              </div>
-            ) : cards && cards.length > 0 ? (
-              <div className="space-y-3">
-                {cards.map((card) => (
-                  <Card key={card.id} className="p-4">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <CreditCard className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{card.cardType}</p>
-                        <p className="text-sm text-muted-foreground">
-                          •••• {card.cardNumber.slice(-4)}
-                        </p>
-                      </div>
-                      {card.isDefault && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary-text">
-                          {t('profile.default')}
-                        </span>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card className="p-6 text-center">
-                <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  {t('profile.cards_auto_added')}
-                </p>
               </Card>
             )}
           </Reveal>

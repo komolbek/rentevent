@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
-import { OrdersController } from './orders.controller';
+import { OrdersController, OrderQuoteController } from './orders.controller';
+import { RateLimitService } from '../common/rate-limit.service';
 import { OrdersService } from './orders.service';
 
 @Module({
-  controllers: [OrdersController],
-  providers: [OrdersService],
+  controllers: [OrderQuoteController, OrdersController],
+  providers: [OrdersService, RateLimitService],
   exports: [OrdersService],
 })
 export class OrdersModule {}

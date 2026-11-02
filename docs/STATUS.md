@@ -1,5 +1,5 @@
 # Status — rentevent
-Updated: 2026-10-29
+Updated: 2026-11-02
 
 **Stage:** MVP (production services live on Railway; storefront behind a "coming soon" gate)
 
@@ -16,7 +16,10 @@ Updated: 2026-10-29
   README rewritten; obsolete `origin/dev` deleted.
 
 ## In progress
-- Nothing open. Branch `main` only.
+- Branch `claude/ios-backend-tasks-657569` (for the iOS app, not merged): `POST /orders/quote`
+  (public, rate-limited; `docs/spec/order-quote.md`), `DELETE /user/profile` (anonymize;
+  `docs/spec/account-deletion.md`), `/privacy` `/terms` `/contacts` open while gated,
+  `/user/cards` and the `Card` model removed. Prod `cards` drop: `docs/ops/drop-cards-table.md`.
 
 ## Next
 - Decide go-live: set `SITE_GATE_ENABLED=false` on the RentEvent Web service.
@@ -24,6 +27,8 @@ Updated: 2026-10-29
 - Migration tracking for prod DB (today `prisma db push` by hand, see CLAUDE.md rule 2).
 
 ## Waiting on
+- Owner: OK to merge the branch above, then OK to drop prod `cards` (`docs/ops/drop-cards-table.md`).
+- Owner/legal: retention of anonymized orders and `orders.notes` (`docs/spec/account-deletion.md`).
 - Owner: CI uses `pnpm install --no-frozen-lockfile` and the Dockerfiles likewise; frozen
   lockfile passes locally. Switch? (deploy/CI config, not done here)
 - Owner: client contact person, language and contract terms for `docs/client/brief.md`.
@@ -32,7 +37,7 @@ Updated: 2026-10-29
 ## Known issues
 - No root `typecheck` script; `build` (nest build / next build) is the type check.
 - Lint: 1 warning, unused `body` in `apps/api/src/admin/admin-reviews.controller.ts:49`.
-- Tests exist only in `apps/api` (11 tests); web and admin have none.
+- Tests exist only in `apps/api`; web and admin have none.
 - Admin sends snake_case + REST; the API was written camelCase. No global transform: each admin
   endpoint maps fields itself. A new admin page that "won't save" or shows blank fields: suspect this.
 - `prisma/migrations/` is gitignored and prod is not migration-tracked.

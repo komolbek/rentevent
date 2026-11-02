@@ -315,8 +315,6 @@ const ru = {
   'profile.default': 'По умолчанию',
   'profile.set_default': 'Сделать по умолчанию',
   'profile.no_addresses': 'Нет сохранённых адресов',
-  'profile.payment_methods': 'Способы оплаты',
-  'profile.cards_auto_added': 'Карты добавляются автоматически при оплате',
   'profile.my_orders': 'Мои заказы',
   'profile.orders_description': 'История и статус заказов',
   'profile.favorites': 'Избранное',
