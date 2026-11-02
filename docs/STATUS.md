@@ -16,7 +16,7 @@ Updated: 2026-11-02
   README rewritten; obsolete `origin/dev` deleted.
 
 ## In progress
-- Branch `claude/ios-backend-tasks-657569` (for the iOS app, not merged): `POST /orders/quote`
+- 2026-11-02: merged to local `main` (not pushed/deployed), for the iOS app: `POST /orders/quote`
   (public, rate-limited; `docs/spec/order-quote.md`), `DELETE /user/profile` (anonymize;
   `docs/spec/account-deletion.md`), `/privacy` `/terms` `/contacts` open while gated,
   `/user/cards` and the `Card` model removed. Prod `cards` drop: `docs/ops/drop-cards-table.md`.
@@ -27,7 +27,7 @@ Updated: 2026-11-02
 - Migration tracking for prod DB (today `prisma db push` by hand, see CLAUDE.md rule 2).
 
 ## Waiting on
-- Owner: OK to merge the branch above, then OK to drop prod `cards` (`docs/ops/drop-cards-table.md`).
+- Owner: OK to push/deploy the merge above, then OK to drop prod `cards` (`docs/ops/drop-cards-table.md`).
 - Owner/legal: retention of anonymized orders and `orders.notes` (`docs/spec/account-deletion.md`).
 - Owner: CI uses `pnpm install --no-frozen-lockfile` and the Dockerfiles likewise; frozen
   lockfile passes locally. Switch? (deploy/CI config, not done here)
