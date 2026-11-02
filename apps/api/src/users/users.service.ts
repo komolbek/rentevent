@@ -5,6 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import * as crypto from 'crypto';
+import { Prisma } from '@rentevent/db';
 import { PrismaService } from '../common/prisma.service';
 
 const TASHKENT_BOUNDS = {
@@ -69,43 +70,49 @@ export class UsersService {
    * removed and every session is revoked.
    */
   async deleteAccount(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || user.deletedAt) {
-      throw new NotFoundException('User not found');
-    }
+    // SERIALIZABLE, with the open-order check inside: an order placed on
+    // another device at the same moment either makes this fail or conflicts
+    // and rolls back; it can never be left open on a deleted account.
+    await this.prisma.$transaction(
+      async (tx) => {
+        const user = await tx.user.findUnique({ where: { id: userId } });
+        if (!user || user.deletedAt) {
+          throw new NotFoundException('User not found');
+        }
 
-    const openOrders = await this.prisma.order.count({
-      where: { userId, deletedAt: null, status: { in: [...OPEN_ORDER_STATUSES] } },
-    });
-    if (openOrders > 0) {
-      throw new ConflictException(
-        'Account has orders in progress. Cancel them or wait until they are returned.',
-      );
-    }
+        const openOrders = await tx.order.count({
+          where: { userId, deletedAt: null, status: { in: [...OPEN_ORDER_STATUSES] } },
+        });
+        if (openOrders > 0) {
+          throw new ConflictException(
+            'Account has orders in progress. Cancel them or wait until they are returned.',
+          );
+        }
 
-    await this.prisma.$transaction([
-      this.prisma.session.deleteMany({ where: { userId } }),
-      // Orders keep their numbers and amounts but lose the link to the address.
-      this.prisma.order.updateMany({
-        where: { userId, deliveryAddressId: { not: null } },
-        data: { deliveryAddressId: null },
-      }),
-      this.prisma.address.deleteMany({ where: { userId } }),
-      this.prisma.favorite.deleteMany({ where: { userId } }),
-      this.prisma.review.deleteMany({ where: { userId } }),
-      this.prisma.notification.deleteMany({ where: { userId } }),
-      this.prisma.user.update({
-        where: { id: userId },
-        data: {
-          // Frees the number (unique) so the person can sign up again later
-          // as a new, empty account; the placeholder is not a phone number.
-          phoneNumber: `deleted:${userId}:${crypto.randomBytes(6).toString('hex')}`,
-          name: null,
-          isActive: false,
-          deletedAt: new Date(),
-        },
-      }),
-    ]);
+        await tx.session.deleteMany({ where: { userId } });
+        // Orders keep their numbers and amounts but lose the link to the address.
+        await tx.order.updateMany({
+          where: { userId, deliveryAddressId: { not: null } },
+          data: { deliveryAddressId: null },
+        });
+        await tx.address.deleteMany({ where: { userId } });
+        await tx.favorite.deleteMany({ where: { userId } });
+        await tx.review.deleteMany({ where: { userId } });
+        await tx.notification.deleteMany({ where: { userId } });
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            // Frees the number (unique) so the person can sign up again later
+            // as a new, empty account; the placeholder is not a phone number.
+            phoneNumber: `deleted:${userId}:${crypto.randomBytes(6).toString('hex')}`,
+            name: null,
+            isActive: false,
+            deletedAt: new Date(),
+          },
+        });
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
 
     return { success: true };
   }

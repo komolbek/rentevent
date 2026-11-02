@@ -27,11 +27,16 @@ reattached.
 - `409` while the account has orders in `CONFIRMED`, `PREPARING` or `DELIVERED`: the equipment
   is still out or about to be. The client shows the message and offers to cancel or wait.
 - `404` if the account is already deleted (cannot normally happen: its sessions are gone).
-- Everything runs in one transaction.
+- Everything, including the open-order check, runs in one SERIALIZABLE transaction. An order
+  placed on another device at the same moment makes one of the two fail (Prisma `P2034`,
+  served as 500); the client retries. An order is never left open on a deleted account.
 - Response: `{ success: true }` (wrapped by the global response interceptor).
 
 ## Open points (owner / legal)
 - Retention: how long anonymized orders are kept, and whether `orders.notes` should be cleared
   too. Not decided; the privacy page already promises the right to delete data (`privacy.s6`).
 - Admin "Customers" hides deleted users (`deleted_at` filter); their orders still show in
-  "Orders" with no name or phone.
+  "Orders" with no name and the phone field showing the `deleted:<id>:<hex>` placeholder.
+- Not checked before deleting: open return requests, pending rental extensions, and RETURNED
+  orders with an unpaid damage fee. Such an account can be deleted and its orders lose the
+  address link (orders keep no copy of the address). To decide before the iOS release.

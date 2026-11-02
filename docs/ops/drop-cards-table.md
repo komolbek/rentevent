@@ -19,8 +19,8 @@ calls `GET /user/cards`). So:
 2. Check `https://api.rentevent.uz/api/products?limit=1` → 200 and
    `https://api.rentevent.uz/api/user/cards` → 404 (route gone).
 3. Then drop the table (steps below). Until then, any `prisma db push` from `packages/db` will
-   stop and ask to drop `cards`: that prompt is this step, do not accept it by accident during
-   unrelated work.
+   stop and ask to drop `cards`: do not accept that prompt during unrelated work, and never
+   use `--accept-data-loss` for this; it applies every schema difference at once.
 
 ## Prod steps (owner runs, or OKs in chat first)
 From `packages/db`, with `DATABASE_URL` set to the Railway Postgres public URL:
@@ -33,10 +33,21 @@ If `unmasked` is not 0, stop and tell the owner: that means full PANs were store
 reportable incident to discuss before deleting (no export of those rows).
 
 ```bash
-# 2. Apply the schema (drops "cards"; Prisma asks for confirmation of data loss).
-pnpm prisma db push --accept-data-loss
+# 2. Show what the schema change would do to prod. Read-only: prints SQL, applies nothing.
+pnpm prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --script
+```
+The output must be exactly the `cards` drop (checked offline against the pre-change schema):
+`ALTER TABLE "public"."cards" DROP CONSTRAINT "cards_user_id_fkey";` and
+`DROP TABLE "public"."cards";`, nothing else. If anything else shows up,
+prod has drifted from `main`: stop and resolve that first, because the next command applies
+every difference, not only this one.
 
-# 3. Verify.
+```bash
+# 3. Drop the table with exactly that SQL (no `db push --accept-data-loss`).
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c 'BEGIN; DROP TABLE "cards"; COMMIT;'
+
+# 4. Verify: the diff is now empty, the table is gone, the API is healthy.
+pnpm prisma migrate diff --from-url "$DATABASE_URL" --to-schema-datamodel prisma/schema.prisma --script   # expect: -- This is an empty migration.
 psql "$DATABASE_URL" -c "select to_regclass('public.cards');"   # expect: null (empty)
 curl -s -o /dev/null -w '%{http_code}\n' 'https://api.rentevent.uz/api/products?limit=1'  # 200
 ```
