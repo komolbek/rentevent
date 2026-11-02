@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
+import * as crypto from 'crypto';
 import { PrismaService } from '../common/prisma.service';
 
 const TASHKENT_BOUNDS = {
@@ -12,7 +13,9 @@ const TASHKENT_BOUNDS = {
 };
 
 const MAX_ADDRESSES = 5;
-const MAX_CARDS = 5;
+
+/** Orders still in progress: the account cannot be deleted until they finish. */
+const OPEN_ORDER_STATUSES = ['CONFIRMED', 'PREPARING', 'DELIVERED'] as const;
 
 @Injectable()
 export class UsersService {
@@ -57,6 +60,54 @@ export class UsersService {
     });
 
     return user;
+  }
+
+  /**
+   * Deletes the account by anonymizing it (docs/spec/account-deletion.md).
+   * Orders, items, returns and extensions stay for accounting and keep
+   * pointing at the user row; everything that identifies the person is
+   * removed and every session is revoked.
+   */
+  async deleteAccount(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.deletedAt) {
+      throw new NotFoundException('User not found');
+    }
+
+    const openOrders = await this.prisma.order.count({
+      where: { userId, deletedAt: null, status: { in: [...OPEN_ORDER_STATUSES] } },
+    });
+    if (openOrders > 0) {
+      throw new ConflictException(
+        'Account has orders in progress. Cancel them or wait until they are returned.',
+      );
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.session.deleteMany({ where: { userId } }),
+      // Orders keep their numbers and amounts but lose the link to the address.
+      this.prisma.order.updateMany({
+        where: { userId, deliveryAddressId: { not: null } },
+        data: { deliveryAddressId: null },
+      }),
+      this.prisma.address.deleteMany({ where: { userId } }),
+      this.prisma.favorite.deleteMany({ where: { userId } }),
+      this.prisma.review.deleteMany({ where: { userId } }),
+      this.prisma.notification.deleteMany({ where: { userId } }),
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          // Frees the number (unique) so the person can sign up again later
+          // as a new, empty account; the placeholder is not a phone number.
+          phoneNumber: `deleted:${userId}:${crypto.randomBytes(6).toString('hex')}`,
+          name: null,
+          isActive: false,
+          deletedAt: new Date(),
+        },
+      }),
+    ]);
+
+    return { success: true };
   }
 
   // ==================== ADDRESSES ====================
@@ -174,123 +225,6 @@ export class UsersService {
     return { success: true };
   }
 
-  // ==================== CARDS ====================
-
-  async getCards(userId: string) {
-    return this.prisma.card.findMany({
-      where: { userId },
-      orderBy: [{ isDefault: 'desc' }, { createdAt: 'desc' }],
-    });
-  }
-
-  async addCard(
-    userId: string,
-    data: {
-      card_number: string;
-      card_holder: string;
-      expiry_month: number;
-      expiry_year: number;
-    },
-  ) {
-    const count = await this.prisma.card.count({ where: { userId } });
-    if (count >= MAX_CARDS) {
-      throw new BadRequestException(`Maximum of ${MAX_CARDS} cards allowed`);
-    }
-
-    const cleanNumber = data.card_number.replace(/\s+/g, '');
-
-    if (!/^\d{16}$/.test(cleanNumber)) {
-      throw new BadRequestException('Card number must be 16 digits');
-    }
-
-    if (!this.luhnCheck(cleanNumber)) {
-      throw new BadRequestException('Invalid card number');
-    }
-
-    if (
-      data.expiry_month < 1 ||
-      data.expiry_month > 12 ||
-      data.expiry_year < new Date().getFullYear() % 100
-    ) {
-      throw new BadRequestException('Invalid expiry date');
-    }
-
-    const cardType = this.detectCardType(cleanNumber);
-    const maskedNumber = `**** **** **** ${cleanNumber.slice(-4)}`;
-
-    const isFirst = count === 0;
-
-    if (isFirst) {
-      await this.prisma.card.updateMany({
-        where: { userId, isDefault: true },
-        data: { isDefault: false },
-      });
-    }
-
-    return this.prisma.card.create({
-      data: {
-        userId,
-        cardNumber: maskedNumber,
-        cardHolder: data.card_holder.trim(),
-        expiryMonth: data.expiry_month,
-        expiryYear: data.expiry_year,
-        cardType,
-        isDefault: isFirst,
-      },
-    });
-  }
-
-  async deleteCard(userId: string, cardId: string) {
-    const card = await this.prisma.card.findFirst({
-      where: { id: cardId, userId },
-    });
-
-    if (!card) {
-      throw new NotFoundException('Card not found');
-    }
-
-    await this.prisma.card.delete({ where: { id: cardId } });
-
-    if (card.isDefault) {
-      const nextDefault = await this.prisma.card.findFirst({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-      });
-
-      if (nextDefault) {
-        await this.prisma.card.update({
-          where: { id: nextDefault.id },
-          data: { isDefault: true },
-        });
-      }
-    }
-
-    return { success: true };
-  }
-
-  async setDefaultCard(userId: string, cardId: string) {
-    const card = await this.prisma.card.findFirst({
-      where: { id: cardId, userId },
-    });
-
-    if (!card) {
-      throw new NotFoundException('Card not found');
-    }
-
-    await this.prisma.$transaction([
-      this.prisma.card.updateMany({
-        where: { userId, isDefault: true },
-        data: { isDefault: false },
-      }),
-      this.prisma.card.update({
-        where: { id: cardId },
-        data: { isDefault: true },
-      }),
-    ]);
-
-    return { success: true };
-  }
-
   // ==================== FAVORITES ====================
 
   async getFavorites(userId: string) {
@@ -368,34 +302,5 @@ export class UsersService {
         'Address coordinates must be within Tashkent bounds',
       );
     }
-  }
-
-  private luhnCheck(cardNumber: string): boolean {
-    let sum = 0;
-    let alternate = false;
-
-    for (let i = cardNumber.length - 1; i >= 0; i--) {
-      let n = parseInt(cardNumber[i], 10);
-
-      if (alternate) {
-        n *= 2;
-        if (n > 9) {
-          n -= 9;
-        }
-      }
-
-      sum += n;
-      alternate = !alternate;
-    }
-
-    return sum % 10 === 0;
-  }
-
-  private detectCardType(cardNumber: string): string {
-    if (cardNumber.startsWith('9860')) return 'HUMO';
-    if (cardNumber.startsWith('8600')) return 'UZCARD';
-    if (cardNumber.startsWith('4')) return 'VISA';
-    if (cardNumber.startsWith('5')) return 'MASTERCARD';
-    return 'UNKNOWN';
   }
 }

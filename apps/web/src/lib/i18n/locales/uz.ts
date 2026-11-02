@@ -317,8 +317,6 @@ const uz: Record<TranslationKey, string> = {
   'profile.default': 'Asosiy',
   'profile.set_default': 'Asosiy qilish',
   'profile.no_addresses': 'Saqlangan manzillar yo\'q',
-  'profile.payment_methods': 'To\'lov usullari',
-  'profile.cards_auto_added': 'Kartalar to\'lov paytida avtomatik qo\'shiladi',
   'profile.my_orders': 'Buyurtmalarim',
   'profile.orders_description': 'Buyurtmalar tarixi va holati',
   'profile.favorites': 'Sevimlilar',

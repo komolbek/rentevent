@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { ACCESS_COOKIE, verifyAccessToken } from '@/lib/gate';
 
+// Legal and contact pages stay public while the store is gated: the iOS app
+// and App Store review link to them. Locale is not in the URL, so these
+// paths cover RU, UZ and EN.
+const GATE_EXEMPT_PAGES = ['/privacy', '/terms', '/contacts'];
+
 const PROTECTED_ROUTES = [
   '/checkout',
   '/profile',
@@ -22,6 +27,7 @@ export async function middleware(request: NextRequest) {
       pathname === '/coming-soon' ||
       // The home page QR code: a phone scanning it must reach the store.
       pathname === '/app' ||
+      GATE_EXEMPT_PAGES.includes(pathname.replace(/\/$/, '')) ||
       pathname.startsWith('/api/access') ||
       pathname.startsWith('/_next/') ||
       pathname === '/favicon.ico' ||

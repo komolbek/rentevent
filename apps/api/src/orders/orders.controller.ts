@@ -6,11 +6,49 @@ import {
   Body,
   Query,
   UseGuards,
+  Req,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { OrdersService } from './orders.service';
+import { OrdersService, QuoteOrderDto } from './orders.service';
 import { UserAuthGuard } from '../common/guards/user-auth.guard';
 import { UserId } from '../common/decorators';
+import { RateLimitService } from '../common/rate-limit.service';
+import { clientIp } from '../common/client-ip';
+
+/** Quotes need no account (a guest cart shows totals too), so they are rate-limited per IP. */
+const QUOTE_LIMIT = { max: 30, windowMs: 60 * 1000 };
+
+@ApiTags('Orders')
+@Controller('orders')
+export class OrderQuoteController {
+  constructor(
+    private ordersService: OrdersService,
+    private rateLimitService: RateLimitService,
+  ) {}
+
+  @Post('quote')
+  @ApiOperation({
+    summary: 'Price a cart without creating an order',
+    description:
+      'Same body as POST /orders; delivery, payment and company fields are ignored. ' +
+      'Runs the same validation, availability check and pricing as order creation and writes nothing.',
+  })
+  async quote(@Req() req: Request, @Body() body: QuoteOrderDto) {
+    const limit = this.rateLimitService.check(
+      'order_quote',
+      clientIp(req),
+      QUOTE_LIMIT.max,
+      QUOTE_LIMIT.windowMs,
+    );
+    if (!limit.allowed) {
+      throw new HttpException('Too many requests', HttpStatus.TOO_MANY_REQUESTS);
+    }
+    return this.ordersService.quoteOrder(body ?? ({} as QuoteOrderDto));
+  }
+}
 
 @ApiTags('Orders')
 @ApiBearerAuth()

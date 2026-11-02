@@ -317,8 +317,6 @@ const en: Record<TranslationKey, string> = {
   'profile.default': 'Default',
   'profile.set_default': 'Set as default',
   'profile.no_addresses': 'No saved addresses',
-  'profile.payment_methods': 'Payment methods',
-  'profile.cards_auto_added': 'Cards are added automatically during payment',
   'profile.my_orders': 'My orders',
   'profile.orders_description': 'Order history and status',
   'profile.favorites': 'Favorites',

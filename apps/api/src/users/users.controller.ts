@@ -36,6 +36,17 @@ export class UsersController {
     return this.usersService.updateProfile(userId, body.name);
   }
 
+  @Delete('profile')
+  @ApiOperation({
+    summary: 'Delete the current account',
+    description:
+      'Anonymizes the account and revokes all its sessions. Orders are kept for accounting. ' +
+      '409 while the account has orders in progress (CONFIRMED, PREPARING, DELIVERED).',
+  })
+  async deleteProfile(@UserId() userId: string) {
+    return this.usersService.deleteAccount(userId);
+  }
+
   // ==================== ADDRESSES ====================
 
   @Get('addresses')
@@ -83,47 +94,6 @@ export class UsersController {
     @Param('addressId') addressId: string,
   ) {
     return this.usersService.setDefaultAddress(userId, addressId);
-  }
-
-  // ==================== CARDS ====================
-
-  @Get('cards')
-  @ApiOperation({ summary: 'List payment cards' })
-  async getCards(@UserId() userId: string) {
-    return this.usersService.getCards(userId);
-  }
-
-  @Post('cards')
-  @ApiOperation({ summary: 'Add a payment card (max 5)' })
-  async addCard(
-    @UserId() userId: string,
-    @Body()
-    body: {
-      card_number: string;
-      card_holder: string;
-      expiry_month: number;
-      expiry_year: number;
-    },
-  ) {
-    return this.usersService.addCard(userId, body);
-  }
-
-  @Delete('cards/:cardId')
-  @ApiOperation({ summary: 'Delete a payment card' })
-  async deleteCard(
-    @UserId() userId: string,
-    @Param('cardId') cardId: string,
-  ) {
-    return this.usersService.deleteCard(userId, cardId);
-  }
-
-  @Post('cards/:cardId/default')
-  @ApiOperation({ summary: 'Set a card as default' })
-  async setDefaultCard(
-    @UserId() userId: string,
-    @Param('cardId') cardId: string,
-  ) {
-    return this.usersService.setDefaultCard(userId, cardId);
   }
 
   // ==================== FAVORITES ====================
