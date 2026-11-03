@@ -11,7 +11,7 @@ Locales: RU (default, no suffix), UZ (`*_uz`), EN (`*_en`).
 ## Where things are
 - Deploy files: root `Dockerfile*`, `.railway/railway.ts`: do not touch without OK.
 - Specs and UX audits: `docs/design/`. Shared i18n for the storefront: `apps/web/src/lib/i18n/`.
-- Dev servers for the preview pane: `.claude/launch.json` (api 4000, web 3002, admin 3003).
+- Dev servers for the preview pane: `.claude/launch.json`, local and not in git (api 4000, web 3002, admin 3003).
 
 ## Run and check
 - `pnpm install --frozen-lockfile`, `pnpm db:generate` (needed before any API build).
