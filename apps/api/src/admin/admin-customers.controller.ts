@@ -10,6 +10,7 @@ import {
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { AdminCustomersService } from './admin-customers.service';
+import { parseLimit, parsePage, MAX_ADMIN_PAGE_LIMIT } from '../common/pagination';
 
 @ApiTags('Admin')
 @UseGuards(AdminAuthGuard)
@@ -25,8 +26,8 @@ export class AdminCustomersController {
     @Query('search') search?: string,
   ) {
     return this.adminCustomersService.listCustomers({
-      page: page ? parseInt(page, 10) : undefined,
-      limit: limit ? parseInt(limit, 10) : undefined,
+      page: parsePage(page),
+      limit: parseLimit(limit, 20, MAX_ADMIN_PAGE_LIMIT),
       search,
     });
   }

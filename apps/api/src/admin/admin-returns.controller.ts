@@ -6,9 +6,8 @@ import {
   Body,
   Query,
   UseGuards,
-  ParseIntPipe,
-  DefaultValuePipe,
 } from '@nestjs/common';
+import { LimitPipe, PagePipe, MAX_ADMIN_PAGE_LIMIT } from '../common/pagination';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { StaffId } from '../common/decorators';
@@ -27,8 +26,8 @@ export class AdminReturnsController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'status', required: false, type: String })
   async findAll(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Query('page', new PagePipe()) page: number,
+    @Query('limit', new LimitPipe(20, MAX_ADMIN_PAGE_LIMIT)) limit: number,
     @Query('status') status?: string,
   ) {
     return this.adminReturnsService.findAll({ page, limit, status });

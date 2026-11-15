@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Query, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
+import { LimitPipe, PagePipe } from '../common/pagination';
 import { ApiTags, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { ProductsService, ProductSort } from './products.service';
 
@@ -35,8 +36,8 @@ export class ProductsController {
   })
   @ApiQuery({ name: 'event_featured', required: false, type: Boolean, description: 'With event_id: only products recommended for it' })
   async findAll(
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Query('page', new PagePipe()) page: number,
+    @Query('limit', new LimitPipe(20)) limit: number,
     @Query('category_id') categoryId?: string,
     @Query('search') search?: string,
     @Query('sort') sort?: ProductSort,
@@ -100,8 +101,8 @@ export class ProductsController {
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
   async getReviews(
     @Param('id') id: string,
-    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('page', new PagePipe()) page: number,
+    @Query('limit', new LimitPipe(10)) limit: number,
   ) {
     return this.productsService.getReviews(id, page, limit);
   }

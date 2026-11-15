@@ -17,6 +17,7 @@ import { UserAuthGuard } from '../common/guards/user-auth.guard';
 import { UserId } from '../common/decorators';
 import { RateLimitService } from '../common/rate-limit.service';
 import { clientIp } from '../common/client-ip';
+import { parseLimit, parsePage } from '../common/pagination';
 
 /** Quotes need no account (a guest cart shows totals too), so they are rate-limited per IP. */
 const QUOTE_LIMIT = { max: 30, windowMs: 60 * 1000 };
@@ -90,8 +91,8 @@ export class OrdersController {
     @Query('status') status?: string,
   ) {
     return this.ordersService.getMyOrders(userId, {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 10,
+      page: parsePage(page),
+      limit: parseLimit(limit, 10),
       status: status || undefined,
     });
   }

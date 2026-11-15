@@ -10,6 +10,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger'
 import { ExtensionsService } from './extensions.service';
 import { UserAuthGuard } from '../common/guards/user-auth.guard';
 import { UserId } from '../common/decorators';
+import { parseLimit, parsePage } from '../common/pagination';
 
 @ApiTags('Extensions')
 @ApiBearerAuth()
@@ -42,8 +43,8 @@ export class ExtensionsController {
     @Query('limit') limit?: string,
   ) {
     return this.extensionsService.getMyExtensions(userId, {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 10,
+      page: parsePage(page),
+      limit: parseLimit(limit, 10),
     });
   }
 }

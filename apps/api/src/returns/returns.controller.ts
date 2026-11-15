@@ -11,6 +11,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger'
 import { ReturnsService } from './returns.service';
 import { UserAuthGuard } from '../common/guards/user-auth.guard';
 import { UserId } from '../common/decorators';
+import { parseLimit, parsePage } from '../common/pagination';
 
 @ApiTags('Returns')
 @ApiBearerAuth()
@@ -43,8 +44,8 @@ export class ReturnsController {
     @Query('limit') limit?: string,
   ) {
     return this.returnsService.getMyReturns(userId, {
-      page: page ? parseInt(page, 10) : 1,
-      limit: limit ? parseInt(limit, 10) : 10,
+      page: parsePage(page),
+      limit: parseLimit(limit, 10),
     });
   }
 
