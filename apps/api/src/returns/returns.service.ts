@@ -6,6 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
+import { assertPhotoUrls } from '../common/photo-urls';
 import { Prisma } from '@rentevent/db';
 
 interface CreateReturnDto {
@@ -27,6 +28,8 @@ export class ReturnsService {
     if (!dto.order_id) {
       throw new BadRequestException('order_id is required');
     }
+
+    const photos = assertPhotoUrls(dto.photos);
 
     // Verify the order exists and belongs to the user
     const order = await this.prisma.order.findFirst({
@@ -67,7 +70,7 @@ export class ReturnsService {
         orderId: dto.order_id,
         userId,
         reason: dto.reason || null,
-        photos: dto.photos || [],
+        photos,
         status: 'REQUESTED',
       },
       include: {

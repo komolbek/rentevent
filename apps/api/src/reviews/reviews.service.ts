@@ -6,6 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
+import { assertPhotoUrls } from '../common/photo-urls';
 
 interface CreateReviewDto {
   product_id: string;
@@ -28,6 +29,8 @@ export class ReviewsService {
     if (dto.rating < 1 || dto.rating > 5) {
       throw new BadRequestException('Rating must be between 1 and 5');
     }
+
+    const photos = assertPhotoUrls(dto.photos);
 
     // Verify user has a DELIVERED or RETURNED order containing this product
     const qualifyingOrder = await this.prisma.order.findFirst({
@@ -69,7 +72,7 @@ export class ReviewsService {
         orderId: qualifyingOrder.id,
         rating: dto.rating,
         comment: dto.comment,
-        photos: dto.photos ?? [],
+        photos,
       },
       include: {
         user: { select: { id: true, name: true } },
@@ -95,12 +98,14 @@ export class ReviewsService {
       throw new BadRequestException('Rating must be between 1 and 5');
     }
 
+    const photos = dto.photos !== undefined ? assertPhotoUrls(dto.photos) : undefined;
+
     return this.prisma.review.update({
       where: { id: reviewId },
       data: {
         ...(dto.rating !== undefined && { rating: dto.rating }),
         ...(dto.comment !== undefined && { comment: dto.comment }),
-        ...(dto.photos !== undefined && { photos: dto.photos }),
+        ...(photos !== undefined && { photos }),
       },
       include: {
         user: { select: { id: true, name: true } },
