@@ -43,8 +43,8 @@ export default function SetPasswordPage() {
     e.preventDefault();
     setError('');
 
-    if (password.length < 6) {
-      setError('Пароль должен содержать минимум 6 символов');
+    if (password.length < 10) {
+      setError('Пароль должен содержать минимум 10 символов');
       return;
     }
 
@@ -107,7 +107,7 @@ export default function SetPasswordPage() {
             </div>
             <p className="text-sm text-gray-500">
               Для безопасности вашего аккаунта установите надёжный пароль
-              (минимум 6 символов)
+              (минимум 10 символов)
             </p>
           </div>
 
@@ -124,7 +124,7 @@ export default function SetPasswordPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Минимум 6 символов"
+                  placeholder="Минимум 10 символов"
                   className="w-full h-12 rounded-xl border-2 border-gray-200 bg-gray-50 pl-11 pr-11 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary-500/10 transition-all"
                   autoFocus
                 />
@@ -169,9 +169,9 @@ export default function SetPasswordPage() {
                       key={level}
                       className={`h-1 flex-1 rounded-full transition-colors ${
                         password.length >= level * 3
-                          ? password.length >= 12
+                          ? password.length >= 16
                             ? 'bg-green-500'
-                            : password.length >= 8
+                            : password.length >= 10
                             ? 'bg-yellow-500'
                             : 'bg-red-400'
                           : 'bg-gray-200'
@@ -180,11 +180,11 @@ export default function SetPasswordPage() {
                   ))}
                 </div>
                 <p className="text-xs text-gray-500">
-                  {password.length < 6
+                  {password.length < 10
                     ? 'Слишком короткий'
-                    : password.length < 8
-                    ? 'Приемлемый'
                     : password.length < 12
+                    ? 'Приемлемый'
+                    : password.length < 16
                     ? 'Хороший'
                     : 'Надёжный'}
                 </p>
@@ -199,7 +199,7 @@ export default function SetPasswordPage() {
 
             <button
               type="submit"
-              disabled={loading || password.length < 6}
+              disabled={loading || password.length < 10}
               className="w-full h-12 rounded-xl bg-primary-500 text-white font-semibold text-sm hover:bg-primary-600 focus:outline-none focus:ring-4 focus:ring-primary-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary-500/25"
             >
               {loading ? (

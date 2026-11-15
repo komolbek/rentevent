@@ -15,6 +15,7 @@ import { OtpService } from '../auth/otp.service';
 import { SmsService } from '../auth/sms.service';
 import { createAdminSession } from '../common/guards/admin-auth.guard';
 import { normalizeUzPhone } from '../common/phone';
+import { assertAdminPassword } from '../common/password';
 
 const MINUTE = 60 * 1000;
 
@@ -154,11 +155,7 @@ export class AdminAuthService {
       }
     }
 
-    if (newPassword.length < 6) {
-      throw new BadRequestException(
-        'Password must be at least 6 characters long',
-      );
-    }
+    assertAdminPassword(newPassword);
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
@@ -295,11 +292,7 @@ export class AdminAuthService {
       );
     }
 
-    if (newPassword.length < 6) {
-      throw new BadRequestException(
-        'Пароль должен содержать не менее 6 символов',
-      );
-    }
+    assertAdminPassword(newPassword);
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
 

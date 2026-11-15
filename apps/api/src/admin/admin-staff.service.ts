@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import * as crypto from 'crypto';
+import { assertAdminPassword } from '../common/password';
 
 @Injectable()
 export class AdminStaffService {
@@ -42,6 +43,8 @@ export class AdminStaffService {
     if (staffRole !== 'OWNER') {
       throw new ForbiddenException('Only OWNER can create staff members');
     }
+
+    if (data.password) assertAdminPassword(data.password);
 
     const existing = await this.prisma.staff.findUnique({
       where: { phoneNumber: data.phoneNumber },

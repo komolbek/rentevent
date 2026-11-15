@@ -81,12 +81,12 @@ export const adminLoginSchema = z.object({
 });
 
 export const setPasswordSchema = z.object({
-  password: z.string().min(8),
+  password: z.string().min(10),
 });
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(1),
-  password: z.string().min(8),
+  password: z.string().min(10),
 });
 
 // Order Status
