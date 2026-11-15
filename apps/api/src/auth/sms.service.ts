@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { maskPhone } from '../common/mask-phone';
 
 export interface SMSResult {
   success: boolean;
@@ -18,8 +19,25 @@ export interface DevOTPEntry {
 const MAX_DEV_ENTRIES = 50;
 
 @Injectable()
-export class SmsService {
+export class SmsService implements OnModuleInit {
+  private readonly logger = new Logger(SmsService.name);
   private devOTPLog: DevOTPEntry[] = [];
+
+  onModuleInit(): void {
+    if (this.isMockInProduction()) {
+      this.logger.error(
+        'SMS_PROVIDER is "mock" (or unset) with NODE_ENV=production: no SMS will be sent, OTP codes are not logged or stored. Set SMS_PROVIDER to gateway or eskiz.',
+      );
+    }
+  }
+
+  /** Mock provider in production: OTPs must never be printed or kept. */
+  isMockInProduction(): boolean {
+    return (
+      (process.env.SMS_PROVIDER || 'mock') === 'mock' &&
+      process.env.NODE_ENV === 'production'
+    );
+  }
 
   getDevOTPLog(): DevOTPEntry[] {
     return [...this.devOTPLog];
@@ -30,7 +48,7 @@ export class SmsService {
   }
 
   isMockMode(): boolean {
-    return (process.env.SMS_PROVIDER || 'mock') === 'mock';
+    return (process.env.SMS_PROVIDER || 'mock') === 'mock' && !this.isMockInProduction();
   }
 
   async sendOTP(phoneNumber: string, code: string): Promise<SMSResult> {
@@ -62,7 +80,11 @@ export class SmsService {
   }
 
   private async sendMock(phoneNumber: string, message: string): Promise<SMSResult> {
-    console.log(`[MOCK SMS] To: ${phoneNumber} | ${message}`);
+    if (this.isMockInProduction()) {
+      // Safe degradation: nothing is delivered and no code is printed.
+      return { success: false, error: 'SMS provider not configured' };
+    }
+    console.log(`[MOCK SMS] To: ${maskPhone(phoneNumber)} | ${message}`);
     return { success: true, messageId: `mock_${Date.now()}` };
   }
 

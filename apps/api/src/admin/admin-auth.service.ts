@@ -15,6 +15,7 @@ import { OtpService } from '../auth/otp.service';
 import { SmsService } from '../auth/sms.service';
 import { createAdminSession } from '../common/guards/admin-auth.guard';
 import { normalizeUzPhone } from '../common/phone';
+import { maskPhone } from '../common/mask-phone';
 import { assertAdminPassword } from '../common/password';
 
 const MINUTE = 60 * 1000;
@@ -205,14 +206,14 @@ export class AdminAuthService {
     this.rateLimitService.record('admin_reset_send_phone', phone, RESET_LIMITS.sendPerPhone.windowMs);
     this.rateLimitService.record('admin_reset_send_ip', ip, RESET_LIMITS.sendPerIp.windowMs);
 
-    this.logger.log(`[forgot-password] send-otp requested for ${phone}`);
+    this.logger.log(`[forgot-password] send-otp requested for ${maskPhone(phone)}`);
 
     const staff = await this.prisma.staff.findUnique({
       where: { phoneNumber: phone },
     });
 
     if (!staff) {
-      this.logger.warn(`[forgot-password] no staff record for ${phone}; silently returning`);
+      this.logger.warn(`[forgot-password] no staff record for ${maskPhone(phone)}; silently returning`);
       return;
     }
     if (!staff.isActive || staff.deletedAt) {
@@ -225,7 +226,7 @@ export class AdminAuthService {
     const code = await this.otpService.generate(phone);
     const result = await this.smsService.sendAdminOTP(phone, code);
     this.logger.log(
-      `[forgot-password] OTP dispatched to ${phone} via ${process.env.SMS_PROVIDER || 'mock'} (success=${result.success}${result.error ? `, error=${result.error}` : ''})`,
+      `[forgot-password] OTP dispatched to ${maskPhone(phone)} via ${process.env.SMS_PROVIDER || 'mock'} (success=${result.success}${result.error ? `, error=${result.error}` : ''})`,
     );
   }
 
