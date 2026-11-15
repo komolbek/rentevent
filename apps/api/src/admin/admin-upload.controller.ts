@@ -8,7 +8,10 @@ import {
 import { ApiTags, ApiOperation, ApiConsumes } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
-import { AdminUploadService } from './admin-upload.service';
+import {
+  AdminUploadService,
+  MAX_UPLOAD_BYTES,
+} from './admin-upload.service';
 
 @ApiTags('Admin')
 @UseGuards(AdminAuthGuard)
@@ -19,7 +22,7 @@ export class AdminUploadController {
   @Post('image')
   @ApiOperation({ summary: 'Upload image' })
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_UPLOAD_BYTES } }))
   async uploadImage(@UploadedFile() file: any) {
     return this.adminUploadService.uploadImage(file);
   }
