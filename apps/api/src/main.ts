@@ -4,11 +4,13 @@ import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { createCorsDelegate } from './common/cors';
 import { swaggerEnabled } from './common/swagger-enabled';
+import { securityHeaders } from './common/security-headers';
 import { ResponseWrapperInterceptor } from './common/response-wrapper.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.use(securityHeaders({ production: process.env.NODE_ENV === 'production', swagger: swaggerEnabled() }));
   app.use(cookieParser());
   app.setGlobalPrefix('api');
 
