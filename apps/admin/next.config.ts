@@ -39,10 +39,9 @@ const nextConfig: NextConfig = {
   transpilePackages: ['@rentevent/types', '@rentevent/validators'],
   images: {
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
+      // UploadThing only (what the admin upload returns); keeps /_next/image from being an open proxy.
+      { protocol: 'https', hostname: '*.ufs.sh' },
+      { protocol: 'https', hostname: 'utfs.io' },
     ],
   },
   async headers() {
