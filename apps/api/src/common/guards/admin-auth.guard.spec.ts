@@ -1,5 +1,35 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createAdminSession, validateAdminSession } from './admin-auth.guard';
+import { AdminAuthGuard, createAdminSession, validateAdminSession } from './admin-auth.guard';
+
+describe('AdminAuthGuard Origin check', () => {
+  const prisma = {
+    staff: {
+      findUnique: async () => ({ id: 'staff-1', role: 'ADMIN', name: 'A', isActive: true, mustChangePassword: false }),
+    },
+  };
+  const run = (origin?: string) => {
+    process.env.ADMIN_SESSION_SECRET = 'test-secret';
+    const request: any = {
+      url: '/api/admin/x',
+      cookies: { admin_session: createAdminSession('staff-1') },
+      headers: origin ? { origin } : {},
+    };
+    const ctx: any = { switchToHttp: () => ({ getRequest: () => request }) };
+    return new AdminAuthGuard(prisma as any).canActivate(ctx);
+  };
+
+  it('rejects a storefront Origin with 403', async () => {
+    await expect(run('https://rentevent.uz')).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('allows the admin Origin', async () => {
+    await expect(run('https://admin.rentevent.uz')).resolves.toBe(true);
+  });
+
+  it('allows requests without Origin', async () => {
+    await expect(run()).resolves.toBe(true);
+  });
+});
 
 describe('validateAdminSession', () => {
   beforeAll(() => {

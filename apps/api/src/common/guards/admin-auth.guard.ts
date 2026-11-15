@@ -6,6 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { adminOrigins } from '../cors';
 import * as crypto from 'crypto';
 
 const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours
@@ -71,6 +72,13 @@ export class AdminAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const cookies = request.cookies || {};
     const sessionToken = cookies.admin_session;
+
+    // Browsers always send Origin on cross-origin calls; reject any that is not the admin panel.
+    // Requests without Origin (curl, server-to-server) are unaffected.
+    const origin = request.headers?.origin;
+    if (origin && !adminOrigins().includes(origin)) {
+      throw new ForbiddenException('Origin not allowed');
+    }
 
     if (!sessionToken) {
       throw new UnauthorizedException('Admin authentication required');

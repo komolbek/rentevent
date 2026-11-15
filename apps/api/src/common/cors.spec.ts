@@ -28,8 +28,17 @@ describe('createCorsDelegate', () => {
     expect(allowed(optionsFor('/api/admin/x?y=/api/', prod), 'https://rentevent.uz')).toBe(false);
   });
 
-  it('local admin origin only outside production', () => {
+  it('admin path matching ignores case and repeated slashes', () => {
+    expect(allowed(optionsFor('/API/Admin/x', prod), 'https://rentevent.uz')).toBe(false);
+    expect(allowed(optionsFor('//api//admin/x', prod), 'https://rentevent.uz')).toBe(false);
+    expect(allowed(optionsFor('/Api/ADMIN?x=1', prod), 'https://rentevent.uz')).toBe(false);
+    expect(allowed(optionsFor('/API/Admin/x', prod), 'https://admin.rentevent.uz')).toBe(true);
+  });
+
+  it('local admin origins only outside production', () => {
     expect(allowed(optionsFor('/api/admin/x', prod), 'http://localhost:3003')).toBe(false);
+    expect(allowed(optionsFor('/api/admin/x', prod), 'http://localhost:3001')).toBe(false);
+    expect(allowed(optionsFor('/api/admin/x', { NODE_ENV: 'development' }), 'http://localhost:3001')).toBe(true);
     expect(allowed(optionsFor('/api/admin/x', { NODE_ENV: 'development' }), 'http://localhost:3003')).toBe(true);
   });
 
