@@ -27,11 +27,13 @@ interface AuthState {
 // The cookie mirrors the localStorage token; both are cleared on logout.
 function setAuthCookie(token: string | null) {
   if (typeof document === 'undefined') return;
+  // Secure only over https, so plain-http local dev still works.
+  const secure = window.location.protocol === 'https:' ? '; Secure' : '';
   if (token) {
     // 30 days, site-wide, SameSite=Lax so it's sent on same-site navigations
-    document.cookie = `auth-token=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax`;
+    document.cookie = `auth-token=${token}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${secure}`;
   } else {
-    document.cookie = 'auth-token=; path=/; max-age=0; SameSite=Lax';
+    document.cookie = `auth-token=; path=/; max-age=0; SameSite=Lax${secure}`;
   }
 }
 

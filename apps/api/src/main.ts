@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { createCorsDelegate } from './common/cors';
 import { ResponseWrapperInterceptor } from './common/response-wrapper.interceptor';
 
 async function bootstrap() {
@@ -12,17 +13,8 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(new ResponseWrapperInterceptor());
 
-  app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://rentevent.uz',
-      'https://www.rentevent.uz',
-      'https://admin.rentevent.uz',
-      'https://api.rentevent.uz',
-    ],
-    credentials: true,
-  });
+  // /api/admin/* answers only the admin origin (ADMIN_ORIGIN); other routes use ALLOWED_ORIGINS.
+  app.enableCors(createCorsDelegate());
 
   const config = new DocumentBuilder()
     .setTitle('RentEvent API')
