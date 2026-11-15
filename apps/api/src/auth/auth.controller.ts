@@ -2,6 +2,7 @@ import { Controller, Post, Body, Req, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Request } from 'express';
+import { clientIp } from '../common/client-ip';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -14,14 +15,13 @@ export class AuthController {
     @Body() body: { phone_number: string },
     @Req() req: Request,
   ) {
-    const ip = (req.headers['x-forwarded-for'] as string) || req.ip || 'unknown';
-    return this.authService.sendOtp(body.phone_number, ip);
+    return this.authService.sendOtp(body?.phone_number, clientIp(req));
   }
 
   @Post('verify-otp')
   @ApiOperation({ summary: 'Verify OTP and get session token' })
   async verifyOtp(@Body() body: { phone_number: string; code: string; device_id: string }) {
-    return this.authService.verifyOtp(body.phone_number, body.code, body.device_id);
+    return this.authService.verifyOtp(body?.phone_number, body?.code, body?.device_id);
   }
 
   @Post('logout')

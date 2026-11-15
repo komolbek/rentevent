@@ -4,6 +4,9 @@ import { OtpService } from './otp.service';
 import { SessionService } from './session.service';
 import { SmsService } from './sms.service';
 import { RateLimitService } from '../common/rate-limit.service';
+import { normalizeUzPhone } from '../common/phone';
+
+const INVALID_PHONE = 'Неверный номер телефона';
 
 @Injectable()
 export class AuthService {
@@ -15,7 +18,10 @@ export class AuthService {
     private rateLimitService: RateLimitService,
   ) {}
 
-  async sendOtp(phoneNumber: string, ip: string) {
+  async sendOtp(rawPhone: unknown, ip: string) {
+    const phoneNumber = normalizeUzPhone(rawPhone);
+    if (!phoneNumber) throw new BadRequestException(INVALID_PHONE);
+
     // Rate limit by phone
     const phoneLimit = this.rateLimitService.check('otp_phone', phoneNumber, 3, 5 * 60 * 1000);
     if (!phoneLimit.allowed) {
@@ -38,7 +44,25 @@ export class AuthService {
     return { success: true, message: 'Код отправлен' };
   }
 
-  async verifyOtp(phoneNumber: string, code: string, deviceId: string) {
+  /**
+   * Finds the user for a canonical phone. Rows created before phones were
+   * normalized hold whatever the client sent (`998…` without the plus, most
+   * often), so those spellings are matched too; the canonical row wins. A
+   * legacy row keeps its spelling (no rewrite), so no duplicate is ever created.
+   */
+  private async findUserByPhone(phoneNumber: string) {
+    const digits = phoneNumber.slice(1);
+    const matches = await this.prisma.user.findMany({
+      where: { phoneNumber: { in: [phoneNumber, digits] } },
+    });
+    return matches.find((u) => u.phoneNumber === phoneNumber) ?? matches[0] ?? null;
+  }
+
+  async verifyOtp(rawPhone: unknown, code: string, deviceId: string) {
+    const phoneNumber = normalizeUzPhone(rawPhone);
+    if (!phoneNumber) throw new BadRequestException(INVALID_PHONE);
+    if (typeof code !== 'string') throw new BadRequestException('Неверный код');
+
     const result = await this.otpService.verify(phoneNumber, code);
 
     if (!result.valid) {
@@ -46,9 +70,7 @@ export class AuthService {
     }
 
     // Find or create user
-    let user = await this.prisma.user.findUnique({
-      where: { phoneNumber },
-    });
+    let user = await this.findUserByPhone(phoneNumber);
 
     if (!user) {
       user = await this.prisma.user.create({
