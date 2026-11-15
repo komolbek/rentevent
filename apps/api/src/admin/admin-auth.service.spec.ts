@@ -47,10 +47,14 @@ function fakePrisma() {
           )
           .slice(-1)[0] ?? null,
       ),
-      update: vi.fn(async ({ where, data }: any) => {
+      updateMany: vi.fn(async ({ where, data }: any) => {
         const o = otps.find((x) => x.id === where.id);
+        if (!o) return { count: 0 };
+        if (where.attempts?.lt !== undefined && !(o.attempts < where.attempts.lt)) return { count: 0 };
+        if (where.verified === false && o.verified) return { count: 0 };
         if (data.attempts) o.attempts += data.attempts.increment;
         if (data.verified) o.verified = true;
+        return { count: 1 };
       }),
     },
   };

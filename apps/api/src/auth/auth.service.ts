@@ -8,6 +8,12 @@ import { normalizeUzPhone } from '../common/phone';
 
 const INVALID_PHONE = 'Неверный номер телефона';
 
+/** Customer verify-otp limits (same shape as the admin reset limits). */
+export const VERIFY_LIMITS = {
+  perPhone: { max: 5, windowMs: 15 * 60 * 1000 },
+  perIp: { max: 20, windowMs: 15 * 60 * 1000 },
+};
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -58,10 +64,27 @@ export class AuthService {
     return matches.find((u) => u.phoneNumber === phoneNumber) ?? matches[0] ?? null;
   }
 
-  async verifyOtp(rawPhone: unknown, code: string, deviceId: string) {
+  async verifyOtp(rawPhone: unknown, code: string, deviceId: string, ip: string) {
     const phoneNumber = normalizeUzPhone(rawPhone);
     if (!phoneNumber) throw new BadRequestException(INVALID_PHONE);
     if (typeof code !== 'string') throw new BadRequestException('Неверный код');
+
+    // Counters are in-memory per instance (fix plan D7/F18); every attempt counts.
+    const phoneLimit = this.rateLimitService.check(
+      'otp_verify_phone',
+      phoneNumber,
+      VERIFY_LIMITS.perPhone.max,
+      VERIFY_LIMITS.perPhone.windowMs,
+    );
+    const ipLimit = this.rateLimitService.check(
+      'otp_verify_ip',
+      ip,
+      VERIFY_LIMITS.perIp.max,
+      VERIFY_LIMITS.perIp.windowMs,
+    );
+    if (!phoneLimit.allowed || !ipLimit.allowed) {
+      throw new HttpException('Слишком много запросов. Попробуйте позже.', HttpStatus.TOO_MANY_REQUESTS);
+    }
 
     const result = await this.otpService.verify(phoneNumber, code);
 

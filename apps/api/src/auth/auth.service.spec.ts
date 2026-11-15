@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { BadRequestException, HttpException } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { AuthService, VERIFY_LIMITS } from './auth.service';
 import { AuthController } from './auth.controller';
 import { RateLimitService } from '../common/rate-limit.service';
 
@@ -42,7 +42,7 @@ describe('AuthService phone normalization', () => {
     const { service, otp, sms } = setup();
     await expect(service.sendOtp('12345', '1.1.1.1')).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.sendOtp(undefined, '1.1.1.1')).rejects.toBeInstanceOf(BadRequestException);
-    await expect(service.verifyOtp('abc', '123456', 'd')).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.verifyOtp('abc', '123456', 'd', '1.1.1.1')).rejects.toBeInstanceOf(BadRequestException);
     expect(otp.generate).not.toHaveBeenCalled();
     expect(sms.sendOTP).not.toHaveBeenCalled();
   });
@@ -61,7 +61,7 @@ describe('AuthService phone normalization', () => {
     const { service, users } = setup();
     const ids = new Set<string>();
     for (const s of ['+998 90 123 45 67', '998901234567', '+998901234567']) {
-      const r = await service.verifyOtp(s, '123456', 'dev');
+      const r = await service.verifyOtp(s, '123456', 'dev', '1.1.1.1');
       ids.add(r.user.id);
     }
     expect(ids.size).toBe(1);
@@ -71,7 +71,7 @@ describe('AuthService phone normalization', () => {
 
   it('finds a legacy user stored without the plus and creates no duplicate', async () => {
     const { service, users } = setup([{ id: 'legacy', phoneNumber: '998901234567', createdAt: new Date() }]);
-    const r = await service.verifyOtp('+998901234567', '123456', 'dev');
+    const r = await service.verifyOtp('+998901234567', '123456', 'dev', '1.1.1.1');
     expect(r.user.id).toBe('legacy');
     expect(users).toHaveLength(1);
   });
@@ -81,8 +81,31 @@ describe('AuthService phone normalization', () => {
       { id: 'legacy', phoneNumber: '998901234567', createdAt: new Date() },
       { id: 'canon', phoneNumber: CANON, createdAt: new Date() },
     ]);
-    const r = await service.verifyOtp('998901234567', '123456', 'dev');
+    const r = await service.verifyOtp('998901234567', '123456', 'dev', '1.1.1.1');
     expect(r.user.id).toBe('canon');
+  });
+});
+
+describe('AuthService verifyOtp rate limit', () => {
+  it('429 per normalized phone after the cap, across spellings and IPs', async () => {
+    const { service, otp } = setup();
+    for (let i = 0; i < VERIFY_LIMITS.perPhone.max; i++) {
+      await service.verifyOtp(i % 2 ? '998901234567' : '+998 90 123 45 67', '123456', 'd', `9.9.9.${i}`);
+    }
+    await expect(service.verifyOtp('+998901234567', '123456', 'd', '8.8.8.8')).rejects.toMatchObject({
+      status: 429,
+    });
+    expect(otp.verify).toHaveBeenCalledTimes(VERIFY_LIMITS.perPhone.max);
+  });
+
+  it('429 per IP after the cap, across phones', async () => {
+    const { service } = setup();
+    for (let i = 0; i < VERIFY_LIMITS.perIp.max; i++) {
+      await service.verifyOtp(`+99890123${String(1000 + i)}`, '123456', 'd', '5.5.5.5');
+    }
+    await expect(service.verifyOtp('+998909999999', '123456', 'd', '5.5.5.5')).rejects.toMatchObject({
+      status: 429,
+    });
   });
 });
 

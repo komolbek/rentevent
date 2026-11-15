@@ -69,7 +69,13 @@ export class OtpService {
       return { valid: false, error: 'Код не найден или истёк', reason: 'not_found' };
     }
 
-    if (otp.attempts >= MAX_ATTEMPTS) {
+    // Reserve an attempt atomically before comparing: parallel guesses cannot
+    // all pass a stale `attempts` read, at most MAX_ATTEMPTS ever get through.
+    const reserved = await this.prisma.oTP.updateMany({
+      where: { id: otp.id, attempts: { lt: MAX_ATTEMPTS } },
+      data: { attempts: { increment: 1 } },
+    });
+    if (reserved.count !== 1) {
       return { valid: false, error: 'Превышено количество попыток', reason: 'wrong_code' };
     }
 
@@ -78,17 +84,17 @@ export class OtpService {
       crypto.timingSafeEqual(Buffer.from(otp.code), Buffer.from(code));
 
     if (!codeMatch) {
-      await this.prisma.oTP.update({
-        where: { id: otp.id },
-        data: { attempts: { increment: 1 } },
-      });
       return { valid: false, error: 'Неверный код', reason: 'wrong_code' };
     }
 
-    await this.prisma.oTP.update({
-      where: { id: otp.id },
+    // A code is single-use even when the correct code is submitted in parallel.
+    const consumed = await this.prisma.oTP.updateMany({
+      where: { id: otp.id, verified: false },
       data: { verified: true },
     });
+    if (consumed.count !== 1) {
+      return { valid: false, error: 'Код не найден или истёк', reason: 'not_found' };
+    }
 
     return { valid: true };
   }

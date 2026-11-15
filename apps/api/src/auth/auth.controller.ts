@@ -20,8 +20,11 @@ export class AuthController {
 
   @Post('verify-otp')
   @ApiOperation({ summary: 'Verify OTP and get session token' })
-  async verifyOtp(@Body() body: { phone_number: string; code: string; device_id: string }) {
-    return this.authService.verifyOtp(body?.phone_number, body?.code, body?.device_id);
+  async verifyOtp(
+    @Body() body: { phone_number: string; code: string; device_id: string },
+    @Req() req: Request,
+  ) {
+    return this.authService.verifyOtp(body?.phone_number, body?.code, body?.device_id, clientIp(req));
   }
 
   @Post('logout')
