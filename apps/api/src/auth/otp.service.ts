@@ -26,12 +26,10 @@ export class OtpService {
   }
 
   async generate(phoneNumber: string): Promise<string> {
-    await this.prisma.oTP.deleteMany({
-      where: {
-        phoneNumber,
-        OR: [{ expiresAt: { lt: new Date() } }, { verified: true }],
-      },
-    });
+    // A new code replaces every older one for this phone (unverified ones
+    // too), so only the latest code can ever be accepted. Other phones are
+    // untouched.
+    await this.prisma.oTP.deleteMany({ where: { phoneNumber } });
 
     const testOtp = process.env.TEST_OTP_CODE || '';
     const code =
@@ -52,7 +50,12 @@ export class OtpService {
   async verify(
     phoneNumber: string,
     code: string,
-  ): Promise<{ valid: boolean; error?: string }> {
+  ): Promise<{
+    valid: boolean;
+    error?: string;
+    /** `not_found`: no live code for the phone; `wrong_code`: a code exists but was not accepted. */
+    reason?: 'not_found' | 'wrong_code';
+  }> {
     const otp = await this.prisma.oTP.findFirst({
       where: {
         phoneNumber,
@@ -63,11 +66,11 @@ export class OtpService {
     });
 
     if (!otp) {
-      return { valid: false, error: 'Код не найден или истёк' };
+      return { valid: false, error: 'Код не найден или истёк', reason: 'not_found' };
     }
 
     if (otp.attempts >= MAX_ATTEMPTS) {
-      return { valid: false, error: 'Превышено количество попыток' };
+      return { valid: false, error: 'Превышено количество попыток', reason: 'wrong_code' };
     }
 
     const codeMatch =
@@ -79,7 +82,7 @@ export class OtpService {
         where: { id: otp.id },
         data: { attempts: { increment: 1 } },
       });
-      return { valid: false, error: 'Неверный код' };
+      return { valid: false, error: 'Неверный код', reason: 'wrong_code' };
     }
 
     await this.prisma.oTP.update({

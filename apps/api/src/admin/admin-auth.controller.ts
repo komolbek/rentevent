@@ -5,10 +5,12 @@ import {
   Delete,
   Body,
   Res,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { clientIp } from '../common/client-ip';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { StaffId } from '../common/decorators';
 import { AdminAuthService } from './admin-auth.service';
@@ -68,18 +70,26 @@ export class AdminAuthController {
   }
 
   @Post('forgot-password/send-otp')
-  async forgotPasswordSendOtp(@Body() body: { phone: string }) {
-    await this.adminAuthService.forgotPasswordSendOtp(body.phone);
+  async forgotPasswordSendOtp(
+    @Body() body: { phone: string },
+    @Req() req: Request,
+  ) {
+    await this.adminAuthService.forgotPasswordSendOtp(
+      body?.phone,
+      clientIp(req),
+    );
     return { success: true, message: 'OTP sent' };
   }
 
   @Post('forgot-password/verify-otp')
   async forgotPasswordVerifyOtp(
     @Body() body: { phone: string; code: string },
+    @Req() req: Request,
   ) {
     const result = await this.adminAuthService.forgotPasswordVerifyOtp(
-      body.phone,
-      body.code,
+      body?.phone,
+      body?.code,
+      clientIp(req),
     );
     return { success: true, resetToken: result.resetToken };
   }

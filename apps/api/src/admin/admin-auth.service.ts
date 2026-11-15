@@ -14,6 +14,23 @@ import { RateLimitService } from '../common/rate-limit.service';
 import { OtpService } from '../auth/otp.service';
 import { SmsService } from '../auth/sms.service';
 import { createAdminSession } from '../common/guards/admin-auth.guard';
+import { normalizeUzPhone } from '../common/phone';
+
+const MINUTE = 60 * 1000;
+
+/**
+ * Forgot-password limits. Counters live in the memory of a single API instance
+ * and reset on every deploy/restart (fix plan D7/F18: needs a shared store
+ * before scaling).
+ */
+export const RESET_LIMITS = {
+  sendPerPhone: { max: 3, windowMs: 15 * MINUTE },
+  sendPerIp: { max: 10, windowMs: 60 * MINUTE },
+  verifyPerPhone: { max: 5, windowMs: 15 * MINUTE },
+  verifyPerIp: { max: 20, windowMs: 15 * MINUTE },
+  // Failed verifications per phone; at the cap the reset flow is locked.
+  failedPerPhone: { max: 10, windowMs: 24 * 60 * MINUTE },
+};
 
 interface ResetTokenEntry {
   staffId: string;
@@ -151,7 +168,46 @@ export class AdminAuthService {
     });
   }
 
-  async forgotPasswordSendOtp(phone: string): Promise<void> {
+  private normalizeResetPhone(phone: string): string {
+    const normalized = normalizeUzPhone(phone);
+    if (!normalized) {
+      throw new BadRequestException('Неверный номер телефона');
+    }
+    return normalized;
+  }
+
+  private tooMany(retryAfterMs: number): HttpException {
+    const minutes = Math.max(1, Math.ceil(retryAfterMs / 60_000));
+    const wait = minutes >= 60 ? `${Math.ceil(minutes / 60)} ч.` : `${minutes} мин.`;
+    return new HttpException(
+      `Слишком много попыток. Повторите через ${wait}`,
+      HttpStatus.TOO_MANY_REQUESTS,
+    );
+  }
+
+  /** Throws 429 when the key is at its cap; records nothing. */
+  private assertBelow(
+    namespace: string,
+    key: string,
+    limit: { max: number; windowMs: number },
+  ): void {
+    if (this.rateLimitService.count(namespace, key, limit.windowMs) >= limit.max) {
+      throw this.tooMany(
+        this.rateLimitService.retryAfterMs(namespace, key, limit.windowMs),
+      );
+    }
+  }
+
+  async forgotPasswordSendOtp(rawPhone: string, ip: string): Promise<void> {
+    const phone = this.normalizeResetPhone(rawPhone);
+    this.assertBelow('admin_reset_failed', phone, RESET_LIMITS.failedPerPhone);
+
+    // Check both limits before recording, so a rejection by one does not burn the other.
+    this.assertBelow('admin_reset_send_phone', phone, RESET_LIMITS.sendPerPhone);
+    this.assertBelow('admin_reset_send_ip', ip, RESET_LIMITS.sendPerIp);
+    this.rateLimitService.record('admin_reset_send_phone', phone, RESET_LIMITS.sendPerPhone.windowMs);
+    this.rateLimitService.record('admin_reset_send_ip', ip, RESET_LIMITS.sendPerIp.windowMs);
+
     this.logger.log(`[forgot-password] send-otp requested for ${phone}`);
 
     const staff = await this.prisma.staff.findUnique({
@@ -177,20 +233,38 @@ export class AdminAuthService {
   }
 
   async forgotPasswordVerifyOtp(
-    phone: string,
+    rawPhone: string,
     code: string,
+    ip: string,
   ): Promise<{ resetToken: string }> {
+    const phone = this.normalizeResetPhone(rawPhone);
+    // Malformed codes are rejected before any counter is touched.
+    if (typeof code !== 'string' || !/^\d{6}$/.test(code)) {
+      throw new BadRequestException('Код должен состоять из 6 цифр');
+    }
+
+    this.assertBelow('admin_reset_failed', phone, RESET_LIMITS.failedPerPhone);
+    this.assertBelow('admin_reset_verify_phone', phone, RESET_LIMITS.verifyPerPhone);
+    this.assertBelow('admin_reset_verify_ip', ip, RESET_LIMITS.verifyPerIp);
+    this.rateLimitService.record('admin_reset_verify_phone', phone, RESET_LIMITS.verifyPerPhone.windowMs);
+    this.rateLimitService.record('admin_reset_verify_ip', ip, RESET_LIMITS.verifyPerIp.windowMs);
+
+    // One message for unknown phone, no live code and wrong code (no enumeration).
+    const invalid = () => new BadRequestException('Неверный или просроченный код');
+
     const staff = await this.prisma.staff.findUnique({
       where: { phoneNumber: phone },
     });
-
-    if (!staff || !staff.isActive || staff.deletedAt) {
-      throw new BadRequestException('Invalid request');
-    }
+    if (!staff || !staff.isActive || staff.deletedAt) throw invalid();
 
     const result = await this.otpService.verify(phone, code);
     if (!result.valid) {
-      throw new BadRequestException(result.error || 'Invalid OTP');
+      // Only a wrong guess against a live code counts toward the lockout, so
+      // nobody can lock a real user out before a code has been issued.
+      if (result.reason === 'wrong_code') {
+        this.rateLimitService.record('admin_reset_failed', phone, RESET_LIMITS.failedPerPhone.windowMs);
+      }
+      throw invalid();
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -216,12 +290,14 @@ export class AdminAuthService {
 
     if (!entry || entry.expiresAt < Date.now()) {
       this.resetTokens.delete(resetToken);
-      throw new BadRequestException('Invalid or expired reset token');
+      throw new BadRequestException(
+        'Ссылка для сброса недействительна или устарела. Начните заново.',
+      );
     }
 
     if (newPassword.length < 6) {
       throw new BadRequestException(
-        'Password must be at least 6 characters long',
+        'Пароль должен содержать не менее 6 символов',
       );
     }
 
