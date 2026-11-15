@@ -8,6 +8,8 @@ export interface FailureLimiter {
   retryAfter(key: string, now?: number): number;
   /** Records one wrong attempt for `key`. */
   recordFailure(key: string, now?: number): void;
+  /** Removes the most recent recorded attempt for `key` (a correct code is not a failure). */
+  undoLast(key: string): void;
 }
 
 export function createFailureLimiter(options: {
@@ -43,6 +45,12 @@ export function createFailureLimiter(options: {
       const list = recent(key, now);
       list.push(now);
       failures.set(key, list);
+    },
+    undoLast(key) {
+      const list = failures.get(key);
+      if (!list) return;
+      list.pop();
+      if (!list.length) failures.delete(key);
     },
   };
 }

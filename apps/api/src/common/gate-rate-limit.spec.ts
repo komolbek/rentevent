@@ -5,6 +5,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 interface Limiter {
   retryAfter(key: string, now?: number): number;
   recordFailure(key: string, now?: number): void;
+  undoLast(key: string): void;
 }
 interface GateModule {
   createFailureLimiter(o: { max: number; windowMs: number; maxKeys?: number }): Limiter;
@@ -17,7 +18,8 @@ let gate: GateModule;
 
 beforeAll(async () => {
   // Typed as plain string so tsc does not resolve (and emit) the web file.
-  const path: string = '../../../web/src/lib/gate-rate-limit';
+  // The explicit .ts keeps a stray compiled .js next to it from shadowing the source.
+  const path: string = '../../../web/src/lib/gate-rate-limit.ts';
   gate = (await import(/* @vite-ignore */ path)) as GateModule;
 });
 
@@ -40,6 +42,20 @@ describe('site-gate failure limiter', () => {
     expect(l.retryAfter('a', 2000)).toBe(0);
     l.recordFailure('a', 2000);
     expect(l.retryAfter('a', 3000)).toBeGreaterThan(0);
+  });
+
+  it('attempts recorded up front block parallel guesses; undoLast frees a correct code', () => {
+    const l = make();
+    // 10 synchronous "in flight" attempts: the 11th is blocked before any of them resolved
+    for (let i = 0; i < gate.GATE_MAX_FAILURES; i++) {
+      expect(l.retryAfter('a', 1000)).toBe(0);
+      l.recordFailure('a', 1000);
+    }
+    expect(l.retryAfter('a', 1000)).toBeGreaterThan(0);
+    // the correct one among them is taken back
+    l.undoLast('a');
+    expect(l.retryAfter('a', 1000)).toBe(0);
+    l.undoLast('missing');
   });
 
   it('does not block other IPs', () => {

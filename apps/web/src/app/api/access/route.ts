@@ -10,7 +10,7 @@ import {
 
 export const runtime = 'edge';
 
-// Wrong codes only; a correct code never counts against the caller.
+// Every attempt counts when it starts; a correct code is taken back.
 const limiter = createFailureLimiter({ max: GATE_MAX_FAILURES, windowMs: GATE_WINDOW_MS });
 
 export async function POST(req: Request) {
@@ -30,6 +30,10 @@ export async function POST(req: Request) {
     );
   }
 
+  // Record the attempt before any await so parallel guesses cannot all pass the check
+  // above; a correct code undoes it below.
+  limiter.recordFailure(ip);
+
   let body: { code?: unknown } = {};
   try {
     body = await req.json();
@@ -42,9 +46,9 @@ export async function POST(req: Request) {
 
   const ok = await codeMatches(secret, code, expected);
   if (!ok) {
-    limiter.recordFailure(ip);
     return NextResponse.json({ ok: false, error: 'invalid_code' }, { status: 401 });
   }
+  limiter.undoLast(ip);
 
   const token = await signAccessToken(secret, ACCESS_TTL_MS);
   const res = NextResponse.json({ ok: true });
