@@ -599,6 +599,7 @@ const uz: Record<TranslationKey, string> = {
   'date_picker.select_period': 'Ijara davrini tanlang',
   'date_picker.selected_days': 'Tanlangan kunlar: {count}',
   'date_picker.start': 'Boshlanish',
+  'date_picker.max_period': 'Maksimal ijara muddati: {count} kun',
   'date_picker.end': 'Tugash',
   'date_picker.clear': 'Tozalash',
   'date_picker.apply': 'Qo\'llash',

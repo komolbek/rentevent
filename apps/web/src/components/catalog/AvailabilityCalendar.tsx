@@ -7,6 +7,8 @@ import { productsApi } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui';
+import { format } from 'date-fns';
+import { maxRentalEnd } from '@/lib/rental-period';
 
 interface AvailabilityCalendarProps {
   productId: string;
@@ -30,16 +32,26 @@ export function AvailabilityCalendar({ productId, totalStock }: AvailabilityCale
 
   const monthKey = `${currentMonth.year}-${String(currentMonth.month + 1).padStart(2, '0')}`;
 
+  // The API rejects past starts and periods over MAX_RENTAL_DAYS: clamp the
+  // month to [today, today + max] and skip the request for a fully past month.
+  const range = useMemo(() => {
+    const { year, month } = currentMonth;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const first = new Date(year, month, 1);
+    const last = new Date(year, month + 1, 0);
+    if (last < today) return null;
+    const start = first < today ? today : first;
+    const cap = maxRentalEnd(start);
+    if (start > cap) return null;
+    return { start: format(start, 'yyyy-MM-dd'), end: format(last > cap ? cap : last, 'yyyy-MM-dd') };
+  }, [currentMonth]);
+
   const { data: availability, isLoading } = useQuery({
     queryKey: ['product-availability', productId, monthKey],
-    queryFn: () => {
-      const year = currentMonth.year;
-      const month = currentMonth.month;
-      const startDate = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-      const lastDay = new Date(year, month + 1, 0).getDate();
-      const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-      return productsApi.checkAvailability(productId, { start_date: startDate, end_date: endDate });
-    },
+    queryFn: () =>
+      productsApi.checkAvailability(productId, { start_date: range!.start, end_date: range!.end }),
+    enabled: !!range,
     staleTime: 1000 * 60 * 5,
   });
 

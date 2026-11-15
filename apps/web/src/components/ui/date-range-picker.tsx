@@ -10,6 +10,7 @@ import { Calendar, ChevronLeft, ChevronRight, X, CalendarDays, ArrowRight } from
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { MAX_RENTAL_DAYS, maxRentalEnd } from '@/lib/rental-period';
 
 interface RangeCalendarProps {
   value: DateRange | undefined;
@@ -25,14 +26,29 @@ interface RangeCalendarProps {
  * popover inside a modal would be clipped by the panel).
  */
 export function RangeCalendar({ value, onChange, minDate, maxDate, months = 1 }: RangeCalendarProps) {
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
+  // The API rejects periods over MAX_RENTAL_DAYS. While only the start is
+  // picked, days beyond start + max are disabled; once both ends are set, a
+  // click that would stretch the range past the max restarts it at that day.
+  const picking = !!value?.from && !value.to;
+  const capEnd = picking && value?.from ? maxRentalEnd(value.from) : undefined;
+  const after = capEnd && (!maxDate || capEnd < maxDate) ? capEnd : maxDate;
+  const handleSelect = (next: DateRange | undefined) => {
+    if (next?.from && next.to && differenceInDays(next.to, next.from) + 1 > MAX_RENTAL_DAYS) {
+      const clicked = value?.from && isSameDay(next.from, value.from) ? next.to : next.from;
+      onChange({ from: clicked, to: clicked });
+      return;
+    }
+    onChange(next);
+  };
   return (
+    <div>
     <DayPicker
       mode="range"
       selected={value}
-      onSelect={onChange}
+      onSelect={handleSelect}
       locale={dateFnsLocale(locale)}
-      disabled={{ before: minDate ?? new Date(), after: maxDate }}
+      disabled={{ before: minDate ?? new Date(), after }}
       numberOfMonths={months}
       // Off: with two months side by side, the grey spill-over days repeated
       // the selection (27–29 Oct showed again at the top of November).
@@ -74,6 +90,10 @@ export function RangeCalendar({ value, onChange, minDate, maxDate, months = 1 }:
           ),
       }}
     />
+    <p className="mt-2 text-center text-xs text-muted-foreground">
+      {t('date_picker.max_period', { count: MAX_RENTAL_DAYS })}
+    </p>
+    </div>
   );
 }
 

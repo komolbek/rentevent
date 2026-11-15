@@ -23,9 +23,10 @@ export class ProductsController {
     required: false,
     type: String,
     example: '2026-09-13',
-    description: 'With end_date: only products with a free unit on every day of the range; adds availableStock to each item',
+    description:
+      'With end_date: only products with a free unit on every day of the range; adds availableStock to each item. Both dates are needed to filter (one alone is ignored). 400 if a date is invalid, start is in the past, end is before start, or the period is over 90 days (both ends included)',
   })
-  @ApiQuery({ name: 'end_date', required: false, type: String, example: '2026-09-16' })
+  @ApiQuery({ name: 'end_date', required: false, type: String, example: '2026-09-16', description: 'See start_date for the period rules' })
   @ApiQuery({
     name: 'event_id',
     required: false,
@@ -68,8 +69,15 @@ export class ProductsController {
   @Get(':id/availability')
   @ApiOperation({ summary: 'Check product availability for a date range' })
   @ApiParam({ name: 'id', type: String })
-  @ApiQuery({ name: 'start_date', required: true, type: String, example: '2025-06-01' })
-  @ApiQuery({ name: 'end_date', required: true, type: String, example: '2025-06-07' })
+  @ApiQuery({
+    name: 'start_date',
+    required: true,
+    type: String,
+    example: '2025-06-01',
+    description:
+      'Both dates are required. 400 if a date is invalid, start is in the past, end is before start, or the period is over 90 days (both ends included)',
+  })
+  @ApiQuery({ name: 'end_date', required: true, type: String, example: '2025-06-07', description: 'See start_date for the period rules' })
   @ApiQuery({ name: 'quantity', required: false, type: Number })
   async checkAvailability(
     @Param('id') id: string,

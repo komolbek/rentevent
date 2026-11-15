@@ -14,6 +14,7 @@ import { useRentalPeriodStore } from '@/stores/rental-period-store';
 import { EventPicker } from '@/components/events/EventPicker';
 import { Button, ProductCardSkeleton, EmptyState, DateRangePicker } from '@/components/ui';
 import { formatDateForAPI, getTomorrow } from '@/lib/utils';
+import { isValidRentalPeriod } from '@/lib/rental-period';
 import { ProductCard } from '@/components/catalog/ProductCard';
 import { Reveal } from '@/components/home/Reveal';
 import { CategoryIcon } from '@/lib/categoryIcon';
@@ -80,8 +81,10 @@ function CatalogPageContent() {
     setPeriod(next?.from, next?.to ?? next?.from);
   };
 
+  // Last guard: an invalid period (past start, over the API's max) is left out
+  // of the query so the catalog still loads instead of getting a 400.
   const periodParams =
-    range?.from && range?.to
+    range?.from && range?.to && isValidRentalPeriod(range.from, range.to)
       ? { start_date: formatDateForAPI(range.from), end_date: formatDateForAPI(range.to) }
       : {};
 

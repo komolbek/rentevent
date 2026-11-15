@@ -7,10 +7,10 @@ import {
 import { PrismaService } from '../common/prisma.service';
 import { Prisma, OrderStatus, PaymentMethod } from '@rentevent/db';
 import { priceOrder } from './order-pricing';
+import { MAX_RENTAL_DAYS } from '../common/rental-period';
 
 const MAX_ORDER_ITEMS = 100;
 const MAX_ITEM_QUANTITY = 10000;
-const MAX_RENTAL_DAYS = 90;
 
 /** The part of an order body that decides availability and price. */
 interface CartDto {

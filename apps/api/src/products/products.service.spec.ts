@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { BadRequestException } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import type { PrismaService } from '../common/prisma.service';
 
@@ -39,7 +40,20 @@ function makeService(opts: {
 
 const base = { page: 1, limit: 20 };
 
+// Date-only strings ("2026-09-13") parse as UTC midnight and the service
+// reads them in local time, so pin the zone to keep the tests machine-independent.
+process.env.TZ = 'Asia/Tashkent';
+
 describe('ProductsService.findAll with a rental period', () => {
+  // Fixed "today" (local noon) so past/future checks do not drift.
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 8, 10, 12, 0, 0));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('excludes products with no free unit on some day of the range and reports free units', async () => {
     const { service, productFindMany } = makeService({
       // "sofa": 2 in stock, both reserved 14–15 Sep → sold out for 13–16.
@@ -78,7 +92,7 @@ describe('ProductsService.findAll with a rental period', () => {
     expect(where.rentalEndDate.gte.getDate()).toBe(13);
   });
 
-  it('ignores the period when it is missing or inverted', async () => {
+  it('ignores the period when it is missing or only one date is given', async () => {
     const { service, orderItemFindMany } = makeService({
       reservations: [],
       stocks: {},
@@ -86,13 +100,54 @@ describe('ProductsService.findAll with a rental period', () => {
     });
 
     const none = await service.findAll(base);
-    const inverted = await service.findAll({ ...base, start_date: '2026-09-16', end_date: '2026-09-13' });
     const half = await service.findAll({ ...base, start_date: '2026-09-16' });
 
     expect(orderItemFindMany).not.toHaveBeenCalled();
-    for (const r of [none, inverted, half]) {
+    for (const r of [none, half]) {
       expect((r.items[0] as { availableStock?: number }).availableStock).toBeUndefined();
     }
+  });
+
+  it('accepts a period starting today and lasting exactly 90 days', async () => {
+    const { service, orderItemFindMany } = makeService({ reservations: [], stocks: {}, products: [] });
+    await service.findAll({ ...base, start_date: '2026-09-10', end_date: '2026-12-08' });
+    expect(orderItemFindMany).toHaveBeenCalledTimes(1);
+  });
+
+  describe('rejects a bad period with 400 before any DB query', () => {
+    const cases: [string, string, string][] = [
+      ['invalid start', 'not-a-date', '2026-09-16'],
+      ['invalid end', '2026-09-13', 'nope'],
+      ['end before start', '2026-09-16', '2026-09-13'],
+      ['start in the past', '2026-09-09', '2026-09-13'],
+      ['more than 90 days', '2026-09-10', '2026-12-09'],
+      ['the DoS range', '1970-01-01', '9999-12-31'],
+    ];
+    for (const [name, start, end] of cases) {
+      it(name, async () => {
+        const { service, orderItemFindMany, productFindMany } = makeService({
+          reservations: [],
+          stocks: {},
+          products: [],
+        });
+        await expect(
+          service.findAll({ ...base, start_date: start, end_date: end }),
+        ).rejects.toBeInstanceOf(BadRequestException);
+        expect(orderItemFindMany).not.toHaveBeenCalled();
+        expect(productFindMany).not.toHaveBeenCalled();
+      });
+    }
+  });
+
+  it('checkAvailability applies the same bounds before any DB query', async () => {
+    const { service, productFindMany } = makeService({ reservations: [], stocks: {}, products: [] });
+    await expect(
+      service.checkAvailability('p1', '1970-01-01', '9999-12-31'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.checkAvailability('p1', undefined as unknown as string, '2026-09-13'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(productFindMany).not.toHaveBeenCalled();
   });
 });
 

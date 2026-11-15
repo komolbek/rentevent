@@ -599,6 +599,7 @@ const en: Record<TranslationKey, string> = {
   'date_picker.select_period': 'Select rental period',
   'date_picker.selected_days': 'Days selected: {count}',
   'date_picker.start': 'Start',
+  'date_picker.max_period': 'Maximum rental period: {count} days',
   'date_picker.end': 'End',
   'date_picker.clear': 'Clear',
   'date_picker.apply': 'Apply',

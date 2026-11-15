@@ -1,6 +1,7 @@
 import type { EventItem } from '@/lib/api';
 import type { Locale } from '@/lib/i18n';
 import { getTomorrow } from '@/lib/utils';
+import { maxRentalEnd } from '@/lib/rental-period';
 
 export function localizeEvent(e: EventItem, locale: Locale, field: 'title' | 'description'): string {
   const base = e[field] || '';
@@ -44,14 +45,16 @@ export function formatEventRange(
  * The rental period to pre-fill for "rent for this fair": delivery to
  * collection (the API's rental_from / rental_to — the day before opening to
  * the last day unless admin set them), clamped so it never starts before
- * tomorrow (the catalog's earliest date). `null` when the fair is over.
+ * tomorrow (the catalog's earliest date) and cut to MAX_RENTAL_DAYS. `null` when the fair is over.
  */
 export function eventRentalPeriod(e: EventItem): { from: Date; to: Date } | null {
   const tomorrow = getTomorrow();
   const start = localDay(e.rental_from ?? e.start_date);
   const end = localDay(e.rental_to ?? new Date(eventLastDay(e)).toISOString());
   if (Number.isNaN(start.getTime()) || end < tomorrow) return null;
-  return { from: start < tomorrow ? tomorrow : start, to: end };
+  const from = start < tomorrow ? tomorrow : start;
+  const cap = maxRentalEnd(from);
+  return { from, to: end > cap ? cap : end };
 }
 
 /** Upcoming (not yet finished) active events, soonest first. */

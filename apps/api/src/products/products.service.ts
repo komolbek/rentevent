@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { Prisma } from '@rentevent/db';
+import { validateRentalPeriod } from '../common/rental-period';
 
 function startOfDay(value: Date | string): Date {
   const d = new Date(value);
@@ -8,12 +9,13 @@ function startOfDay(value: Date | string): Date {
   return d;
 }
 
-/** Both dates valid and in order, else no period filter at all. */
+/**
+ * No filter unless both dates are given. When they are, they must form a
+ * valid rental period (400 otherwise), which also bounds the per-day loops.
+ */
 function parsePeriod(start?: string, end?: string): { start: Date; end: Date } | null {
   if (!start || !end) return null;
-  const s = startOfDay(start);
-  const e = startOfDay(end);
-  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime()) || s > e) return null;
+  const { start: s, end: e } = validateRentalPeriod(start, end);
   return { start: s, end: e };
 }
 
@@ -280,6 +282,9 @@ export class ProductsService {
     endDate: string,
     quantity?: number,
   ) {
+    // Before any DB work: bounds the per-day loop below.
+    const { start, end } = validateRentalPeriod(startDate, endDate);
+
     const product = await this.prisma.product.findFirst({
       where: { id, isActive: true, deletedAt: null },
       select: { id: true, totalStock: true, name: true },
@@ -288,9 +293,6 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException('Product not found');
     }
-
-    const start = new Date(startDate);
-    const end = new Date(endDate);
 
     // Find all order items for this product from overlapping CONFIRMED/PREPARING/DELIVERED orders
     const overlappingItems = await this.prisma.orderItem.findMany({

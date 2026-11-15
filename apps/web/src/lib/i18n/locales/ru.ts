@@ -597,6 +597,7 @@ const ru = {
   'date_picker.select_period': 'Выберите период аренды',
   'date_picker.selected_days': 'Выбрано дней: {count}',
   'date_picker.start': 'Начало',
+  'date_picker.max_period': 'Максимальный срок аренды: {count} дн.',
   'date_picker.end': 'Конец',
   'date_picker.clear': 'Очистить',
   'date_picker.apply': 'Применить',

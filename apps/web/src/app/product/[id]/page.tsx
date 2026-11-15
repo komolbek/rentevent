@@ -43,6 +43,7 @@ import {
 import { countLabel } from '@/lib/i18n';
 import { useCartStore } from '@/stores/cart-store';
 import { useFavoritesStore } from '@/stores/favorites-store';
+import { isValidRentalPeriod } from '@/lib/rental-period';
 import { useRentalPeriodStore, getStoredPeriod } from '@/stores/rental-period-store';
 import { useAuthStore } from '@/stores/auth-store';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -119,7 +120,7 @@ export default function ProductDetailPage() {
   // rule the catalog's date filter applies. Shown under the date field so the
   // visitor knows before pressing "add".
   const periodKey =
-    dateRange?.from && dateRange?.to
+    dateRange?.from && dateRange?.to && isValidRentalPeriod(dateRange.from, dateRange.to)
       ? { start_date: formatDateForAPI(dateRange.from), end_date: formatDateForAPI(dateRange.to) }
       : null;
   const { data: availability } = useQuery({
