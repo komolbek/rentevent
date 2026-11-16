@@ -17,6 +17,12 @@ import { AdminAuthService } from '../admin/admin-auth.service';
 import { RateLimitedFilter } from './otp-errors';
 
 const PHONE = '+998901234567';
+
+/** The plain code the gateway was asked to send in the n-th call (the DB only holds its HMAC). */
+function sentCode(fetchMock: { mock: { calls: unknown[][] } }, n: number): string {
+  const init = fetchMock.mock.calls[n][1] as { body: string };
+  return /(\d{6})\./.exec(JSON.parse(init.body).message)![1];
+}
 const MIN = 60_000;
 const HOUR = 60 * MIN;
 
@@ -35,7 +41,7 @@ function fakePrisma() {
     },
     oTP: {
       create: vi.fn(async ({ data }: any) => {
-        const row = { id: ++seq, verified: false, attempts: 0, createdAt: new Date(seq), ...data };
+        const row = { id: ++seq, verified: false, attempts: 0, createdAt: new Date(), ...data };
         otps.push(row);
         return row;
       }),
@@ -43,11 +49,16 @@ function fakePrisma() {
         for (let i = otps.length - 1; i >= 0; i--) {
           const o = otps[i];
           const byPhone = where.phoneNumber === undefined || o.phoneNumber === where.phoneNumber;
+          if (where.createdAt) {
+            if (o.createdAt < where.createdAt.lt) otps.splice(i, 1);
+            continue;
+          }
           const byId =
             where.id === undefined ||
             (where.id.not !== undefined ? o.id !== where.id.not : o.id === where.id);
           if (byPhone && byId) otps.splice(i, 1);
         }
+        return { count: 0 };
       }),
       findFirst: vi.fn(async ({ where }: any) =>
         otps
@@ -232,7 +243,8 @@ describe('SMS2: timeout, breaker and a clean failure path', () => {
     const fetchMock = vi.fn(async () => okResponse());
     const { auth, otp, prisma } = stack(fetchMock as any);
     await auth.sendOtp(PHONE, '1.1.1.1');
-    const previous = prisma.otps[0].code;
+    const storedPrevious = prisma.otps[0].code;
+    const previous = sentCode(fetchMock, 0);
 
     vi.advanceTimersByTime(61_000);
     fetchMock.mockImplementation(hangingFetch() as any);
@@ -247,8 +259,8 @@ describe('SMS2: timeout, breaker and a clean failure path', () => {
     expect(typeof body.message).toBe('string');
     // the dead row is gone, the earlier code is the only one and it verifies
     expect(prisma.otps).toHaveLength(1);
-    expect(prisma.otps[0].code).toBe(previous);
-    expect((await otp.verify(PHONE, previous)).valid).toBe(true);
+    expect(prisma.otps[0].code).toBe(storedPrevious);
+    expect((await otp.verify('login', PHONE, previous)).valid).toBe(true);
   });
 
   it('a successful send replaces the previous code', async () => {
@@ -358,7 +370,8 @@ describe('SMS2: timeout, breaker and a clean failure path', () => {
     const fetchMock = vi.fn(async () => okResponse());
     const { admin, prisma, otp, rateLimit } = stack(fetchMock as any);
     await admin.forgotPasswordSendOtp(PHONE, '1.1.1.1');
-    const previous = prisma.otps[0].code;
+    const storedPrevious = prisma.otps[0].code;
+    const previous = sentCode(fetchMock, 0);
 
     vi.advanceTimersByTime(61_000);
     fetchMock.mockImplementation((async () => {
@@ -367,7 +380,7 @@ describe('SMS2: timeout, breaker and a clean failure path', () => {
     await admin.forgotPasswordSendOtp(PHONE, '1.1.1.1');
 
     expect(prisma.otps).toHaveLength(1);
-    expect((await otp.verify(PHONE, previous)).valid).toBe(true);
+    expect((await otp.verify('admin_reset', PHONE, previous)).valid).toBe(true);
     // only the successful send is counted
     expect(rateLimit.count('admin_sms_phone_hour', PHONE, HOUR)).toBe(1);
     expect(rateLimit.count('admin_reset_send_phone', PHONE, 15 * MIN)).toBe(1);

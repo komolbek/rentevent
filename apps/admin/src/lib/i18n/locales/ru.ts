@@ -198,6 +198,18 @@ const ru = {
   'settings.app_links_hint': 'Ссылки на App Store и Google Play — по ним на сайте показывается блок «Скачайте приложение» с QR-кодом. Оставьте пустым, чтобы скрыть.',
   'orders.event_label': 'Мероприятие',
   'orders.event_chip_title': 'Заказ к мероприятию: {title}',
+  'otp.verification_code': 'Код подтверждения',
+  'otp.resend_timer': 'Повторная отправка через',
+  'otp.seconds_suffix': 'с',
+  'otp.resend': 'Отправить код повторно',
+  'otp.error_invalid_phone': 'Введите корректный номер телефона',
+  'otp.error_invalid_code': 'Неверный или просроченный код',
+  'otp.error_code_expired': 'Код истёк. Запросите новый.',
+  'otp.error_rate_limited': 'Слишком много попыток. Попробуйте позже.',
+  'otp.error_rate_limited_wait': 'Слишком много попыток. Повторите через {seconds} с.',
+  'otp.error_sms_unavailable': 'SMS сейчас не отправляются. Попробуйте через несколько минут.',
+  'otp.error_network': 'Нет связи с сервером. Проверьте интернет.',
+  'otp.error_send_failed': 'Ошибка отправки кода',
 } as const;
 
 export type AdminTranslationKey = keyof typeof ru;

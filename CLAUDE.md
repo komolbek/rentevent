@@ -13,6 +13,7 @@ Locales: RU (default, no suffix), UZ (`*_uz`), EN (`*_en`).
 missing `SMS_GATEWAY_URL` / `SMS_GATEWAY_API_KEY`, or on a typo) or `mock` (dev/test only, needs
 `NODE_ENV=development|test`, prints the code). The direct `eskiz` provider is gone
 (`ESKIZ_API_TOKEN`, `SMS_SENDER` are unused). `SMS_DAILY_CAP` (default 1000): global SMS per 24 h.
+`OTP_PEPPER`: HMAC key for stored OTP codes; REQUIRED in production (API refuses to boot without it), generate with `openssl rand -hex 32`, Railway only. Codes are keyed per purpose (`login:` / `admin_reset:`); `/api/admin/dev-otp` exists only when `NODE_ENV` is development/test.
 Send caps (per-phone budgets are separate for customer and admin reset; IP and global ceiling shared): per phone 1/60 s, 5/h, 10/day; per IP 10/15 min,
 30/day. 429 carries `retry_after_seconds` + `Retry-After`; a failed send answers 503 `sms_unavailable`.
 Test auth (App Review account, customer login only): `ENABLE_TEST_AUTH=true`, `TEST_PHONE_NUMBERS`

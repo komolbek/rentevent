@@ -44,6 +44,7 @@ export class AuthService {
     let result;
     try {
       result = await this.otpService.issueAndSend(
+        'login',
         phoneNumber,
         (code) => this.smsService.sendOTP(phoneNumber, code),
         { allowTestAuth: true },
@@ -99,7 +100,7 @@ export class AuthService {
       );
     }
 
-    const result = await this.otpService.verify(phoneNumber, code);
+    const result = await this.otpService.verify('login', phoneNumber, code);
 
     if (!result.valid) {
       throw otpBadRequest(

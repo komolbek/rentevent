@@ -9,6 +9,15 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { SmsService } from '../auth/sms.service';
 
+/**
+ * The dev OTP viewer exists only in development/test builds. In any other
+ * NODE_ENV (production, staging, unset) the controller is not registered, so
+ * `/api/admin/dev-otp` is a plain 404 whatever SMS_PROVIDER says.
+ */
+export function devOtpControllers(nodeEnv: string | undefined) {
+  return nodeEnv === 'development' || nodeEnv === 'test' ? [AdminDevOtpController] : [];
+}
+
 @ApiTags('Admin')
 @UseGuards(AdminAuthGuard)
 @Controller('admin/dev-otp')

@@ -172,6 +172,12 @@ const en: Record<TranslationKey, string> = {
   'auth.code_sent': 'Code sent to your number',
   'auth.welcome': 'Welcome!',
   'auth.error_invalid_code': 'Invalid code. Try again.',
+  'auth.verification_code': 'Verification code',
+  'auth.error_code_expired': 'The code has expired. Request a new one.',
+  'auth.error_rate_limited': 'Too many attempts. Please try again later.',
+  'auth.error_rate_limited_wait': 'Too many attempts. Try again in {seconds} s.',
+  'auth.error_sms_unavailable': 'SMS is temporarily unavailable. Try again in a few minutes.',
+  'auth.error_network': 'Cannot reach the server. Check your connection.',
 
   // Catalog Page
   'catalog.title': 'Catalog',

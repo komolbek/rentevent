@@ -23,6 +23,14 @@ import { useAuthStore, getDeviceId } from '@/stores/auth-store';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { Reveal } from '@/components/home/Reveal';
+import {
+  applyOtpBackspace,
+  applyOtpInput,
+  classifyOtpError,
+  emptyOtp,
+  resendSeconds,
+  type ClassifiedOtpError,
+} from '@/lib/otp-input';
 
 type AuthStep = 'phone' | 'otp';
 
@@ -33,7 +41,7 @@ export default function AuthPage() {
 
   const [step, setStep] = useState<AuthStep>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [otpCode, setOtpCode] = useState<string[]>(emptyOtp());
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
@@ -69,6 +77,27 @@ export default function AuthPage() {
     }
   };
 
+  const otpErrorMessage = ({ kind, retryAfter }: ClassifiedOtpError): string => {
+    switch (kind) {
+      case 'invalid_phone':
+        return t('auth.error_invalid_phone');
+      case 'invalid_code':
+        return t('auth.error_invalid_code');
+      case 'code_expired':
+        return t('auth.error_code_expired');
+      case 'rate_limited':
+        return retryAfter
+          ? t('auth.error_rate_limited_wait', { seconds: retryAfter })
+          : t('auth.error_rate_limited');
+      case 'sms_unavailable':
+        return t('auth.error_sms_unavailable');
+      case 'network':
+        return t('auth.error_network');
+      default:
+        return t('auth.error_send_failed');
+    }
+  };
+
   const handleSendOTP = async () => {
     const digits = phoneNumber.replace(/\s/g, '');
     if (digits.length !== 9) {
@@ -80,49 +109,51 @@ export default function AuthPage() {
     try {
       await authApi.sendOtp(`+998${digits}`);
       setStep('otp');
-      setCountdown(60);
+      setCountdown(resendSeconds());
       toast.success(t('auth.code_sent'));
       // Focus first OTP input
       setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
     } catch (error) {
-      toast.error(t('auth.error_send_failed'));
+      const info = classifyOtpError(error);
+      toast.error(otpErrorMessage(info));
+      // Rate limited: the resend button waits for the server's time, not a fixed minute.
+      if (info.kind === 'rate_limited') setCountdown(resendSeconds(info.retryAfter));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-
-    const newOtp = [...otpCode];
-    newOtp[index] = value.slice(-1);
-    setOtpCode(newOtp);
-
-    // Auto-focus next input
-    if (value && index < 5) {
-      otpInputRefs.current[index + 1]?.focus();
-    }
-
-    // Auto-submit when all digits entered
-    if (value && index === 5 && newOtp.every(d => d)) {
-      handleVerifyOTP(newOtp.join(''));
-    }
+  /** Typing, autofill (whole code in one box) and paste all end up here. */
+  const applyOtp = (index: number, raw: string) => {
+    const r = applyOtpInput(otpCode, index, raw);
+    setOtpCode(r.digits);
+    otpInputRefs.current[r.focusIndex]?.focus();
+    // Auto-submit as soon as all six digits are in
+    if (r.complete && !isLoading) handleVerifyOTP(r.digits.join(''));
   };
+
+  const handleOtpChange = (index: number, value: string) => applyOtp(index, value);
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
+    if (e.key === 'Backspace') {
+      const r = applyOtpBackspace(otpCode, index);
+      if (r) {
+        e.preventDefault();
+        setOtpCode(r.digits);
+        otpInputRefs.current[r.focusIndex]?.focus();
+      }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault();
       otpInputRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      e.preventDefault();
+      otpInputRefs.current[index + 1]?.focus();
     }
   };
 
-  const handleOtpPaste = (e: React.ClipboardEvent) => {
+  const handleOtpPaste = (index: number, e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (pastedData.length === 6) {
-      const newOtp = pastedData.split('');
-      setOtpCode(newOtp);
-      handleVerifyOTP(pastedData);
-    }
+    applyOtp(index, e.clipboardData.getData('text'));
   };
 
   const handleVerifyOTP = async (code: string) => {
@@ -134,8 +165,11 @@ export default function AuthPage() {
       toast.success(t('auth.welcome'));
       router.replace(getRedirectTarget());
     } catch (error) {
-      toast.error(t('auth.error_invalid_code'));
-      setOtpCode(['', '', '', '', '', '']);
+      const info = classifyOtpError(error);
+      toast.error(otpErrorMessage(info));
+      // Too many attempts: the resend button waits for the server's time.
+      if (info.kind === 'rate_limited') setCountdown(resendSeconds(info.retryAfter));
+      setOtpCode(emptyOtp());
       otpInputRefs.current[0]?.focus();
     } finally {
       setIsLoading(false);
@@ -225,7 +259,7 @@ export default function AuthPage() {
                 <button
                   onClick={() => {
                     setStep('phone');
-                    setOtpCode(['', '', '', '', '', '']);
+                    setOtpCode(emptyOtp());
                   }}
                   className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                 >
@@ -243,19 +277,24 @@ export default function AuthPage() {
                 </div>
 
                 {/* OTP Input */}
-                <div className="flex justify-center gap-2">
+                <div
+                  className="flex justify-center gap-2"
+                  role="group"
+                  aria-label={t('auth.verification_code')}
+                >
                   {otpCode.map((digit, index) => (
                     <motion.input
                       key={index}
                       ref={(el) => { otpInputRefs.current[index] = el }}
                       type="text"
                       inputMode="numeric"
+                      pattern="[0-9]*"
                       autoComplete={index === 0 ? 'one-time-code' : 'off'}
-                      aria-label={`${t('auth.enter_code')} ${index + 1}/6`}
+                      aria-label={`${t('auth.verification_code')} ${index + 1}/6`}
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      onPaste={handleOtpPaste}
+                      onPaste={(e) => handleOtpPaste(index, e)}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}

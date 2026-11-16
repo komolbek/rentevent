@@ -172,6 +172,12 @@ const uz: Record<TranslationKey, string> = {
   'auth.code_sent': 'Kod raqamingizga yuborildi',
   'auth.welcome': 'Xush kelibsiz!',
   'auth.error_invalid_code': 'Noto\'g\'ri kod. Qayta urinib ko\'ring.',
+  'auth.verification_code': 'Tasdiqlash kodi',
+  'auth.error_code_expired': 'Kod eskirgan. Yangi kod so\'rang.',
+  'auth.error_rate_limited': 'Urinishlar juda ko\'p. Keyinroq qayta urinib ko\'ring.',
+  'auth.error_rate_limited_wait': 'Urinishlar juda ko\'p. {seconds} soniyadan keyin qayta urinib ko\'ring.',
+  'auth.error_sms_unavailable': 'SMS hozir yuborilmayapti. Bir necha daqiqadan keyin urinib ko\'ring.',
+  'auth.error_network': 'Server bilan aloqa yo\'q. Internetni tekshiring.',
 
   // Catalog Page
   'catalog.title': 'Katalog',

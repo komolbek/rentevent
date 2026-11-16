@@ -200,6 +200,18 @@ const en: Record<AdminTranslationKey, string> = {
   'settings.app_links_hint': 'App Store and Google Play links — they drive the “Download the app” block with a QR code on the site. Leave empty to hide it.',
   'orders.event_label': 'Event',
   'orders.event_chip_title': 'Order for event: {title}',
+  'otp.verification_code': 'Verification code',
+  'otp.resend_timer': 'Resend in',
+  'otp.seconds_suffix': 's',
+  'otp.resend': 'Resend code',
+  'otp.error_invalid_phone': 'Enter a valid phone number',
+  'otp.error_invalid_code': 'Invalid or expired code',
+  'otp.error_code_expired': 'The code has expired. Request a new one.',
+  'otp.error_rate_limited': 'Too many attempts. Please try again later.',
+  'otp.error_rate_limited_wait': 'Too many attempts. Try again in {seconds} s.',
+  'otp.error_sms_unavailable': 'SMS is temporarily unavailable. Try again in a few minutes.',
+  'otp.error_network': 'Cannot reach the server. Check your connection.',
+  'otp.error_send_failed': 'Could not send the code',
 };
 
 export default en;

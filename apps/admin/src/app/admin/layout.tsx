@@ -10,7 +10,6 @@ const PUBLIC_ROUTES = [
   "/admin/login",
   "/admin/forgot-password",
   "/admin/set-password",
-  "/admin/dev-otp",
 ];
 
 export default function AdminLayout({

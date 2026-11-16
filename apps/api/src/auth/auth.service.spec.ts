@@ -23,7 +23,7 @@ function setup(existingUsers: any[] = []) {
   };
   const otp = {
     isTestPhone: vi.fn(() => false),
-    issueAndSend: vi.fn(async (_phone: string, send: (code: string) => Promise<any>) => send('123456')),
+    issueAndSend: vi.fn(async (_purpose: string, _phone: string, send: (code: string) => Promise<any>) => send('123456')),
     verify: vi.fn(async () => ({ valid: true })),
   };
   const session = { create: vi.fn(async () => 'token') };
@@ -63,7 +63,7 @@ describe('AuthService phone normalization', () => {
         vi.advanceTimersByTime(61_000);
         await service.sendOtp(s, '1.1.1.1');
       }
-      expect(otp.issueAndSend.mock.calls.map((c: any[]) => c[0])).toEqual([CANON, CANON, CANON]);
+      expect(otp.issueAndSend.mock.calls.map((c: any[]) => c[1])).toEqual([CANON, CANON, CANON]);
     } finally {
       vi.useRealTimers();
     }

@@ -26,6 +26,8 @@ Updated: 2026-11-16
 - 2026-11-16: hero slides H3 (UploadThing cleanup on replace/delete) + H4 (admin screen: focal point, mobile photo, alt,
   dates, status badge) in working tree, uncommitted; `scripts/check.sh` green; not checked in a browser (no local DB).
 
+- 2026-11-16: SMS5 (dev OTP viewer only in dev/test), SMS6 (per-purpose HMAC-stored OTP, purge, `OTP_PEPPER` required in prod), SMS7 (web/admin OTP input + error mapping) in working tree, uncommitted, `scripts/check.sh` pending. Details: `docs/security/sms-readiness-2026-11-16.md` Progress.
+
 ## Next
 - Security fixes T3–T13 in plan order (T3 reuses T1's `normalizeUzPhone`), plan
   `docs/security/fix-plan-2026-11-15.md`, audit `docs/security/audit-2026-11-15.md`. F3 (D1) before go-live.
@@ -34,6 +36,7 @@ Updated: 2026-11-16
 - Migration tracking for prod DB (today `prisma db push` by hand, see CLAUDE.md rule 2).
 
 ## Waiting on
+- Owner: set `OTP_PEPPER` in Railway (API) BEFORE pushing SMS6, or the API will not boot.
 - Owner: OK to push `main` (deploys the 11-02 merge + T1 + T2); commit `docs/security/`? (lists open vulns).
 - iOS (`rentevent-ios`, not checked): after T2 the API returns 400 for past start / >90 days on
   `GET /products` and `/products/:id/availability`. Verify the app never sends those before deploy.

@@ -29,7 +29,7 @@ import { AdminSmsTemplatesController } from './admin-sms-templates.controller';
 import { AdminSmsTemplatesService } from './admin-sms-templates.service';
 import { AdminUploadController } from './admin-upload.controller';
 import { AdminUploadService } from './admin-upload.service';
-import { AdminDevOtpController } from './admin-dev-otp.controller';
+import { devOtpControllers } from './admin-dev-otp.controller';
 
 @Module({
   imports: [AuthModule],
@@ -48,7 +48,7 @@ import { AdminDevOtpController } from './admin-dev-otp.controller';
     AdminSettingsController,
     AdminSmsTemplatesController,
     AdminUploadController,
-    AdminDevOtpController,
+    ...devOtpControllers(process.env.NODE_ENV),
   ],
   providers: [
     AdminAuthService,

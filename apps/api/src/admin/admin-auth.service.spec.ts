@@ -33,9 +33,14 @@ function fakePrisma() {
         for (let i = otps.length - 1; i >= 0; i--) {
           const o = otps[i];
           const byPhone = where.phoneNumber === undefined || o.phoneNumber === where.phoneNumber;
+          if (where.createdAt) {
+            if (o.createdAt < where.createdAt.lt) otps.splice(i, 1);
+            continue;
+          }
           const byId = where.id === undefined || (where.id.not !== undefined ? o.id !== where.id.not : o.id === where.id);
           if (byPhone && byId) otps.splice(i, 1);
         }
+        return { count: 0 };
       }),
       create: vi.fn(async ({ data }: any) => {
         const row = { id: ++seq, verified: false, attempts: 0, createdAt: new Date(), ...data };
@@ -281,7 +286,7 @@ describe('AdminAuthService forgot-password', () => {
     expect(oldCode).toBe('111111');
     expect(newCode).toBe('222222');
     expect(await status(service.forgotPasswordVerifyOtp(PHONE, oldCode, IP))).toBe(400);
-    expect(prisma.otps.filter((o) => o.phoneNumber === PHONE)).toHaveLength(1);
+    expect(prisma.otps.filter((o) => o.phoneNumber === `admin_reset:${PHONE}`)).toHaveLength(1);
     expect(prisma.otps.some((o) => o.phoneNumber === '+998911111111')).toBe(true);
     const res = await service.forgotPasswordVerifyOtp('+998 90 123 45 67', newCode, IP);
     expect(res.resetToken).toMatch(/^[0-9a-f]{64}$/);

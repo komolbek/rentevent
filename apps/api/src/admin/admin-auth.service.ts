@@ -228,7 +228,7 @@ export class AdminAuthService {
       return;
     }
 
-    const result = await this.otpService.issueAndSend(phone, (code) =>
+    const result = await this.otpService.issueAndSend('admin_reset', phone, (code) =>
       this.smsService.sendAdminOTP(phone, code),
     );
     if (!result.success) {
@@ -267,7 +267,7 @@ export class AdminAuthService {
     });
     if (!staff || !staff.isActive || staff.deletedAt) throw invalid();
 
-    const result = await this.otpService.verify(phone, code);
+    const result = await this.otpService.verify('admin_reset', phone, code);
     if (!result.valid) {
       // Only a wrong guess against a live code counts toward the lockout, so
       // nobody can lock a real user out before a code has been issued.

@@ -200,6 +200,18 @@ const uz: Record<AdminTranslationKey, string> = {
   'settings.app_links_hint': 'App Store va Google Play havolalari — ular orqali saytda QR-kodli «Ilovani yuklab oling» bloki koʻrsatiladi. Yashirish uchun boʻsh qoldiring.',
   'orders.event_label': 'Tadbir',
   'orders.event_chip_title': 'Tadbir uchun buyurtma: {title}',
+  'otp.verification_code': 'Tasdiqlash kodi',
+  'otp.resend_timer': 'Qayta yuborish',
+  'otp.seconds_suffix': ' s',
+  'otp.resend': 'Kodni qayta yuborish',
+  'otp.error_invalid_phone': 'Telefon raqamini to\'g\'ri kiriting',
+  'otp.error_invalid_code': 'Kod noto\'g\'ri yoki eskirgan',
+  'otp.error_code_expired': 'Kod eskirgan. Yangi kod so\'rang.',
+  'otp.error_rate_limited': 'Urinishlar juda ko\'p. Keyinroq qayta urinib ko\'ring.',
+  'otp.error_rate_limited_wait': 'Urinishlar juda ko\'p. {seconds} soniyadan keyin qayta urinib ko\'ring.',
+  'otp.error_sms_unavailable': 'SMS hozir yuborilmayapti. Bir necha daqiqadan keyin urinib ko\'ring.',
+  'otp.error_network': 'Server bilan aloqa yo\'q. Internetni tekshiring.',
+  'otp.error_send_failed': 'Kodni yuborib bo\'lmadi',
 };
 
 export default uz;

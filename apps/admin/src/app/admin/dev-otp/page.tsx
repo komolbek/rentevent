@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { notFound } from 'next/navigation';
 import {
   MessageSquare,
   RefreshCw,
@@ -13,7 +14,7 @@ import {
   Shield,
   User,
 } from 'lucide-react';
-import { api, adminDevOtpApi } from '@/lib/api';
+import { adminDevOtpApi } from '@/lib/api';
 
 interface OTPEntry {
   id: string;
@@ -44,7 +45,13 @@ function timeAgo(dateString: string): string {
   return `${hours}ч назад`;
 }
 
-export default function DevOTPPage() {
+/** Dev-only screen: a production build answers 404 (the API route does not exist there either). */
+export default function DevOTPRoute() {
+  if (process.env.NODE_ENV === 'production') notFound();
+  return <DevOTPPage />;
+}
+
+function DevOTPPage() {
   const [entries, setEntries] = useState<OTPEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -54,12 +61,10 @@ export default function DevOTPPage() {
   const fetchEntries = useCallback(async () => {
     try {
       const res = await adminDevOtpApi.list();
-      const data = res.data;
-
-      if (data.success) {
-        setEntries(data.entries);
-        setError('');
-      }
+      // The API answers `{ entries }` (no `success` flag).
+      const list = res.data?.entries;
+      setEntries(Array.isArray(list) ? list : []);
+      setError('');
     } catch (err: any) {
       if (err?.response?.status === 403) {
         setError('prod');
@@ -84,7 +89,7 @@ export default function DevOTPPage() {
   }, [autoRefresh, error, fetchEntries]);
 
   const handleClear = async () => {
-    await api.delete('/admin/dev/otp');
+    await adminDevOtpApi.clear();
     setEntries([]);
   };
 
@@ -102,15 +107,15 @@ export default function DevOTPPage() {
           <Check className="h-8 w-8 text-green-500" />
         </div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">
-          Рабочий режим (Eskiz)
+          Рабочий режим
         </h2>
         <p className="text-gray-500 mb-6">
-          SMS отправляются через Eskiz. OTP-коды доставляются на реальные
+          SMS отправляются через шлюз. OTP-коды доставляются на реальные
           номера телефонов. Dev-лог недоступен в этом режиме.
         </p>
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          SMS_PROVIDER = eskiz
+          SMS_PROVIDER = gateway
         </div>
       </div>
     );
@@ -128,7 +133,7 @@ export default function DevOTPPage() {
           <p className="text-xs text-amber-600 mt-0.5">
             OTP-коды отображаются здесь вместо отправки на телефон.
             Переключите <code className="px-1 py-0.5 bg-amber-100 rounded">SMS_PROVIDER</code> на{' '}
-            <code className="px-1 py-0.5 bg-amber-100 rounded">eskiz</code> в
+            <code className="px-1 py-0.5 bg-amber-100 rounded">gateway</code> в
             Railway для отправки реальных SMS.
           </p>
         </div>

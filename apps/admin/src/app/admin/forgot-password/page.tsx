@@ -15,6 +15,15 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Logo } from "@/components/Logo";
+import { useTranslation } from '@/lib/i18n/useTranslation';
+import {
+  applyOtpBackspace,
+  applyOtpInput,
+  classifyOtpError,
+  emptyOtp,
+  resendSeconds,
+  type ClassifiedOtpError,
+} from '@/lib/otp-input';
 
 type Step = 'phone' | 'otp' | 'password';
 
@@ -29,9 +38,10 @@ function formatPhoneInput(value: string): string {
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [step, setStep] = useState<Step>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [otpCode, setOtpCode] = useState(['', '', '', '', '', '']);
+  const [otpCode, setOtpCode] = useState<string[]>(emptyOtp());
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -42,8 +52,29 @@ export default function ForgotPasswordPage() {
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const startCountdown = () => {
-    setCountdown(60);
+  const otpErrorMessage = ({ kind, retryAfter }: ClassifiedOtpError, fallback?: string): string => {
+    switch (kind) {
+      case 'invalid_phone':
+        return t('otp.error_invalid_phone');
+      case 'invalid_code':
+        return t('otp.error_invalid_code');
+      case 'code_expired':
+        return t('otp.error_code_expired');
+      case 'rate_limited':
+        return retryAfter
+          ? t('otp.error_rate_limited_wait', { seconds: retryAfter })
+          : t('otp.error_rate_limited');
+      case 'sms_unavailable':
+        return t('otp.error_sms_unavailable');
+      case 'network':
+        return t('otp.error_network');
+      default:
+        return fallback || t('otp.error_send_failed');
+    }
+  };
+
+  const startCountdown = (seconds = resendSeconds()) => {
+    setCountdown(seconds);
     const interval = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -86,42 +117,44 @@ export default function ForgotPasswordPage() {
         setError(data.message || 'Ошибка отправки кода');
       }
     } catch (err: any) {
-      const message = err?.response?.data?.message;
-      setError(message || 'Ошибка подключения к серверу');
+      const info = classifyOtpError(err);
+      setError(otpErrorMessage(info, err?.response?.data?.message));
+      if (info.kind === 'rate_limited' && step === 'otp') startCountdown(resendSeconds(info.retryAfter));
     } finally {
       setLoading(false);
     }
   };
 
   // OTP input handlers
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const newOtp = [...otpCode];
-    newOtp[index] = value.slice(-1);
-    setOtpCode(newOtp);
-
-    if (value && index < 5) {
-      otpRefs.current[index + 1]?.focus();
-    }
-
-    if (value && index === 5 && newOtp.every((d) => d)) {
-      handleVerifyOTP(newOtp.join(''));
-    }
+  /** Typing, autofill (whole code in one box) and paste all end up here. */
+  const applyOtp = (index: number, raw: string) => {
+    const r = applyOtpInput(otpCode, index, raw);
+    setOtpCode(r.digits);
+    otpRefs.current[r.focusIndex]?.focus();
+    // Auto-submit as soon as all six digits are in
+    if (r.complete && !loading) handleVerifyOTP(r.digits.join(''));
   };
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !otpCode[index] && index > 0) {
+    if (e.key === 'Backspace') {
+      const r = applyOtpBackspace(otpCode, index);
+      if (r) {
+        e.preventDefault();
+        setOtpCode(r.digits);
+        otpRefs.current[r.focusIndex]?.focus();
+      }
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault();
       otpRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < 5) {
+      e.preventDefault();
+      otpRefs.current[index + 1]?.focus();
     }
   };
 
-  const handleOtpPaste = (e: React.ClipboardEvent) => {
+  const handleOtpPaste = (index: number, e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (pasted.length === 6) {
-      setOtpCode(pasted.split(''));
-      handleVerifyOTP(pasted);
-    }
+    applyOtp(index, e.clipboardData.getData('text'));
   };
 
   // Step 2: Verify OTP
@@ -141,13 +174,17 @@ export default function ForgotPasswordPage() {
         setResetToken(data.resetToken);
         setStep('password');
       } else {
-        setError(data.message || 'Неверный код');
-        setOtpCode(['', '', '', '', '', '']);
+        setError(data.message || t('otp.error_invalid_code'));
+        setOtpCode(emptyOtp());
         otpRefs.current[0]?.focus();
       }
     } catch (err: any) {
-      const message = err?.response?.data?.message;
-      setError(message || 'Ошибка подключения к серверу');
+      const info = classifyOtpError(err);
+      setError(otpErrorMessage(info, err?.response?.data?.message));
+      // Too many attempts: the resend button waits for the server's time.
+      if (info.kind === 'rate_limited') startCountdown(resendSeconds(info.retryAfter));
+      setOtpCode(emptyOtp());
+      otpRefs.current[0]?.focus();
     } finally {
       setLoading(false);
     }
@@ -191,7 +228,7 @@ export default function ForgotPasswordPage() {
 
   const handleResendOTP = async () => {
     if (countdown > 0) return;
-    setOtpCode(['', '', '', '', '', '']);
+    setOtpCode(emptyOtp());
     await handleSendOTP();
   };
 
@@ -324,7 +361,11 @@ export default function ForgotPasswordPage() {
               </div>
 
               {/* OTP Inputs */}
-              <div className="flex justify-center gap-2">
+              <div
+                className="flex justify-center gap-2"
+                role="group"
+                aria-label={t('otp.verification_code')}
+              >
                 {otpCode.map((digit, index) => (
                   <input
                     key={index}
@@ -333,10 +374,13 @@ export default function ForgotPasswordPage() {
                     }}
                     type="text"
                     inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                    aria-label={`${t('otp.verification_code')} ${index + 1}/6`}
                     value={digit}
-                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onChange={(e) => applyOtp(index, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                    onPaste={handleOtpPaste}
+                    onPaste={(e) => handleOtpPaste(index, e)}
                     className={`w-12 h-14 rounded-xl border-2 text-center text-2xl font-bold transition-all focus:border-primary-500 focus:outline-none focus:ring-4 focus:ring-primary-500/10 ${
                       digit
                         ? 'border-primary-500 bg-primary-500/5'
@@ -363,9 +407,9 @@ export default function ForgotPasswordPage() {
               <div className="text-center">
                 {countdown > 0 ? (
                   <p className="text-sm text-gray-500">
-                    Повторная отправка через{' '}
+                    {t('otp.resend_timer')}{' '}
                     <span className="font-medium text-gray-900">
-                      {countdown}с
+                      {countdown}{t('otp.seconds_suffix')}
                     </span>
                   </p>
                 ) : (
@@ -374,7 +418,7 @@ export default function ForgotPasswordPage() {
                     disabled={loading}
                     className="text-sm text-primary-500 hover:text-primary-600 font-medium transition-colors"
                   >
-                    Отправить код повторно
+                    {t('otp.resend')}
                   </button>
                 )}
               </div>
@@ -382,7 +426,7 @@ export default function ForgotPasswordPage() {
               <button
                 onClick={() => {
                   setStep('phone');
-                  setOtpCode(['', '', '', '', '', '']);
+                  setOtpCode(emptyOtp());
                   setError('');
                 }}
                 className="w-full text-center text-sm text-gray-500 hover:text-gray-700 inline-flex items-center justify-center gap-1 transition-colors"

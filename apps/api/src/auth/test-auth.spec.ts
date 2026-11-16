@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Logger } from '@nestjs/common';
-import { OtpService } from './otp.service';
+import { OtpService, hashOtp } from './otp.service';
 import { SmsService } from './sms.service';
 import { AuthService } from './auth.service';
 import { SmsQuotaService } from './sms-quota.service';
@@ -31,7 +31,7 @@ function fakePrisma(staffPhones: string[] = []) {
     },
     oTP: {
       create: vi.fn(async ({ data }: any) => {
-        const row = { id: ++seq, verified: false, attempts: 0, createdAt: new Date(seq), ...data };
+        const row = { id: ++seq, verified: false, attempts: 0, createdAt: new Date(), ...data };
         otps.push(row);
         return row;
       }),
@@ -39,11 +39,16 @@ function fakePrisma(staffPhones: string[] = []) {
         for (let i = otps.length - 1; i >= 0; i--) {
           const o = otps[i];
           const byPhone = where.phoneNumber === undefined || o.phoneNumber === where.phoneNumber;
+          if (where.createdAt) {
+            if (o.createdAt < where.createdAt.lt) otps.splice(i, 1);
+            continue;
+          }
           const byId =
             where.id === undefined ||
             (where.id.not !== undefined ? o.id !== where.id.not : o.id === where.id);
           if (byPhone && byId) otps.splice(i, 1);
         }
+        return { count: 0 };
       }),
     },
   };
@@ -64,6 +69,7 @@ function stack(staffPhones: string[] = []) {
 
 function testEnv(over: Record<string, string> = {}) {
   vi.stubEnv('NODE_ENV', 'production');
+  vi.stubEnv('OTP_PEPPER', 'test-pepper');
   vi.stubEnv('ENABLE_TEST_AUTH', 'true');
   vi.stubEnv('TEST_PHONE_NUMBERS', REVIEW);
   vi.stubEnv('TEST_OTP_CODE', FIXED);
@@ -128,6 +134,7 @@ describe('SMS4: boot validation', () => {
 
   it('disabled: boots silently without touching the database', async () => {
     vi.stubEnv('NODE_ENV', 'production');
+    vi.stubEnv('OTP_PEPPER', 'test-pepper');
     const s = stack();
     await s.otp.onModuleInit();
     expect(s.prisma.staff.findMany).not.toHaveBeenCalled();
@@ -141,7 +148,7 @@ describe('SMS4: behaviour', () => {
     await s.auth.sendOtp(`+${REVIEW}`, '1.1.1.1');
     expect(s.sendOTP).not.toHaveBeenCalled();
     expect(s.prisma.otps).toHaveLength(1);
-    expect(s.prisma.otps[0].code).toBe(FIXED);
+    expect(s.prisma.otps[0].code).toBe(hashOtp(FIXED));
     expect(s.rateLimit.count('sms_global_day', 'all', 24 * 3_600_000)).toBe(0);
     expect(s.otp.isTestAuthEnabled()).toBe(true);
   });
@@ -149,10 +156,10 @@ describe('SMS4: behaviour', () => {
   it('the fixed code verifies', async () => {
     testEnv();
     const s = stack();
-    const row = { id: 1, phoneNumber: `+${REVIEW}`, code: FIXED, attempts: 0, verified: false, expiresAt: new Date(Date.now() + 60_000) };
+    const row = { id: 1, phoneNumber: `login:+${REVIEW}`, code: hashOtp(FIXED), attempts: 0, verified: false, expiresAt: new Date(Date.now() + 60_000) };
     (s.prisma as any).oTP.findFirst = async () => row;
     (s.prisma as any).oTP.updateMany = async () => ({ count: 1 });
-    expect((await s.otp.verify(`+${REVIEW}`, FIXED)).valid).toBe(true);
+    expect((await s.otp.verify('login', `+${REVIEW}`, FIXED)).valid).toBe(true);
   });
 
   it('a normal phone still gets a random code and a real SMS', async () => {
@@ -160,7 +167,7 @@ describe('SMS4: behaviour', () => {
     const s = stack();
     await s.auth.sendOtp('+998901234567', '1.1.1.1');
     expect(s.sendOTP).toHaveBeenCalledTimes(1);
-    expect(s.prisma.otps[0].code).toMatch(/^\d{6}$/);
+    expect(s.prisma.otps[0].code).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('per-phone and per-IP caps still apply to test phones', async () => {
@@ -182,9 +189,9 @@ describe('SMS4: behaviour', () => {
     await s.admin.forgotPasswordSendOtp(STAFF, '1.1.1.1');
     expect(s.sendAdminOTP).toHaveBeenCalledTimes(1);
     expect(s.prisma.otps).toHaveLength(1);
-    expect(s.prisma.otps[0].code).not.toBe(FIXED);
-    expect(s.prisma.otps[0].code).toMatch(/^\d{6}$/);
-    expect(s.sendAdminOTP.mock.calls[0][1]).toBe(s.prisma.otps[0].code);
+    expect(s.prisma.otps[0].code).not.toBe(hashOtp(FIXED));
+    expect(s.prisma.otps[0].code).toMatch(/^[0-9a-f]{64}$/);
+    expect(hashOtp(s.sendAdminOTP.mock.calls[0][1])).toBe(s.prisma.otps[0].code);
   });
 
   it('a bad config at runtime fails closed (no test phone)', () => {

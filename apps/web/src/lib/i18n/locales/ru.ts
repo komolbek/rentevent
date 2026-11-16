@@ -170,6 +170,12 @@ const ru = {
   'auth.code_sent': 'Код отправлен на ваш номер',
   'auth.welcome': 'Добро пожаловать!',
   'auth.error_invalid_code': 'Неверный код. Попробуйте ещё раз.',
+  'auth.verification_code': 'Код подтверждения',
+  'auth.error_code_expired': 'Код истёк. Запросите новый.',
+  'auth.error_rate_limited': 'Слишком много попыток. Попробуйте позже.',
+  'auth.error_rate_limited_wait': 'Слишком много попыток. Повторите через {seconds} с.',
+  'auth.error_sms_unavailable': 'SMS сейчас не отправляются. Попробуйте через несколько минут.',
+  'auth.error_network': 'Нет связи с сервером. Проверьте интернет.',
 
   // Catalog Page
   'catalog.title': 'Каталог',

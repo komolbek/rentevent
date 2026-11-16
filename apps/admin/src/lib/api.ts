@@ -220,6 +220,7 @@ export const adminUploadApi = {
 // ─── Dev OTP ─────────────────────────────────────────────────────────────────
 
 export const adminDevOtpApi = {
-  list: () => api.get("/admin/dev/otp"),
+  list: () => api.get("/admin/dev-otp"),
+  clear: () => api.delete("/admin/dev-otp"),
 };
 
