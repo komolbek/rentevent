@@ -5,6 +5,7 @@ import { Plus, Edit, Trash2, GripVertical, Upload, X, ImageIcon } from 'lucide-r
 import toast from 'react-hot-toast'
 import { Modal, btn } from '@/components/Modal'
 import { adminHeroSlidesApi, adminInspirationsApi, adminUploadApi } from '@/lib/api'
+import { HeroLinkPicker } from '@/components/HeroLinkPicker'
 import { useTranslation } from '@/lib/i18n/useTranslation'
 import { heroSlideStatus, focalFromClick, buildHeroBody, type HeroSlideStatus } from '@rentevent/validators'
 
@@ -571,13 +572,22 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
 
           <div>
             <label className="block text-sm text-gray-600 mb-1">{t(cfg.linkField.labelKey)}</label>
-            <input
-              type="text"
-              placeholder={cfg.linkField.placeholder}
-              value={form[cfg.linkField.name] ?? ''}
-              onChange={(e) => setForm((p) => ({ ...p, [cfg.linkField.name]: e.target.value }))}
-              className={field}
-            />
+            {kind === 'hero' ? (
+              <HeroLinkPicker
+                key={editing?.id ?? 'new'}
+                value={form[cfg.linkField.name] ?? ''}
+                onChange={(next) => setForm((p) => ({ ...p, [cfg.linkField.name]: next }))}
+                className={field}
+              />
+            ) : (
+              <input
+                type="text"
+                placeholder={cfg.linkField.placeholder}
+                value={form[cfg.linkField.name] ?? ''}
+                onChange={(e) => setForm((p) => ({ ...p, [cfg.linkField.name]: e.target.value }))}
+                className={field}
+              />
+            )}
             <p className="mt-1 text-xs text-gray-500">{t(cfg.linkField.hintKey)}</p>
           </div>
 
