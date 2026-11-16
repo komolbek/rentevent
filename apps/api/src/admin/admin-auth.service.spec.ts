@@ -70,7 +70,7 @@ function fakePrisma() {
   };
 }
 
-function setup() {
+function setup(opts: { raw?: boolean } = {}) {
   const prisma = fakePrisma();
   const sms = { sendAdminOTP: vi.fn(async () => ({ success: true })) };
   const rateLimit = new RateLimitService();
@@ -79,7 +79,18 @@ function setup() {
   // sms.service.spec.ts; here only the admin flow's own limits are exercised.
   const quota = { reserve: vi.fn(() => ({ slots: [] })), refund: vi.fn(), refundGlobal: vi.fn() };
   const service = new AdminAuthService(prisma as any, rateLimit, otp, sms as any, quota as any);
-  return { prisma, sms, service, rateLimit };
+  if (!opts.raw) {
+    // Sends are detached from the response; settle them so the flow tests read like before.
+    const send = service.forgotPasswordSendOtp.bind(service);
+    service.forgotPasswordSendOtp = async (...a: Parameters<typeof send>) => {
+      try {
+        return await send(...a);
+      } finally {
+        await service.settled();
+      }
+    };
+  }
+  return { prisma, sms, service, rateLimit, quota };
 }
 
 async function status(p: Promise<unknown>): Promise<number | 'ok'> {
@@ -290,5 +301,74 @@ describe('AdminAuthService forgot-password', () => {
     expect(prisma.otps.some((o) => o.phoneNumber === '+998911111111')).toBe(true);
     const res = await service.forgotPasswordVerifyOtp('+998 90 123 45 67', newCode, IP);
     expect(res.resetToken).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  describe('send after responding (S20)', () => {
+    const UNKNOWN = '+998900000000';
+
+    it('answers a known and an unknown phone identically; only the known one triggers an SMS', async () => {
+      const { service, sms } = setup({ raw: true });
+      const known = await service.forgotPasswordSendOtp(PHONE, '2.2.2.2');
+      const unknown = await service.forgotPasswordSendOtp(UNKNOWN, '3.3.3.3');
+      expect(known).toBeUndefined();
+      expect(unknown).toBeUndefined();
+      await service.settled();
+      expect(sms.sendAdminOTP).toHaveBeenCalledTimes(1);
+      expect(sms.sendAdminOTP).toHaveBeenCalledWith(PHONE, expect.stringMatching(/^\d{6}$/));
+    });
+
+    it('does not wait for a slow SMS call', async () => {
+      const { service, sms } = setup({ raw: true });
+      let release!: () => void;
+      sms.sendAdminOTP.mockImplementation(
+        () => new Promise((r) => { release = () => r({ success: true } as any); }),
+      );
+      let done = false;
+      const p = service.forgotPasswordSendOtp(PHONE, IP).then(() => { done = true; });
+      await vi.advanceTimersByTimeAsync(0);
+      expect(done).toBe(true); // returned while the send is still pending
+      await p;
+      release();
+      await service.settled();
+      expect(sms.sendAdminOTP).toHaveBeenCalledTimes(1);
+    });
+
+    it('swallows and logs a failed send; the retry is not blocked and the budget is refunded', async () => {
+      const { service, sms, prisma, quota, rateLimit } = setup({ raw: true });
+      const warn = vi.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
+      sms.sendAdminOTP.mockResolvedValueOnce({ success: false, error: 'boom' } as any);
+      await expect(service.forgotPasswordSendOtp(PHONE, IP)).resolves.toBeUndefined();
+      await service.settled();
+      expect(quota.refund).toHaveBeenCalledTimes(1);
+      expect(rateLimit.count('admin_reset_send_phone', PHONE, RESET_LIMITS.sendPerPhone.windowMs)).toBe(0);
+      expect(prisma.otps.filter((o) => o.phoneNumber === `admin_reset:${PHONE}`)).toHaveLength(0);
+      const logged = warn.mock.calls.map((c) => String(c[0])).join('\n');
+      expect(logged).toContain('not delivered');
+      expect(logged).not.toContain(PHONE);
+      await service.forgotPasswordSendOtp(PHONE, IP);
+      await service.settled();
+      expect(sms.sendAdminOTP).toHaveBeenCalledTimes(2);
+      expect(prisma.otps.filter((o) => o.phoneNumber === `admin_reset:${PHONE}`)).toHaveLength(1);
+    });
+
+    it('swallows a throwing send without rejecting the request', async () => {
+      const { service, sms, prisma } = setup({ raw: true });
+      const warn = vi.spyOn((service as any).logger, 'warn').mockImplementation(() => undefined);
+      sms.sendAdminOTP.mockRejectedValueOnce(new Error(`gateway down for ${PHONE}`));
+      await expect(service.forgotPasswordSendOtp(PHONE, IP)).resolves.toBeUndefined();
+      await expect(service.settled()).resolves.toBeUndefined();
+      expect(prisma.otps).toHaveLength(0);
+      expect(warn.mock.calls.map((c) => String(c[0])).join('\n')).not.toContain(PHONE);
+    });
+
+    it('applies the rate limits equally to unknown phones, before any lookup', async () => {
+      const { service, prisma } = setup({ raw: true });
+      for (let i = 0; i < RESET_LIMITS.sendPerPhone.max; i++) {
+        expect(await status(service.forgotPasswordSendOtp(UNKNOWN, `10.0.0.${i}`))).toBe('ok');
+      }
+      prisma.staff.findUnique.mockClear();
+      expect(await status(service.forgotPasswordSendOtp(UNKNOWN, '10.0.0.99'))).toBe(429);
+      expect(prisma.staff.findUnique).not.toHaveBeenCalled();
+    });
   });
 });

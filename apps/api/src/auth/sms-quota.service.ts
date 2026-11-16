@@ -1,6 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { RateLimitService } from '../common/rate-limit.service';
 import { RateLimitedException } from './otp-errors';
+import {
+  DailyThresholds,
+  SmsBlockReason,
+  logSmsBlocked,
+  logSmsDaily,
+} from './sms-log';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -21,12 +27,20 @@ export const SMS_LIMITS = {
 };
 
 export const DEFAULT_SMS_DAILY_CAP = 1000;
-const WARN_RATIO = 0.7;
 
 export function smsDailyCap(env: NodeJS.ProcessEnv = process.env): number {
   const n = Number(env.SMS_DAILY_CAP);
   return Number.isInteger(n) && n > 0 ? n : DEFAULT_SMS_DAILY_CAP;
 }
+
+const BLOCK_REASON: Record<string, SmsBlockReason> = {
+  sms_phone_cooldown: 'phone_cooldown',
+  sms_phone_hour: 'phone_hour',
+  sms_phone_day: 'phone_day',
+  sms_ip_window: 'ip_15m',
+  sms_ip_day: 'ip_day',
+  sms_global_day: 'global_daily',
+};
 
 type Slot = { namespace: string; key: string; windowMs: number; at: number };
 
@@ -37,7 +51,7 @@ export interface SmsReservation {
 
 @Injectable()
 export class SmsQuotaService {
-  private readonly logger = new Logger(SmsQuotaService.name);
+  private readonly thresholds = new DailyThresholds();
 
   constructor(private readonly rateLimit: RateLimitService) {}
 
@@ -68,12 +82,23 @@ export class SmsQuotaService {
     if (opts.noSms) checks.pop();
 
     let retryAfterMs = -1;
+    let blockedNs = '';
     for (const [ns, key, limit] of checks) {
       if (this.rateLimit.count(ns, key, limit.windowMs) >= limit.max) {
-        retryAfterMs = Math.max(retryAfterMs, this.rateLimit.retryAfterMs(ns, key, limit.windowMs));
+        const wait = this.rateLimit.retryAfterMs(ns, key, limit.windowMs);
+        if (wait > retryAfterMs) blockedNs = ns;
+        retryAfterMs = Math.max(retryAfterMs, wait);
       }
     }
-    if (retryAfterMs >= 0) throw new RateLimitedException(retryAfterMs);
+    if (retryAfterMs >= 0) {
+      logSmsBlocked({
+        reason: opts.noSms ? 'test_auth' : BLOCK_REASON[blockedNs.replace(/^admin_/, '')] ?? 'global_daily',
+        purpose: opts.flow === 'admin' ? 'admin_reset' : 'login',
+        phone,
+        ip,
+      });
+      throw new RateLimitedException(retryAfterMs);
+    }
 
     const slots = checks.map(([namespace, key, limit]) => ({
       namespace,
@@ -83,8 +108,9 @@ export class SmsQuotaService {
     }));
 
     const used = opts.noSms ? 0 : this.rateLimit.count('sms_global_day', 'all', DAY);
-    if (!opts.noSms && used === Math.ceil(cap * WARN_RATIO)) {
-      this.logger.warn(`SMS daily ceiling at ${used}/${cap} (70 %): check for abuse or a campaign`);
+    if (!opts.noSms) {
+      const pct = this.thresholds.crossed(used, cap);
+      if (pct !== null) logSmsDaily(used, cap, pct);
     }
     return { slots };
   }

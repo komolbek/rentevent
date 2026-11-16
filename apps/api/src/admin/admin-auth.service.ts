@@ -12,7 +12,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../common/prisma.service';
 import { RateLimitService } from '../common/rate-limit.service';
 import { OtpService } from '../auth/otp.service';
-import { SmsQuotaService } from '../auth/sms-quota.service';
+import { SmsQuotaService, SmsReservation } from '../auth/sms-quota.service';
 import { RateLimitedException } from '../auth/otp-errors';
 import { SmsService } from '../auth/sms.service';
 import { createAdminSession } from '../common/guards/admin-auth.guard';
@@ -46,6 +46,7 @@ interface ResetTokenEntry {
 export class AdminAuthService {
   private readonly logger = new Logger(AdminAuthService.name);
   private resetTokens = new Map<string, ResetTokenEntry>();
+  private readonly pendingSends = new Set<Promise<void>>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -228,18 +229,52 @@ export class AdminAuthService {
       return;
     }
 
-    const result = await this.otpService.issueAndSend('admin_reset', phone, (code) =>
-      this.smsService.sendAdminOTP(phone, code),
+    // Answer first, send after: a known and an unknown phone take the same path up to here
+    // (one staff lookup), so neither the body nor the response time tells them apart. The
+    // send runs detached; its outcome is only ever logged (the `sms_send` line comes from
+    // SmsService), never thrown into the request. `issueAndSend` already deletes the new,
+    // undelivered code when the send fails or throws, so a retry is not blocked.
+    const task = this.dispatchResetOtp(phone, ip, reservation, phoneAt, ipAt).finally(() =>
+      this.pendingSends.delete(task),
     );
-    if (!result.success) {
-      // Nothing was sent: the new code is gone, the previous one still works and the budget is given back.
-      this.smsQuota.refund(reservation);
-      this.rateLimitService.refund('admin_reset_send_phone', phone, phoneAt);
-      this.rateLimitService.refund('admin_reset_send_ip', ip, ipAt);
+    this.pendingSends.add(task);
+  }
+
+  /** Resolves when every in-flight reset send has finished (tests, graceful shutdown). */
+  async settled(): Promise<void> {
+    await Promise.allSettled([...this.pendingSends]);
+  }
+
+  /** Never rejects. */
+  private async dispatchResetOtp(
+    phone: string,
+    ip: string,
+    reservation: SmsReservation,
+    phoneAt: number,
+    ipAt: number,
+  ): Promise<void> {
+    let ok = false;
+    try {
+      const result = await this.otpService.issueAndSend('admin_reset', phone, (code) =>
+        this.smsService.sendAdminOTP(phone, code),
+      );
+      ok = result.success;
+    } catch (e) {
+      this.logger.warn(
+        `[forgot-password] send failed for ${maskPhone(phone)}: ${e instanceof Error ? e.name : 'error'}`,
+      );
     }
-    this.logger.log(
-      `[forgot-password] OTP dispatched to ${maskPhone(phone)} via ${process.env.SMS_PROVIDER || 'mock'} (success=${result.success}${result.error ? `, error=${result.error}` : ''})`,
-    );
+    try {
+      if (!ok) {
+        // Nothing was sent: the budget is given back; the previous code (if any) still works.
+        this.smsQuota.refund(reservation);
+        this.rateLimitService.refund('admin_reset_send_phone', phone, phoneAt);
+        this.rateLimitService.refund('admin_reset_send_ip', ip, ipAt);
+        this.logger.warn(`[forgot-password] OTP not delivered to ${maskPhone(phone)}`);
+      }
+    } catch {
+      /* a bookkeeping problem must not surface */
+    }
   }
 
   async forgotPasswordVerifyOtp(

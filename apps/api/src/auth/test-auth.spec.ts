@@ -187,6 +187,7 @@ describe('SMS4: behaviour', () => {
     testEnv({ TEST_PHONE_NUMBERS: STAFF.slice(1) });
     const s = stack([STAFF]);
     await s.admin.forgotPasswordSendOtp(STAFF, '1.1.1.1');
+    await s.admin.settled();
     expect(s.sendAdminOTP).toHaveBeenCalledTimes(1);
     expect(s.prisma.otps).toHaveLength(1);
     expect(s.prisma.otps[0].code).not.toBe(hashOtp(FIXED));

@@ -5,6 +5,7 @@ import { SessionService } from './session.service';
 import { SmsService } from './sms.service';
 import { RateLimitService } from '../common/rate-limit.service';
 import { SmsQuotaService } from './sms-quota.service';
+import { logSmsBlocked } from './sms-log';
 import { RateLimitedException, otpBadRequest, smsUnavailable } from './otp-errors';
 import { normalizeUzPhone } from '../common/phone';
 
@@ -35,7 +36,10 @@ export class AuthService {
     const isTestPhone = this.otpService.isTestPhone(phoneNumber);
 
     // Provider outage: answer at once, no row written, no budget used.
-    if (!isTestPhone && this.smsService.isCircuitOpen()) throw smsUnavailable();
+    if (!isTestPhone && this.smsService.isCircuitOpen()) {
+      logSmsBlocked({ reason: 'breaker_open', purpose: 'login', phone: phoneNumber });
+      throw smsUnavailable();
+    }
 
     // Every cap is checked before any is recorded (a rejection burns nothing);
     // the slots are given back below when the SMS could not be sent.

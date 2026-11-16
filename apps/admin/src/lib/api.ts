@@ -157,14 +157,6 @@ export const adminDeliveryZonesApi = {
   delete: (id: string) => api.delete(`/admin/delivery-zones/${id}`),
 };
 
-// ─── SMS Templates ───────────────────────────────────────────────────────────
-
-export const adminSmsTemplatesApi = {
-  list: () => api.get("/admin/sms-templates"),
-  update: (id: string, data: Record<string, unknown>) =>
-    api.patch(`/admin/sms-templates/${id}`, data),
-};
-
 // ─── Upload ──────────────────────────────────────────────────────────────────
 
 export const adminEventsApi = {

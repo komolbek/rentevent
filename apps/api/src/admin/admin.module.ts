@@ -25,8 +25,6 @@ import { AdminCustomersController } from './admin-customers.controller';
 import { AdminCustomersService } from './admin-customers.service';
 import { AdminSettingsController } from './admin-settings.controller';
 import { AdminSettingsService } from './admin-settings.service';
-import { AdminSmsTemplatesController } from './admin-sms-templates.controller';
-import { AdminSmsTemplatesService } from './admin-sms-templates.service';
 import { AdminUploadController } from './admin-upload.controller';
 import { AdminUploadService } from './admin-upload.service';
 import { devOtpControllers } from './admin-dev-otp.controller';
@@ -46,7 +44,6 @@ import { devOtpControllers } from './admin-dev-otp.controller';
     AdminStaffController,
     AdminCustomersController,
     AdminSettingsController,
-    AdminSmsTemplatesController,
     AdminUploadController,
     ...devOtpControllers(process.env.NODE_ENV),
   ],
@@ -63,7 +60,6 @@ import { devOtpControllers } from './admin-dev-otp.controller';
     AdminStaffService,
     AdminCustomersService,
     AdminSettingsService,
-    AdminSmsTemplatesService,
     AdminUploadService,
   ],
 })

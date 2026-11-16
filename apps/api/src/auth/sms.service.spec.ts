@@ -370,6 +370,7 @@ describe('SMS2: timeout, breaker and a clean failure path', () => {
     const fetchMock = vi.fn(async () => okResponse());
     const { admin, prisma, otp, rateLimit } = stack(fetchMock as any);
     await admin.forgotPasswordSendOtp(PHONE, '1.1.1.1');
+    await admin.settled();
     const storedPrevious = prisma.otps[0].code;
     const previous = sentCode(fetchMock, 0);
 
@@ -378,6 +379,7 @@ describe('SMS2: timeout, breaker and a clean failure path', () => {
       throw new TypeError('fetch failed');
     }) as any);
     await admin.forgotPasswordSendOtp(PHONE, '1.1.1.1');
+    await admin.settled();
 
     expect(prisma.otps).toHaveLength(1);
     expect((await otp.verify('admin_reset', PHONE, previous)).valid).toBe(true);
@@ -487,8 +489,9 @@ describe('SMS3: abuse caps and server cooldown', () => {
       if (i === 5) expect(warn).not.toHaveBeenCalled();
       if (i === 6) expect(warn).toHaveBeenCalledTimes(1);
     }
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn.mock.calls[0][0]).toContain('7/10');
+    // sms_daily warns at 70, 90 and 100 %, once each (SMS9).
+    expect(warn).toHaveBeenCalledTimes(3);
+    expect(warn.mock.calls[0][0]).toBe('sms_daily total=7 cap=10 pct=70');
     expect(await bodyOf(auth.sendOtp(phoneN(99), '4.4.4.99'))).toMatchObject({
       statusCode: 429,
       code: 'rate_limited',
@@ -533,6 +536,7 @@ describe('SMS3: abuse caps and server cooldown', () => {
   it('admin forgot-password has its own per-phone caps (IP and global shared) and keeps its admin ones', async () => {
     const { auth, admin, rateLimit } = stack(vi.fn(async () => okResponse()) as any);
     await admin.forgotPasswordSendOtp(PHONE, '1.1.1.1');
+    await admin.settled();
     // 60 s cooldown on the same phone within the admin flow
     expect(await bodyOf(admin.forgotPasswordSendOtp(PHONE, '2.2.2.2'))).toMatchObject({
       statusCode: 429,
@@ -547,8 +551,10 @@ describe('SMS3: abuse caps and server cooldown', () => {
     // the admin 3-per-15-min cap is still the stricter one
     vi.advanceTimersByTime(61_000);
     await admin.forgotPasswordSendOtp(PHONE, '1.1.1.1');
+    await admin.settled();
     vi.advanceTimersByTime(61_000);
     await admin.forgotPasswordSendOtp(PHONE, '1.1.1.1');
+    await admin.settled();
     vi.advanceTimersByTime(61_000);
     expect(await statusOf(admin.forgotPasswordSendOtp(PHONE, '1.1.1.1'))).toBe(429);
   });
@@ -567,6 +573,7 @@ describe('SMS3: abuse caps and server cooldown', () => {
     const { admin, rateLimit } = stack(vi.fn(async () => okResponse()) as any);
     const unknown = phoneN(5);
     await admin.forgotPasswordSendOtp(unknown, '7.7.7.7');
+    await admin.settled();
     expect(rateLimit.count('sms_global_day', 'all', 24 * HOUR)).toBe(0);
     expect(rateLimit.count('admin_sms_phone_cooldown', unknown, MIN)).toBe(1);
     expect(rateLimit.count('sms_ip_day', '7.7.7.7', 24 * HOUR)).toBe(1);

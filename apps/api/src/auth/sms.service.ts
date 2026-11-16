@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { maskPhone } from '../common/mask-phone';
+import { logSmsSend, SmsPurpose } from './sms-log';
 
 export type SmsProvider = 'mock' | 'gateway';
 
@@ -7,6 +8,8 @@ export interface SMSResult {
   success: boolean;
   messageId?: string;
   error?: string;
+  /** For logs only: HTTP status of the gateway answer or an error class (see sms-log.ts). */
+  status?: string;
   /** Stable reason when `success` is false: the caller answers 503 `sms_unavailable`. */
   failure?: 'circuit_open' | 'timeout' | 'network' | 'rate_limited' | 'provider_error' | 'not_configured';
 }
@@ -107,7 +110,7 @@ export class SmsService implements OnModuleInit {
     if (this.isMockMode()) {
       this.addDevEntry(phoneNumber, code, 'customer_auth', message);
     }
-    return this.send(phoneNumber, message);
+    return this.send(phoneNumber, message, 'login');
   }
 
   async sendAdminOTP(phoneNumber: string, code: string): Promise<SMSResult> {
@@ -115,7 +118,7 @@ export class SmsService implements OnModuleInit {
     if (this.isMockMode()) {
       this.addDevEntry(phoneNumber, code, 'admin_reset', message);
     }
-    return this.send(phoneNumber, message);
+    return this.send(phoneNumber, message, 'admin_reset');
   }
 
   private provider(): SmsProvider | null {
@@ -126,14 +129,35 @@ export class SmsService implements OnModuleInit {
     }
   }
 
-  private async send(phoneNumber: string, message: string): Promise<SMSResult> {
+  /** The single choke point: one `sms_send` log line per attempt (never the code or the text). */
+  private async send(phoneNumber: string, message: string, purpose: SmsPurpose): Promise<SMSResult> {
     const provider = this.provider();
+    const started = Date.now();
+    const result = await this.dispatch(provider, phoneNumber, message);
+    logSmsSend({
+      purpose,
+      provider: provider ?? '-',
+      ok: result.success,
+      ms: Date.now() - started,
+      messageId: result.messageId,
+      status: result.status ?? (result.success ? '200' : 'config'),
+      phone: phoneNumber,
+    });
+    return result;
+  }
+
+  private async dispatch(provider: SmsProvider | null, phoneNumber: string, message: string): Promise<SMSResult> {
     if (provider === 'mock') return this.sendMock(phoneNumber, message);
     if (provider !== 'gateway') {
-      return { success: false, error: 'SMS provider not configured', failure: 'not_configured' };
+      return { success: false, error: 'SMS provider not configured', failure: 'not_configured', status: 'config' };
     }
     if (this.isCircuitOpen()) {
-      return { success: false, error: 'SMS provider temporarily unavailable', failure: 'circuit_open' };
+      return {
+        success: false,
+        error: 'SMS provider temporarily unavailable',
+        failure: 'circuit_open',
+        status: 'breaker_open',
+      };
     }
     const result = await this.sendGateway(phoneNumber, message);
     this.trackBreaker(result);
@@ -143,17 +167,17 @@ export class SmsService implements OnModuleInit {
   /** Mock: nothing is delivered. The code is printed only in development/test. */
   private async sendMock(phoneNumber: string, message: string): Promise<SMSResult> {
     if (!isDevOrTest()) {
-      return { success: false, error: 'SMS provider not configured', failure: 'not_configured' };
+      return { success: false, error: 'SMS provider not configured', failure: 'not_configured', status: 'config' };
     }
     console.log(`[MOCK SMS] To: ${maskPhone(phoneNumber)} | ${message}`);
-    return { success: true, messageId: `mock_${Date.now()}` };
+    return { success: true, messageId: `mock_${Date.now()}`, status: 'mock' };
   }
 
   private async sendGateway(phoneNumber: string, message: string): Promise<SMSResult> {
     const gatewayUrl = process.env.SMS_GATEWAY_URL;
     const apiKey = process.env.SMS_GATEWAY_API_KEY;
     if (!gatewayUrl || !apiKey) {
-      return { success: false, error: 'SMS gateway not configured', failure: 'not_configured' };
+      return { success: false, error: 'SMS gateway not configured', failure: 'not_configured', status: 'config' };
     }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), SMS_TIMEOUT_MS);
@@ -166,22 +190,22 @@ export class SmsService implements OnModuleInit {
         signal: controller.signal,
       });
       if (response.status === 429) {
-        return { success: false, error: 'SMS gateway throttled the request', failure: 'rate_limited' };
+        return { success: false, error: 'SMS gateway throttled the request', failure: 'rate_limited', status: 'http_429' };
       }
       if (response.status >= 500 || response.status === 401 || response.status === 403) {
-        return { success: false, error: `SMS gateway error ${response.status}`, failure: 'provider_error' };
+        return { success: false, error: `SMS gateway error ${response.status}`, failure: 'provider_error', status: response.status >= 500 ? 'http_5xx' : `http_${response.status}` };
       }
       const data = await response.json();
       if (response.ok && data?.status === 'sent') {
-        return { success: true, messageId: data.id };
+        return { success: true, messageId: data.id, status: String(response.status) };
       }
       // A rejection of this one request (bad number, template): not a gateway outage.
-      return { success: false, error: 'SMS sending failed' };
+      return { success: false, error: 'SMS sending failed', status: `http_${response.status}` };
     } catch (e) {
       const aborted = controller.signal.aborted || (e as Error)?.name === 'AbortError';
       return aborted
-        ? { success: false, error: 'SMS gateway timed out', failure: 'timeout' }
-        : { success: false, error: 'SMS gateway request failed', failure: 'network' };
+        ? { success: false, error: 'SMS gateway timed out', failure: 'timeout', status: 'timeout' }
+        : { success: false, error: 'SMS gateway request failed', failure: 'network', status: 'network' };
     } finally {
       clearTimeout(timer);
     }
