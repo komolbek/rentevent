@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
-import { RateLimitService } from '../common/rate-limit.service';
 
 import { AdminAuthController } from './admin-auth.controller';
 import { AdminAuthService } from './admin-auth.service';
@@ -52,7 +51,6 @@ import { AdminDevOtpController } from './admin-dev-otp.controller';
     AdminDevOtpController,
   ],
   providers: [
-    RateLimitService,
     AdminAuthService,
     AdminDashboardService,
     AdminProductsService,

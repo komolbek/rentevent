@@ -12,10 +12,11 @@ services:
       - NODE_ENV=production
       - ADMIN_API_KEY=${ADMIN_API_KEY:-change-me-in-production}
       - ENABLE_TEST_AUTH=${ENABLE_TEST_AUTH:-false}
-      - SMS_PROVIDER=${SMS_PROVIDER:-mock}
+      # NODE_ENV=production: the API refuses to boot unless SMS_PROVIDER=gateway with URL and key.
+      - SMS_PROVIDER=${SMS_PROVIDER:-gateway}
       - SMS_GATEWAY_URL=${SMS_GATEWAY_URL:-}
       - SMS_GATEWAY_API_KEY=${SMS_GATEWAY_API_KEY:-}
-      - ESKIZ_API_TOKEN=${ESKIZ_API_TOKEN:-}
+      - SMS_DAILY_CAP=${SMS_DAILY_CAP:-1000}
       - UPLOADTHING_TOKEN=${UPLOADTHING_TOKEN:-}
     depends_on:
       db:

@@ -3,6 +3,7 @@ import { BadRequestException, HttpException } from '@nestjs/common';
 import { AuthService, VERIFY_LIMITS } from './auth.service';
 import { AuthController } from './auth.controller';
 import { RateLimitService } from '../common/rate-limit.service';
+import { SmsQuotaService } from './sms-quota.service';
 
 const CANON = '+998901234567';
 
@@ -21,11 +22,12 @@ function setup(existingUsers: any[] = []) {
     },
   };
   const otp = {
-    generate: vi.fn(async () => '123456'),
+    isTestPhone: vi.fn(() => false),
+    issueAndSend: vi.fn(async (_phone: string, send: (code: string) => Promise<any>) => send('123456')),
     verify: vi.fn(async () => ({ valid: true })),
   };
   const session = { create: vi.fn(async () => 'token') };
-  const sms = { sendOTP: vi.fn(async () => ({ success: true })) };
+  const sms = { sendOTP: vi.fn(async () => ({ success: true })), isCircuitOpen: vi.fn(() => false) };
   const rateLimit = new RateLimitService();
   const service = new AuthService(
     prisma as any,
@@ -33,6 +35,7 @@ function setup(existingUsers: any[] = []) {
     session as any,
     sms as any,
     rateLimit,
+    new SmsQuotaService(rateLimit),
   );
   return { prisma, otp, sms, service, users, rateLimit };
 }
@@ -43,18 +46,27 @@ describe('AuthService phone normalization', () => {
     await expect(service.sendOtp('12345', '1.1.1.1')).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.sendOtp(undefined, '1.1.1.1')).rejects.toBeInstanceOf(BadRequestException);
     await expect(service.verifyOtp('abc', '123456', 'd', '1.1.1.1')).rejects.toBeInstanceOf(BadRequestException);
-    expect(otp.generate).not.toHaveBeenCalled();
+    expect(otp.issueAndSend).not.toHaveBeenCalled();
     expect(sms.sendOTP).not.toHaveBeenCalled();
   });
 
   it('three spellings share one rate-limit key and one OTP phone', async () => {
-    const { service, otp } = setup();
-    const spellings = ['+998 90 123 45 67', '998901234567', '+998-90-123-45-67'];
-    for (const s of spellings) await service.sendOtp(s, '1.1.1.1');
-    expect(otp.generate.mock.calls.map((c: any[]) => c[0])).toEqual([CANON, CANON, CANON]);
-    // the 3-per-window phone limit is now spent for every spelling
-    await expect(service.sendOtp('+998901234567', '2.2.2.2')).rejects.toBeInstanceOf(HttpException);
-    await expect(service.sendOtp('998 90 123 45 67', '3.3.3.3')).rejects.toMatchObject({ status: 429 });
+    vi.useFakeTimers();
+    try {
+      const { service, otp } = setup();
+      const spellings = ['+998 90 123 45 67', '998901234567', '+998-90-123-45-67'];
+      await service.sendOtp(spellings[0], '1.1.1.1');
+      // the 60 s cooldown is spent for every spelling, whatever the IP
+      await expect(service.sendOtp(spellings[1], '2.2.2.2')).rejects.toMatchObject({ status: 429 });
+      await expect(service.sendOtp(spellings[2], '3.3.3.3')).rejects.toMatchObject({ status: 429 });
+      for (const s of spellings.slice(1)) {
+        vi.advanceTimersByTime(61_000);
+        await service.sendOtp(s, '1.1.1.1');
+      }
+      expect(otp.issueAndSend.mock.calls.map((c: any[]) => c[0])).toEqual([CANON, CANON, CANON]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('three spellings resolve to one user, stored canonical', async () => {

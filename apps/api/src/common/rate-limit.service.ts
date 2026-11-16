@@ -30,8 +30,11 @@ export class RateLimitService {
     return entry.timestamps.length;
   }
 
-  /** Records one event without checking any limit; drops events older than the window. */
-  record(namespace: string, key: string, windowMs: number): void {
+  /**
+   * Records one event without checking any limit; drops events older than the
+   * window. Returns the event's timestamp so it can be taken back with `refund`.
+   */
+  record(namespace: string, key: string, windowMs: number): number {
     const store = this.getStore(namespace);
     const now = Date.now();
     let entry = store.get(key);
@@ -41,6 +44,17 @@ export class RateLimitService {
     }
     entry.timestamps = entry.timestamps.filter((t) => t > now - windowMs);
     entry.timestamps.push(now);
+    return now;
+  }
+
+  /** Takes back one event recorded by `record` (a send that never happened). */
+  refund(namespace: string, key: string, timestamp: number): void {
+    const store = this.getStore(namespace);
+    const entry = store.get(key);
+    if (!entry) return;
+    const index = entry.timestamps.indexOf(timestamp);
+    if (index >= 0) entry.timestamps.splice(index, 1);
+    if (entry.timestamps.length === 0) store.delete(key);
   }
 
   /** Ms until the oldest event in the window expires (0 when there are none). */

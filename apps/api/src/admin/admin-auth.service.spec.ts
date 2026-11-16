@@ -31,11 +31,16 @@ function fakePrisma() {
     oTP: {
       deleteMany: vi.fn(async ({ where }: any) => {
         for (let i = otps.length - 1; i >= 0; i--) {
-          if (otps[i].phoneNumber === where.phoneNumber) otps.splice(i, 1);
+          const o = otps[i];
+          const byPhone = where.phoneNumber === undefined || o.phoneNumber === where.phoneNumber;
+          const byId = where.id === undefined || (where.id.not !== undefined ? o.id !== where.id.not : o.id === where.id);
+          if (byPhone && byId) otps.splice(i, 1);
         }
       }),
       create: vi.fn(async ({ data }: any) => {
-        otps.push({ id: ++seq, verified: false, attempts: 0, createdAt: new Date(), ...data });
+        const row = { id: ++seq, verified: false, attempts: 0, createdAt: new Date(), ...data };
+        otps.push(row);
+        return row;
       }),
       findFirst: vi.fn(async ({ where }: any) =>
         otps
@@ -65,7 +70,10 @@ function setup() {
   const sms = { sendAdminOTP: vi.fn(async () => ({ success: true })) };
   const rateLimit = new RateLimitService();
   const otp = new OtpService(prisma as any);
-  const service = new AdminAuthService(prisma as any, rateLimit, otp, sms as any);
+  // The shared SMS caps (cooldown, hourly, daily, global) have their own tests in
+  // sms.service.spec.ts; here only the admin flow's own limits are exercised.
+  const quota = { reserve: vi.fn(() => ({ slots: [] })), refund: vi.fn() };
+  const service = new AdminAuthService(prisma as any, rateLimit, otp, sms as any, quota as any);
   return { prisma, sms, service, rateLimit };
 }
 

@@ -7,6 +7,7 @@ import {
   Res,
   Req,
   UseGuards,
+  UseFilters,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
@@ -14,6 +15,7 @@ import { clientIp } from '../common/client-ip';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { StaffId } from '../common/decorators';
 import { AdminAuthService } from './admin-auth.service';
+import { RateLimitedFilter } from '../auth/otp-errors';
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -24,6 +26,7 @@ const COOKIE_OPTIONS = {
 };
 
 @ApiTags('Admin')
+@UseFilters(RateLimitedFilter)
 @Controller('admin/auth')
 export class AdminAuthController {
   constructor(private readonly adminAuthService: AdminAuthService) {}

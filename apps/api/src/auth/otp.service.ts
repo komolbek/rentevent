@@ -1,50 +1,105 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
+import { maskPhone } from '../common/mask-phone';
 import * as crypto from 'crypto';
+import type { SMSResult } from './sms.service';
+import { TestAuthConfigError, parseTestAuthConfig } from './test-auth';
 
 const OTP_EXPIRY_MINUTES = 5;
 const MAX_ATTEMPTS = 3;
 
-function normalizePhoneNumber(phone: string): string {
-  return phone.replace(/^\+/, '').replace(/[\s-]/g, '');
-}
-
-function isTestPhoneNumber(phone: string): boolean {
-  if (process.env.ENABLE_TEST_AUTH !== 'true') return false;
-  const testPhones = process.env.TEST_PHONE_NUMBERS;
-  if (!testPhones) return false;
-  const normalized = normalizePhoneNumber(phone);
-  return testPhones.split(',').map((p) => p.trim()).includes(normalized);
-}
-
 @Injectable()
-export class OtpService {
+export class OtpService implements OnModuleInit {
+  private readonly logger = new Logger(OtpService.name);
+
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Refuses to boot on a bad test-auth config, or when a test phone belongs to
+   * a staff account (the fixed code would be a back door into admin reset).
+   * Railway then keeps the previous deployment.
+   */
+  async onModuleInit(): Promise<void> {
+    const config = parseTestAuthConfig();
+    if (!config.enabled) return;
+    if (process.env.NODE_ENV !== 'production') return;
+
+    const variants = config.phones.flatMap((p) => [p, p.slice(1)]);
+    const staff = await this.prisma.staff.findMany({
+      where: { phoneNumber: { in: variants } },
+      select: { phoneNumber: true },
+    });
+    if (staff.length > 0) {
+      throw new TestAuthConfigError(
+        `TEST_PHONE_NUMBERS contains a staff phone (${maskPhone(staff[0].phoneNumber)}); remove it`,
+      );
+    }
+    this.logger.warn(
+      `TEST AUTH IS ACTIVE IN PRODUCTION for ${config.phones.map(maskPhone).join(', ')}: a fixed code logs in, no SMS is sent. Turn it off after App Review (docs/ops/app-review-account.md).`,
+    );
+  }
+
+  /** True when test-auth is switched on (`ENABLE_TEST_AUTH=true`). */
   isTestAuthEnabled(): boolean {
     return process.env.ENABLE_TEST_AUTH === 'true';
   }
 
-  async generate(phoneNumber: string): Promise<string> {
-    // A new code replaces every older one for this phone (unverified ones
-    // too), so only the latest code can ever be accepted. Other phones are
-    // untouched.
-    await this.prisma.oTP.deleteMany({ where: { phoneNumber } });
+  /**
+   * True when `phone` (canonical `+998…`) is a test phone. Customer login only:
+   * callers pass the admin reset flow no `allowTestAuth`, so a staff phone in
+   * the list still gets a random code and the real SMS. A bad config fails closed.
+   */
+  isTestPhone(phone: string): boolean {
+    if (!this.isTestAuthEnabled()) return false;
+    try {
+      return parseTestAuthConfig().phones.includes(phone);
+    } catch {
+      return false;
+    }
+  }
 
-    const testOtp = process.env.TEST_OTP_CODE || '';
-    const code =
-      isTestPhoneNumber(phoneNumber) && testOtp
-        ? testOtp
-        : crypto.randomInt(100000, 999999).toString();
+  /**
+   * Stores a new code, sends it with `send`, and only when the send succeeds
+   * deletes the phone's older codes. On failure the new row is deleted and the
+   * previous valid code keeps working. The result of `send` is returned as is.
+   * With `allowTestAuth` (customer login only) a test phone gets the fixed code
+   * and `send` is not called: no SMS leaves the server.
+   */
+  async issueAndSend(
+    phoneNumber: string,
+    send: (code: string) => Promise<SMSResult>,
+    opts: { allowTestAuth?: boolean } = {},
+  ): Promise<SMSResult> {
+    const testCode =
+      opts.allowTestAuth && this.isTestPhone(phoneNumber) ? parseTestAuthConfig().code : '';
+    const code = testCode || crypto.randomInt(0, 1_000_000).toString().padStart(6, '0');
 
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + OTP_EXPIRY_MINUTES);
 
-    await this.prisma.oTP.create({
+    const created = await this.prisma.oTP.create({
       data: { phoneNumber, code, expiresAt },
     });
 
-    return code;
+    let result: SMSResult;
+    try {
+      result = testCode ? { success: true, messageId: 'test-auth' } : await send(code);
+    } catch (e) {
+      await this.prisma.oTP.deleteMany({ where: { id: created.id } });
+      throw e;
+    }
+
+    if (!result.success) {
+      await this.prisma.oTP.deleteMany({ where: { id: created.id } });
+      return result;
+    }
+    // A new code replaces every older one for this phone (unverified ones
+    // too), so only the latest code can ever be accepted. Other phones are
+    // untouched.
+    await this.prisma.oTP.deleteMany({
+      where: { phoneNumber, id: { not: created.id } },
+    });
+    return result;
   }
 
   async verify(

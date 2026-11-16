@@ -25,6 +25,7 @@ function authSetup() {
     new RateLimitService(),
     {} as any,
     {} as any,
+    {} as any,
   );
   return { prisma, service };
 }

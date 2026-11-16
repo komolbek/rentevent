@@ -34,12 +34,10 @@ describe('SmsService with SMS_PROVIDER=mock', () => {
     process.env.NODE_ENV = saved.e;
   });
 
-  it('in production: logs a startup error, prints no code, stores none, reports failure', async () => {
+  it('in production: refuses to boot, prints no code, stores none, reports failure', async () => {
     process.env.NODE_ENV = 'production';
     const sms = new SmsService();
-    const err = vi.spyOn((sms as any).logger, 'error').mockImplementation(() => undefined);
-    sms.onModuleInit();
-    expect(err).toHaveBeenCalledTimes(1);
+    expect(() => sms.onModuleInit()).toThrow();
 
     const res = await sms.sendOTP('+998901234567', '123456');
     expect(res.success).toBe(false);

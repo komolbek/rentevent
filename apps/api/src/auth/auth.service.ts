@@ -1,9 +1,11 @@
-import { Injectable, BadRequestException, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../common/prisma.service';
 import { OtpService } from './otp.service';
 import { SessionService } from './session.service';
 import { SmsService } from './sms.service';
 import { RateLimitService } from '../common/rate-limit.service';
+import { SmsQuotaService } from './sms-quota.service';
+import { RateLimitedException, otpBadRequest, smsUnavailable } from './otp-errors';
 import { normalizeUzPhone } from '../common/phone';
 
 const INVALID_PHONE = 'Неверный номер телефона';
@@ -22,29 +24,37 @@ export class AuthService {
     private sessionService: SessionService,
     private smsService: SmsService,
     private rateLimitService: RateLimitService,
+    private smsQuota: SmsQuotaService,
   ) {}
 
   async sendOtp(rawPhone: unknown, ip: string) {
     const phoneNumber = normalizeUzPhone(rawPhone);
-    if (!phoneNumber) throw new BadRequestException(INVALID_PHONE);
+    if (!phoneNumber) throw otpBadRequest(INVALID_PHONE, 'invalid_phone');
 
-    // Rate limit by phone
-    const phoneLimit = this.rateLimitService.check('otp_phone', phoneNumber, 3, 5 * 60 * 1000);
-    if (!phoneLimit.allowed) {
-      throw new HttpException('Слишком много запросов. Попробуйте позже.', HttpStatus.TOO_MANY_REQUESTS);
+    // A test-auth phone never reaches the provider: no SMS, no global budget.
+    const isTestPhone = this.otpService.isTestPhone(phoneNumber);
+
+    // Provider outage: answer at once, no row written, no budget used.
+    if (!isTestPhone && this.smsService.isCircuitOpen()) throw smsUnavailable();
+
+    // Every cap is checked before any is recorded (a rejection burns nothing);
+    // the slots are given back below when the SMS could not be sent.
+    const reservation = this.smsQuota.reserve(phoneNumber, ip, { noSms: isTestPhone });
+
+    let result;
+    try {
+      result = await this.otpService.issueAndSend(
+        phoneNumber,
+        (code) => this.smsService.sendOTP(phoneNumber, code),
+        { allowTestAuth: true },
+      );
+    } catch (e) {
+      this.smsQuota.refund(reservation);
+      throw e;
     }
-
-    // Rate limit by IP
-    const ipLimit = this.rateLimitService.check('otp_ip', ip, 10, 15 * 60 * 1000);
-    if (!ipLimit.allowed) {
-      throw new HttpException('Слишком много запросов. Попробуйте позже.', HttpStatus.TOO_MANY_REQUESTS);
-    }
-
-    const code = await this.otpService.generate(phoneNumber);
-    const smsResult = await this.smsService.sendOTP(phoneNumber, code);
-
-    if (!smsResult.success) {
-      throw new BadRequestException('Не удалось отправить SMS');
+    if (!result.success) {
+      this.smsQuota.refund(reservation);
+      throw smsUnavailable();
     }
 
     return { success: true, message: 'Код отправлен' };
@@ -66,8 +76,8 @@ export class AuthService {
 
   async verifyOtp(rawPhone: unknown, code: string, deviceId: string, ip: string) {
     const phoneNumber = normalizeUzPhone(rawPhone);
-    if (!phoneNumber) throw new BadRequestException(INVALID_PHONE);
-    if (typeof code !== 'string') throw new BadRequestException('Неверный код');
+    if (!phoneNumber) throw otpBadRequest(INVALID_PHONE, 'invalid_phone');
+    if (typeof code !== 'string') throw otpBadRequest('Неверный код', 'invalid_code');
 
     // Counters are in-memory per instance (fix plan D7/F18); every attempt counts.
     const phoneLimit = this.rateLimitService.check(
@@ -83,13 +93,19 @@ export class AuthService {
       VERIFY_LIMITS.perIp.windowMs,
     );
     if (!phoneLimit.allowed || !ipLimit.allowed) {
-      throw new HttpException('Слишком много запросов. Попробуйте позже.', HttpStatus.TOO_MANY_REQUESTS);
+      throw new RateLimitedException(
+        Math.max(phoneLimit.retryAfterMs, ipLimit.retryAfterMs),
+        'Слишком много запросов. Попробуйте позже.',
+      );
     }
 
     const result = await this.otpService.verify(phoneNumber, code);
 
     if (!result.valid) {
-      throw new BadRequestException(result.error || 'Неверный код');
+      throw otpBadRequest(
+        result.error || 'Неверный код',
+        result.reason === 'not_found' ? 'code_expired' : 'invalid_code',
+      );
     }
 
     // Find or create user

@@ -12,6 +12,8 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../common/prisma.service';
 import { RateLimitService } from '../common/rate-limit.service';
 import { OtpService } from '../auth/otp.service';
+import { SmsQuotaService } from '../auth/sms-quota.service';
+import { RateLimitedException } from '../auth/otp-errors';
 import { SmsService } from '../auth/sms.service';
 import { createAdminSession } from '../common/guards/admin-auth.guard';
 import { normalizeUzPhone } from '../common/phone';
@@ -50,6 +52,7 @@ export class AdminAuthService {
     private readonly rateLimitService: RateLimitService,
     private readonly otpService: OtpService,
     private readonly smsService: SmsService,
+    private readonly smsQuota: SmsQuotaService,
   ) {}
 
   async login(
@@ -177,10 +180,7 @@ export class AdminAuthService {
   private tooMany(retryAfterMs: number): HttpException {
     const minutes = Math.max(1, Math.ceil(retryAfterMs / 60_000));
     const wait = minutes >= 60 ? `${Math.ceil(minutes / 60)} ч.` : `${minutes} мин.`;
-    return new HttpException(
-      `Слишком много попыток. Повторите через ${wait}`,
-      HttpStatus.TOO_MANY_REQUESTS,
-    );
+    return new RateLimitedException(retryAfterMs, `Слишком много попыток. Повторите через ${wait}`);
   }
 
   /** Throws 429 when the key is at its cap; records nothing. */
@@ -200,11 +200,14 @@ export class AdminAuthService {
     const phone = this.normalizeResetPhone(rawPhone);
     this.assertBelow('admin_reset_failed', phone, RESET_LIMITS.failedPerPhone);
 
-    // Check both limits before recording, so a rejection by one does not burn the other.
+    // Check every limit before recording any, so a rejection burns nothing. The
+    // admin caps above stay as they were; the shared SMS caps (60 s cooldown,
+    // hourly/daily per phone, per IP, global ceiling) are added on top.
     this.assertBelow('admin_reset_send_phone', phone, RESET_LIMITS.sendPerPhone);
     this.assertBelow('admin_reset_send_ip', ip, RESET_LIMITS.sendPerIp);
-    this.rateLimitService.record('admin_reset_send_phone', phone, RESET_LIMITS.sendPerPhone.windowMs);
-    this.rateLimitService.record('admin_reset_send_ip', ip, RESET_LIMITS.sendPerIp.windowMs);
+    const reservation = this.smsQuota.reserve(phone, ip);
+    const phoneAt = this.rateLimitService.record('admin_reset_send_phone', phone, RESET_LIMITS.sendPerPhone.windowMs);
+    const ipAt = this.rateLimitService.record('admin_reset_send_ip', ip, RESET_LIMITS.sendPerIp.windowMs);
 
     this.logger.log(`[forgot-password] send-otp requested for ${maskPhone(phone)}`);
 
@@ -223,8 +226,15 @@ export class AdminAuthService {
       return;
     }
 
-    const code = await this.otpService.generate(phone);
-    const result = await this.smsService.sendAdminOTP(phone, code);
+    const result = await this.otpService.issueAndSend(phone, (code) =>
+      this.smsService.sendAdminOTP(phone, code),
+    );
+    if (!result.success) {
+      // Nothing was sent: the new code is gone, the previous one still works and the budget is given back.
+      this.smsQuota.refund(reservation);
+      this.rateLimitService.refund('admin_reset_send_phone', phone, phoneAt);
+      this.rateLimitService.refund('admin_reset_send_ip', ip, ipAt);
+    }
     this.logger.log(
       `[forgot-password] OTP dispatched to ${maskPhone(phone)} via ${process.env.SMS_PROVIDER || 'mock'} (success=${result.success}${result.error ? `, error=${result.error}` : ''})`,
     );

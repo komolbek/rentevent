@@ -8,6 +8,19 @@ pnpm 10 + Turborepo monorepo. `apps/web` and `apps/admin`: Next.js. `apps/api`: 
 UploadThing (images), Payme and Click (payments), sms-gateway / Eskiz (OTP), Resend (email).
 Locales: RU (default, no suffix), UZ (`*_uz`), EN (`*_en`).
 
+## SMS / OTP env (API)
+`SMS_PROVIDER` is exactly `gateway` (production; the API refuses to boot on anything else, on a
+missing `SMS_GATEWAY_URL` / `SMS_GATEWAY_API_KEY`, or on a typo) or `mock` (dev/test only, needs
+`NODE_ENV=development|test`, prints the code). The direct `eskiz` provider is gone
+(`ESKIZ_API_TOKEN`, `SMS_SENDER` are unused). `SMS_DAILY_CAP` (default 1000): global SMS per 24 h.
+Send caps (customer and admin reset share them): per phone 1/60 s, 5/h, 10/day; per IP 10/15 min,
+30/day. 429 carries `retry_after_seconds` + `Retry-After`; a failed send answers 503 `sms_unavailable`.
+Test auth (App Review account, customer login only): `ENABLE_TEST_AUTH=true`, `TEST_PHONE_NUMBERS`
+(`998XXXXXXXXX`, no `+`, at most 2 in production, never a staff phone), `TEST_OTP_CODE` (exactly 6
+digits). The API refuses to boot in production on a violation; test phones get the fixed code, no SMS,
+and are never used for admin reset. Values only in Railway: `docs/ops/app-review-account.md`.
+Details: `docs/security/sms-readiness-2026-11-16.md`.
+
 ## Where things are
 - Deploy files: root `Dockerfile*`, `.railway/railway.ts`: do not touch without OK.
 - Specs and UX audits: `docs/design/`. Shared i18n for the storefront: `apps/web/src/lib/i18n/`.

@@ -1,10 +1,12 @@
-import { Controller, Post, Body, Req, Headers } from '@nestjs/common';
+import { Controller, Post, Body, Req, Headers, UseFilters } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Request } from 'express';
 import { clientIp } from '../common/client-ip';
+import { RateLimitedFilter } from './otp-errors';
 
 @ApiTags('Auth')
+@UseFilters(RateLimitedFilter)
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}

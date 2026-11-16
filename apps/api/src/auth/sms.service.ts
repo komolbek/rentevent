@@ -1,10 +1,14 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { maskPhone } from '../common/mask-phone';
 
+export type SmsProvider = 'mock' | 'gateway';
+
 export interface SMSResult {
   success: boolean;
   messageId?: string;
   error?: string;
+  /** Stable reason when `success` is false: the caller answers 503 `sms_unavailable`. */
+  failure?: 'circuit_open' | 'timeout' | 'network' | 'rate_limited' | 'provider_error' | 'not_configured';
 }
 
 export interface DevOTPEntry {
@@ -18,25 +22,57 @@ export interface DevOTPEntry {
 
 const MAX_DEV_ENTRIES = 50;
 
+/** One provider call may take at most this long (the gateway itself waits up to 30 s for Eskiz). */
+export const SMS_TIMEOUT_MS = 8000;
+/** Consecutive failures that open the breaker, and for how long it stays open. */
+export const BREAKER_THRESHOLD = 5;
+export const BREAKER_OPEN_MS = 30_000;
+
+export class SmsConfigError extends Error {}
+
+/**
+ * Closed set of providers. Unset or empty means `mock` (dev/test only; production
+ * refuses it at boot). Anything else, including `Gateway` or `eskiz `, is a config error.
+ */
+export function parseSmsProvider(raw: string | undefined): SmsProvider {
+  if (raw === undefined || raw === '') return 'mock';
+  if (raw === 'mock' || raw === 'gateway') return raw;
+  throw new SmsConfigError(
+    'SMS_PROVIDER must be exactly "gateway" (production) or "mock" (dev/test only); the direct "eskiz" provider was removed',
+  );
+}
+
+/** Mock output may carry the code only in these environments. */
+function isDevOrTest(): boolean {
+  return process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+}
+
 @Injectable()
 export class SmsService implements OnModuleInit {
   private readonly logger = new Logger(SmsService.name);
   private devOTPLog: DevOTPEntry[] = [];
+  private consecutiveFailures = 0;
+  private breakerOpenUntil = 0;
 
+  /** Refuses to boot on a bad config; Railway then keeps the previous deployment. */
   onModuleInit(): void {
-    if (this.isMockInProduction()) {
-      this.logger.error(
-        'SMS_PROVIDER is "mock" (or unset) with NODE_ENV=production: no SMS will be sent, OTP codes are not logged or stored. Set SMS_PROVIDER to gateway or eskiz.',
+    const provider = parseSmsProvider(process.env.SMS_PROVIDER);
+    if (process.env.NODE_ENV === 'production') {
+      if (provider !== 'gateway') {
+        throw new SmsConfigError(
+          'SMS_PROVIDER must be "gateway" when NODE_ENV=production (mock or unset would fake "code sent")',
+        );
+      }
+      if (!process.env.SMS_GATEWAY_URL || !process.env.SMS_GATEWAY_API_KEY) {
+        throw new SmsConfigError(
+          'SMS_GATEWAY_URL and SMS_GATEWAY_API_KEY are required when SMS_PROVIDER=gateway',
+        );
+      }
+    } else if (provider === 'mock' && !isDevOrTest()) {
+      this.logger.warn(
+        'SMS_PROVIDER is mock and NODE_ENV is not development/test: no SMS is delivered and no code is logged.',
       );
     }
-  }
-
-  /** Mock provider in production: OTPs must never be printed or kept. */
-  isMockInProduction(): boolean {
-    return (
-      (process.env.SMS_PROVIDER || 'mock') === 'mock' &&
-      process.env.NODE_ENV === 'production'
-    );
   }
 
   getDevOTPLog(): DevOTPEntry[] {
@@ -47,8 +83,14 @@ export class SmsService implements OnModuleInit {
     this.devOTPLog.length = 0;
   }
 
+  /** Mock provider in an environment where it may expose codes (development/test). */
   isMockMode(): boolean {
-    return (process.env.SMS_PROVIDER || 'mock') === 'mock' && !this.isMockInProduction();
+    return this.provider() === 'mock' && isDevOrTest();
+  }
+
+  /** True while the breaker is open: callers answer 503 without touching the provider. */
+  isCircuitOpen(): boolean {
+    return Date.now() < this.breakerOpenUntil;
   }
 
   async sendOTP(phoneNumber: string, code: string): Promise<SMSResult> {
@@ -67,22 +109,32 @@ export class SmsService implements OnModuleInit {
     return this.send(phoneNumber, message);
   }
 
-  private async send(phoneNumber: string, message: string): Promise<SMSResult> {
-    const provider = process.env.SMS_PROVIDER || 'mock';
-    switch (provider) {
-      case 'gateway':
-        return this.sendGateway(phoneNumber, message);
-      case 'eskiz':
-        return this.sendEskiz(phoneNumber, message);
-      default:
-        return this.sendMock(phoneNumber, message);
+  private provider(): SmsProvider | null {
+    try {
+      return parseSmsProvider(process.env.SMS_PROVIDER);
+    } catch {
+      return null;
     }
   }
 
+  private async send(phoneNumber: string, message: string): Promise<SMSResult> {
+    const provider = this.provider();
+    if (provider === 'mock') return this.sendMock(phoneNumber, message);
+    if (provider !== 'gateway') {
+      return { success: false, error: 'SMS provider not configured', failure: 'not_configured' };
+    }
+    if (this.isCircuitOpen()) {
+      return { success: false, error: 'SMS provider temporarily unavailable', failure: 'circuit_open' };
+    }
+    const result = await this.sendGateway(phoneNumber, message);
+    this.trackBreaker(result);
+    return result;
+  }
+
+  /** Mock: nothing is delivered. The code is printed only in development/test. */
   private async sendMock(phoneNumber: string, message: string): Promise<SMSResult> {
-    if (this.isMockInProduction()) {
-      // Safe degradation: nothing is delivered and no code is printed.
-      return { success: false, error: 'SMS provider not configured' };
+    if (!isDevOrTest()) {
+      return { success: false, error: 'SMS provider not configured', failure: 'not_configured' };
     }
     console.log(`[MOCK SMS] To: ${maskPhone(phoneNumber)} | ${message}`);
     return { success: true, messageId: `mock_${Date.now()}` };
@@ -92,42 +144,54 @@ export class SmsService implements OnModuleInit {
     const gatewayUrl = process.env.SMS_GATEWAY_URL;
     const apiKey = process.env.SMS_GATEWAY_API_KEY;
     if (!gatewayUrl || !apiKey) {
-      return { success: false, error: 'SMS gateway not configured' };
+      return { success: false, error: 'SMS gateway not configured', failure: 'not_configured' };
     }
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), SMS_TIMEOUT_MS);
     try {
       const phone = phoneNumber.replace(/^\+/, '');
       const response = await fetch(`${gatewayUrl}/sms/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
         body: JSON.stringify({ phone, message }),
+        signal: controller.signal,
       });
+      if (response.status === 429) {
+        return { success: false, error: 'SMS gateway throttled the request', failure: 'rate_limited' };
+      }
+      if (response.status >= 500 || response.status === 401 || response.status === 403) {
+        return { success: false, error: `SMS gateway error ${response.status}`, failure: 'provider_error' };
+      }
       const data = await response.json();
-      if (response.ok && data.status === 'sent') {
+      if (response.ok && data?.status === 'sent') {
         return { success: true, messageId: data.id };
       }
-      return { success: false, error: data.errorMessage || 'SMS sending failed' };
-    } catch {
-      return { success: false, error: 'SMS gateway request failed' };
+      // A rejection of this one request (bad number, template): not a gateway outage.
+      return { success: false, error: 'SMS sending failed' };
+    } catch (e) {
+      const aborted = controller.signal.aborted || (e as Error)?.name === 'AbortError';
+      return aborted
+        ? { success: false, error: 'SMS gateway timed out', failure: 'timeout' }
+        : { success: false, error: 'SMS gateway request failed', failure: 'network' };
+    } finally {
+      clearTimeout(timer);
     }
   }
 
-  private async sendEskiz(phoneNumber: string, message: string): Promise<SMSResult> {
-    const token = process.env.ESKIZ_API_TOKEN;
-    if (!token) return { success: false, error: 'SMS provider not configured' };
-    try {
-      const phone = phoneNumber.replace(/^\+/, '');
-      const response = await fetch('https://notify.eskiz.uz/api/message/sms/send', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobile_phone: phone, message, from: process.env.SMS_SENDER || '4210' }),
-      });
-      const data = await response.json();
-      if (response.ok && data.status === 'waiting') {
-        return { success: true, messageId: data.id?.toString() };
-      }
-      return { success: false, error: data.message || 'SMS sending failed' };
-    } catch {
-      return { success: false, error: 'SMS sending failed' };
+  /** Outage-type failures count toward the breaker; one success closes it. */
+  private trackBreaker(result: SMSResult): void {
+    if (result.success) {
+      this.consecutiveFailures = 0;
+      this.breakerOpenUntil = 0;
+      return;
+    }
+    if (!result.failure) return; // request-specific rejection, not an outage
+    this.consecutiveFailures += 1;
+    if (this.consecutiveFailures >= BREAKER_THRESHOLD) {
+      this.breakerOpenUntil = Date.now() + BREAKER_OPEN_MS;
+      this.logger.error(
+        `SMS gateway failed ${this.consecutiveFailures} times in a row; answering 503 for ${BREAKER_OPEN_MS / 1000} s`,
+      );
     }
   }
 
