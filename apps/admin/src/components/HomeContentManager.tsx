@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus, Edit, Trash2, GripVertical, Upload, X, ImageIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Modal, btn } from '@/components/Modal'
 import { adminHeroSlidesApi, adminInspirationsApi, adminUploadApi } from '@/lib/api'
 import { useTranslation } from '@/lib/i18n/useTranslation'
+import { heroSlideStatus, focalFromClick, buildHeroBody, type HeroSlideStatus } from '@rentevent/validators'
 
 /**
  * Shared list + editor for the admin-managed home page content: hero slides
@@ -61,7 +62,7 @@ const CONFIG: Record<HomeContentKind, KindConfig> = {
       hintKey: 'hero.cta_url_hint',
       placeholder: '/catalog',
     },
-    thumbClass: 'h-12 w-28',
+    thumbClass: 'h-14 w-[8.4rem]',
   },
   inspiration: {
     api: adminInspirationsApi,
@@ -99,6 +100,23 @@ interface ContentItem {
 
 type FormState = Record<string, string> & { image_url: string }
 
+/** Hero-only form fields (snake_case, as the API expects). Empty string = not set. */
+const HERO_EXTRA = ['image_key', 'mobile_image_url', 'mobile_image_key', 'alt', 'focal_x', 'focal_y', 'starts_at', 'ends_at']
+
+const STATUS_STYLE: Record<HeroSlideStatus, string> = {
+  live: 'bg-green-100 text-green-800 hover:bg-green-200',
+  scheduled: 'bg-amber-100 text-amber-800 hover:bg-amber-200',
+  ended: 'bg-gray-200 text-gray-600 hover:bg-gray-300',
+  hidden: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
+}
+const STATUS_KEY: Record<HeroSlideStatus, string> = {
+  live: 'hero.status_live',
+  scheduled: 'hero.status_scheduled',
+  ended: 'hero.status_ended',
+  hidden: 'common.hidden',
+}
+
+
 function errorMessage(err: unknown): string | undefined {
   const msg = (err as { response?: { data?: { message?: string | string[] } } })?.response?.data?.message
   return Array.isArray(msg) ? msg.join(', ') : msg
@@ -110,6 +128,7 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
 
   const emptyForm = (): FormState => {
     const f: FormState = { image_url: '' }
+    if (kind === 'hero') for (const k of HERO_EXTRA) f[k] = ''
     for (const field of cfg.textFields) for (const l of LANGS) f[`${field.name}${SUFFIX[l]}`] = ''
     f[cfg.linkField.name] = ''
     return f
@@ -161,7 +180,7 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
     const f = emptyForm()
     for (const key of Object.keys(f)) {
       const v = item[key]
-      f[key] = typeof v === 'string' ? v : ''
+      f[key] = typeof v === 'string' ? v : typeof v === 'number' ? String(v) : ''
     }
     setEditing(item)
     setForm(f)
@@ -171,13 +190,15 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
     setShowModal(true)
   }
 
-  const handleImageUpload = async (ev: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (ev: React.ChangeEvent<HTMLInputElement>, slot: 'image' | 'mobile_image' = 'image') => {
     const file = ev.target.files?.[0]
     if (!file) return
     setUploading(true)
     try {
       const { data } = await adminUploadApi.uploadImage(file)
-      if (data.success && data.data?.url) setForm((p) => ({ ...p, image_url: data.data.url }))
+      if (data.success && data.data?.url) {
+        setForm((p) => ({ ...p, [`${slot}_url`]: data.data.url, [`${slot}_key`]: data.data.key ?? '' }))
+      }
     } catch (err) {
       console.error('Upload failed:', err)
       toast.error(t('common.upload_error'))
@@ -193,15 +214,19 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
       setError(t('content.err_image_required'))
       return
     }
-    if (!form.title.trim()) {
+    if (kind === 'inspiration' && !form.title.trim()) {
       setLang('ru')
       setError(t('content.err_title_required'))
+      return
+    }
+    if (kind === 'hero' && form.starts_at && form.ends_at && form.ends_at < form.starts_at) {
+      setError(t('hero.err_dates'))
       return
     }
     setSaving(true)
     setError(null)
     try {
-      const body: Record<string, unknown> = { ...form, is_active: isActive }
+      const body: Record<string, unknown> = kind === 'hero' ? buildHeroBody(form, isActive) : { ...form, is_active: isActive }
       const { data } = editing
         ? await cfg.api.update(editing.id, body)
         : await cfg.api.create(body)
@@ -267,6 +292,16 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
     }
   }
 
+  const previewRef = useRef<HTMLDivElement>(null)
+  const setFocal = (ev: React.MouseEvent) => {
+    if (!previewRef.current) return
+    const { x, y } = focalFromClick(ev.clientX, ev.clientY, previewRef.current.getBoundingClientRect())
+    setForm((p) => ({ ...p, focal_x: String(x), focal_y: String(y) }))
+  }
+  const focalX = form.focal_x !== '' && form.focal_x !== undefined ? Number(form.focal_x) : 50
+  const focalY = form.focal_y !== '' && form.focal_y !== undefined ? Number(form.focal_y) : 50
+  const liveCount = kind === 'hero' ? items.filter((i) => heroSlideStatus(i as never) === 'live').length : 0
+
   const field = 'w-full px-4 py-2 border border-gray-300 rounded-lg bg-white'
   const suffix = SUFFIX[lang]
 
@@ -282,13 +317,22 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
         </button>
       </div>
 
+      {kind === 'hero' && (
+        <p className="mb-3 text-sm text-gray-600">
+          <span className="font-medium">{t('hero.live_count', { n: liveCount })}</span> · {t('hero.cache_note')}
+        </p>
+      )}
+
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
           </div>
         ) : items.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">{t(cfg.emptyKey)}</div>
+          <div className="text-center py-12 text-gray-500">
+            {t(cfg.emptyKey)}
+            {kind === 'hero' && <div className="mt-1 text-sm">{t('hero.empty_note')}</div>}
+          </div>
         ) : (
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -326,7 +370,9 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
                           </div>
                         )}
                         <div className="min-w-0">
-                          <div className="font-medium truncate max-w-[360px]">{item.title}</div>
+                          <div className={`font-medium truncate max-w-[360px] ${kind === 'hero' && !item.title ? 'text-gray-400 italic' : ''}`}>
+                            {item.title || (kind === 'hero' ? t('hero.no_title') : '')}
+                          </div>
                           {secondary ? <div className="text-xs text-gray-500 truncate max-w-[360px]">{String(secondary)}</div> : null}
                           {link ? <div className="text-xs text-blue-600 truncate max-w-[360px]">{String(link)}</div> : null}
                         </div>
@@ -336,10 +382,13 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
                       <button
                         type="button"
                         onClick={() => toggleActive(item)}
-                        className={`px-2 py-1 rounded text-sm ${item.is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
+                        className={`px-2 py-1 rounded text-sm ${kind === 'hero' ? STATUS_STYLE[heroSlideStatus(item as never)] : item.is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-gray-100 text-gray-800 hover:bg-gray-200'}`}
                       >
-                        {item.is_active ? t('common.active') : t('common.hidden')}
+                        {kind === 'hero' ? t(STATUS_KEY[heroSlideStatus(item as never)]) : item.is_active ? t('common.active') : t('common.hidden')}
                       </button>
+                      {kind === 'hero' && (item.starts_at || item.ends_at) ? (
+                        <div className="mt-1 text-xs text-gray-500">{String(item.starts_at ?? '…')} → {String(item.ends_at ?? '…')}</div>
+                      ) : null}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex gap-1">
@@ -378,12 +427,32 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
         <form id={`${kind}-form`} onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('content.field_image')} *</label>
-            {form.image_url ? (
+            {form.image_url && kind === 'hero' ? (
+              <div className="relative block max-w-md">
+                <div
+                  ref={previewRef}
+                  onClick={setFocal}
+                  role="button"
+                  aria-label={t('hero.focal_label')}
+                  className="relative aspect-video w-full cursor-crosshair overflow-hidden rounded-lg border"
+                >
+                  <img src={form.image_url} alt="" className="h-full w-full object-cover" draggable={false} />
+                  <span
+                    data-testid="focal-dot"
+                    className="pointer-events-none absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-600/70 shadow ring-2 ring-blue-600"
+                    style={{ left: `${focalX}%`, top: `${focalY}%` }}
+                  />
+                </div>
+                <button type="button" onClick={() => setForm((p) => ({ ...p, image_url: '', image_key: '' }))} aria-label={t('common.delete')} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : form.image_url ? (
               <div className="relative inline-block">
                 <img
                   src={form.image_url}
                   alt=""
-                  className={kind === 'hero' ? 'h-32 w-full max-w-md rounded-lg object-cover border' : 'h-32 w-32 rounded-lg object-cover border'}
+                  className="h-32 w-32 rounded-lg object-cover border"
                 />
                 <button type="button" onClick={() => setForm((p) => ({ ...p, image_url: '' }))} aria-label={t('common.delete')} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
                   <X className="h-3 w-3" />
@@ -394,11 +463,75 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
               <label className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
                 {uploading ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" /> : <Upload className="h-4 w-4" />}
                 {form.image_url ? t('common.replace_photo') : t('common.upload_photo')}
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={uploading} />
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleImageUpload(e)} className="hidden" disabled={uploading} />
               </label>
             </div>
             <p className="mt-1 text-xs text-gray-500">{t(cfg.imageHintKey)}</p>
           </div>
+
+          {kind === 'hero' && (
+            <>
+              {form.image_url && (
+                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
+                  <span className="font-medium">{t('hero.focal_label')}: {focalX}% / {focalY}%</span>
+                  <button type="button" onClick={() => setForm((p) => ({ ...p, focal_x: '', focal_y: '' }))} className="text-blue-600 hover:underline">{t('hero.focal_reset')}</button>
+                  <span className="basis-full text-gray-500">{t('hero.focal_hint')}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('hero.mobile_label')}</label>
+                <div className="flex items-start gap-3">
+                  {form.mobile_image_url ? (
+                    <div className="relative shrink-0">
+                      <img src={form.mobile_image_url} alt="" className="aspect-[4/5] h-28 rounded-lg object-cover border" />
+                      <button type="button" onClick={() => setForm((p) => ({ ...p, mobile_image_url: '', mobile_image_key: '' }))} aria-label={t('common.delete')} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : form.image_url ? (
+                    <div className="shrink-0 text-center">
+                      <div className="aspect-[4/5] h-28 overflow-hidden rounded-lg border">
+                        <img src={form.image_url} alt="" className="h-full w-full object-cover" style={{ objectPosition: `${focalX}% ${focalY}%` }} />
+                      </div>
+                      <div className="mt-1 text-[10px] text-gray-500">{t('hero.phone_preview')}</div>
+                    </div>
+                  ) : null}
+                  <div>
+                    <label className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <Upload className="h-4 w-4" />
+                      {form.mobile_image_url ? t('common.replace_photo') : t('common.upload_photo')}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleImageUpload(e, 'mobile_image')} className="hidden" disabled={uploading} />
+                    </label>
+                    <p className="mt-1 text-xs text-gray-500">{t('hero.mobile_hint')}</p>
+                    {!form.mobile_image_url && <p className="mt-1 text-xs text-amber-700">{t('hero.mobile_fallback')}</p>}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">{t('hero.alt_label')}</label>
+                <input type="text" maxLength={200} value={form.alt ?? ''} onChange={(e) => setForm((p) => ({ ...p, alt: e.target.value }))} className={field} />
+                <p className="mt-1 text-xs text-gray-500">{t('hero.alt_hint')}</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('hero.dates_label')}</label>
+                <div className="flex flex-wrap gap-4">
+                  <label className="text-sm text-gray-600">
+                    {t('hero.starts_at')}
+                    <input type="date" value={form.starts_at ?? ''} onChange={(e) => setForm((p) => ({ ...p, starts_at: e.target.value }))} className={`${field} mt-1`} />
+                  </label>
+                  <label className="text-sm text-gray-600">
+                    {t('hero.ends_at')}
+                    <input type="date" min={form.starts_at || undefined} value={form.ends_at ?? ''} onChange={(e) => setForm((p) => ({ ...p, ends_at: e.target.value }))} className={`${field} mt-1`} />
+                  </label>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">{t('hero.dates_hint')}</p>
+              </div>
+              <p className="text-xs text-gray-500">{t('hero.title_optional')}</p>
+            </>
+          )}
 
           <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-4">
             <div role="tablist" className="mb-3 inline-flex rounded-lg border border-gray-200 bg-white p-1">
@@ -418,7 +551,7 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
             <div className="space-y-3">
               {cfg.textFields.map((f) => {
                 const key = `${f.name}${suffix}`
-                const required = f.name === 'title' && lang === 'ru'
+                const required = kind === 'inspiration' && f.name === 'title' && lang === 'ru'
                 return (
                   <div key={key}>
                     <label className="block text-sm text-gray-600 mb-1">
@@ -474,7 +607,8 @@ export function HomeContentManager({ kind }: { kind: HomeContentKind }) {
       >
         {deleteConfirm && (
           <p className="text-gray-600">
-            {t('content.delete_confirm')} <strong>&quot;{deleteConfirm.title}&quot;</strong>?
+            {t('content.delete_confirm')} <strong>&quot;{deleteConfirm.title || t('hero.no_title')}&quot;</strong>?
+            {kind === 'hero' && items.length === 1 && <span className="mt-2 block text-sm">{t('hero.delete_last')}</span>}
           </p>
         )}
       </Modal>

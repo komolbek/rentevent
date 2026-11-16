@@ -86,4 +86,20 @@ export class AdminUploadService {
       throw new InternalServerErrorException('Image upload failed');
     }
   }
+
+  /**
+   * Best-effort removal of an uploaded file by its UploadThing key. Never
+   * throws: a failed cleanup must not fail the admin request (it only leaves
+   * an orphan file). Returns whether the file was deleted.
+   */
+  async deleteFile(key?: string | null): Promise<boolean> {
+    if (!key) return false;
+    try {
+      const result = await this.utapi.deleteFiles(key);
+      return Boolean(result?.success);
+    } catch (err) {
+      this.logger.warn(`UploadThing delete failed for ${key}: ${String(err)}`);
+      return false;
+    }
+  }
 }

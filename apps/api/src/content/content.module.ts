@@ -5,9 +5,10 @@ import {
   AdminInspirationsController,
 } from './content.controller';
 import { ContentService } from './content.service';
+import { AdminUploadService } from '../admin/admin-upload.service';
 
 @Module({
   controllers: [ContentController, AdminHeroSlidesController, AdminInspirationsController],
-  providers: [ContentService],
+  providers: [ContentService, AdminUploadService],
 })
 export class ContentModule {}

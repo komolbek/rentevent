@@ -1,7 +1,10 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Header, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AdminAuthGuard } from '../common/guards/admin-auth.guard';
 import { ContentService, ContentBody, ContentKind } from './content.service';
+
+/** Admin edits reach the storefront within ~5 min; clients revalidate by ETag. */
+export const HERO_SLIDES_CACHE_CONTROL = 'public, max-age=60, s-maxage=300, stale-while-revalidate=600';
 
 @ApiTags('Content')
 @Controller()
@@ -9,6 +12,7 @@ export class ContentController {
   constructor(private readonly content: ContentService) {}
 
   @Get('hero-slides')
+  @Header('Cache-Control', HERO_SLIDES_CACHE_CONTROL)
   @ApiOperation({ summary: 'Active home hero slides, in display order' })
   heroSlides() {
     return this.content.listPublic('heroSlide');
@@ -37,8 +41,8 @@ function adminContentController(path: string, kind: ContentKind) {
 
     @Post('reorder')
     @ApiOperation({ summary: `Persist a new ${path} order` })
-    reorder(@Body() body: { orderedIds: string[] }) {
-      return this.content.reorder(kind, body.orderedIds);
+    reorder(@Body() body: { orderedIds?: unknown }) {
+      return this.content.reorder(kind, body?.orderedIds);
     }
 
     @Post()

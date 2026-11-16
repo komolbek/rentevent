@@ -480,12 +480,26 @@ model HeroSlide {
   ctaLabelUz    String?  @map("cta_label_uz")
   ctaLabelEn    String?  @map("cta_label_en")
   ctaUrl        String?  @map("cta_url")
+  /// UploadThing file keys, kept for cleanup when a photo is replaced or the slide deleted.
+  imageKey      String?  @map("image_key")
+  /// Portrait 4:5 crop for phones (web <640px, iOS). null = use imageUrl.
+  mobileImageUrl String? @map("mobile_image_url")
+  mobileImageKey String? @map("mobile_image_key")
+  /// Phone crop point of imageUrl when there is no mobile image: 0-100, null = 50.
+  focalX        Int?     @map("focal_x")
+  focalY        Int?     @map("focal_y")
+  /// Accessible name for image-only slides (title empty).
+  alt           String?
+  /// Schedule, whole days in Tashkent time (UTC+5). null = from now / no end.
+  startsAt      DateTime? @map("starts_at")
+  endsAt        DateTime? @map("ends_at")
   isActive      Boolean  @default(true) @map("is_active")
   displayOrder  Int      @default(0) @map("display_order")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@index([isActive, displayOrder])
+  @@index([isActive, startsAt, endsAt])
   @@map("hero_slides")
 }
 

@@ -7,3 +7,4 @@ export * from './returns';
 export * from './extensions';
 export * from './admin';
 export * from './common';
+export * from './content';
