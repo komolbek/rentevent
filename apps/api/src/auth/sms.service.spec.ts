@@ -368,7 +368,7 @@ describe('SMS2: timeout, breaker and a clean failure path', () => {
     expect(prisma.otps).toHaveLength(1);
     expect((await otp.verify(PHONE, previous)).valid).toBe(true);
     // only the successful send is counted
-    expect(rateLimit.count('sms_phone_hour', PHONE, HOUR)).toBe(1);
+    expect(rateLimit.count('admin_sms_phone_hour', PHONE, HOUR)).toBe(1);
     expect(rateLimit.count('admin_reset_send_phone', PHONE, 15 * MIN)).toBe(1);
   });
 });
@@ -516,16 +516,17 @@ describe('SMS3: abuse caps and server cooldown', () => {
     expect(rateLimit.count('sms_phone_cooldown', PHONE, MIN)).toBe(1);
   });
 
-  it('admin forgot-password uses the same caps (shared with customer sends) and keeps its own', async () => {
+  it('admin forgot-password has its own per-phone caps (IP and global shared) and keeps its admin ones', async () => {
     const { auth, admin, rateLimit } = stack(vi.fn(async () => okResponse()) as any);
     await admin.forgotPasswordSendOtp(PHONE, '1.1.1.1');
-    // 60 s cooldown on the same phone, whichever flow asks
+    // 60 s cooldown on the same phone within the admin flow
     expect(await bodyOf(admin.forgotPasswordSendOtp(PHONE, '2.2.2.2'))).toMatchObject({
       statusCode: 429,
       code: 'rate_limited',
       retry_after_seconds: 60,
     });
-    expect(await statusOf(auth.sendOtp(PHONE, '3.3.3.3'))).toBe(429);
+    // the customer flow has its own phone budget: it is not blocked by the admin send
+    expect(await statusOf(auth.sendOtp(PHONE, '3.3.3.3'))).toBe('ok');
     // the rejected call burned neither the admin keys nor the shared IP keys
     expect(rateLimit.count('admin_reset_send_ip', '2.2.2.2', HOUR)).toBe(0);
     expect(rateLimit.count('sms_ip_window', '2.2.2.2', 15 * MIN)).toBe(0);
@@ -536,5 +537,24 @@ describe('SMS3: abuse caps and server cooldown', () => {
     await admin.forgotPasswordSendOtp(PHONE, '1.1.1.1');
     vi.advanceTimersByTime(61_000);
     expect(await statusOf(admin.forgotPasswordSendOtp(PHONE, '1.1.1.1'))).toBe(429);
+  });
+
+  it('customer sends for a staff phone do not use up the staff reset budget', async () => {
+    const { auth, admin } = stack(vi.fn(async () => okResponse()) as any);
+    for (let i = 0; i < SMS_LIMITS.phoneDay.max; i++) {
+      await auth.sendOtp(PHONE, `9.9.9.${i}`);
+      vi.advanceTimersByTime(13 * MIN); // stays under the 5/h cap
+    }
+    expect(await statusOf(auth.sendOtp(PHONE, '9.9.9.99'))).toBe(429);
+    expect(await statusOf(admin.forgotPasswordSendOtp(PHONE, '8.8.8.8'))).toBe('ok');
+  });
+
+  it('an unknown staff phone gives the global slot back but keeps the phone and IP slots', async () => {
+    const { admin, rateLimit } = stack(vi.fn(async () => okResponse()) as any);
+    const unknown = phoneN(5);
+    await admin.forgotPasswordSendOtp(unknown, '7.7.7.7');
+    expect(rateLimit.count('sms_global_day', 'all', 24 * HOUR)).toBe(0);
+    expect(rateLimit.count('admin_sms_phone_cooldown', unknown, MIN)).toBe(1);
+    expect(rateLimit.count('sms_ip_day', '7.7.7.7', 24 * HOUR)).toBe(1);
   });
 });

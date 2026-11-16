@@ -72,7 +72,7 @@ function setup() {
   const otp = new OtpService(prisma as any);
   // The shared SMS caps (cooldown, hourly, daily, global) have their own tests in
   // sms.service.spec.ts; here only the admin flow's own limits are exercised.
-  const quota = { reserve: vi.fn(() => ({ slots: [] })), refund: vi.fn() };
+  const quota = { reserve: vi.fn(() => ({ slots: [] })), refund: vi.fn(), refundGlobal: vi.fn() };
   const service = new AdminAuthService(prisma as any, rateLimit, otp, sms as any, quota as any);
   return { prisma, sms, service, rateLimit };
 }

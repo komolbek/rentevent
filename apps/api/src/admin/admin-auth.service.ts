@@ -205,7 +205,7 @@ export class AdminAuthService {
     // hourly/daily per phone, per IP, global ceiling) are added on top.
     this.assertBelow('admin_reset_send_phone', phone, RESET_LIMITS.sendPerPhone);
     this.assertBelow('admin_reset_send_ip', ip, RESET_LIMITS.sendPerIp);
-    const reservation = this.smsQuota.reserve(phone, ip);
+    const reservation = this.smsQuota.reserve(phone, ip, { flow: 'admin' });
     const phoneAt = this.rateLimitService.record('admin_reset_send_phone', phone, RESET_LIMITS.sendPerPhone.windowMs);
     const ipAt = this.rateLimitService.record('admin_reset_send_ip', ip, RESET_LIMITS.sendPerIp.windowMs);
 
@@ -217,12 +217,14 @@ export class AdminAuthService {
 
     if (!staff) {
       this.logger.warn(`[forgot-password] no staff record for ${maskPhone(phone)}; silently returning`);
+      this.smsQuota.refundGlobal(reservation); // no SMS leaves: do not eat the global ceiling
       return;
     }
     if (!staff.isActive || staff.deletedAt) {
       this.logger.warn(
         `[forgot-password] staff ${staff.id} is inactive or soft-deleted (isActive=${staff.isActive}, deletedAt=${staff.deletedAt?.toISOString() ?? 'null'}); silently returning`,
       );
+      this.smsQuota.refundGlobal(reservation);
       return;
     }
 

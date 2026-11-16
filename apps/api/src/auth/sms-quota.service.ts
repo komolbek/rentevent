@@ -45,12 +45,20 @@ export class SmsQuotaService {
    * Checks every cap first and records only when all pass, so a rejection burns
    * nothing. Throws `RateLimitedException` (429, `retry_after_seconds`).
    */
-  reserve(phone: string, ip: string, opts: { noSms?: boolean } = {}): SmsReservation {
+  reserve(
+    phone: string,
+    ip: string,
+    opts: { noSms?: boolean; flow?: 'customer' | 'admin' } = {},
+  ): SmsReservation {
     const cap = smsDailyCap();
+    // Phone budgets are per flow: a public customer send-otp for a staff phone
+    // must not use up that staff member's password-reset budget. IP and the
+    // global ceiling stay shared.
+    const p = opts.flow === 'admin' ? 'admin_' : '';
     const checks: Array<[string, string, { max: number; windowMs: number }]> = [
-      ['sms_phone_cooldown', phone, SMS_LIMITS.phoneCooldown],
-      ['sms_phone_hour', phone, SMS_LIMITS.phoneHour],
-      ['sms_phone_day', phone, SMS_LIMITS.phoneDay],
+      [`${p}sms_phone_cooldown`, phone, SMS_LIMITS.phoneCooldown],
+      [`${p}sms_phone_hour`, phone, SMS_LIMITS.phoneHour],
+      [`${p}sms_phone_day`, phone, SMS_LIMITS.phoneDay],
       ['sms_ip_window', ip, SMS_LIMITS.ipWindow],
       ['sms_ip_day', ip, SMS_LIMITS.ipDay],
       ['sms_global_day', 'all', { max: cap, windowMs: DAY }],
@@ -79,6 +87,17 @@ export class SmsQuotaService {
       this.logger.warn(`SMS daily ceiling at ${used}/${cap} (70 %): check for abuse or a campaign`);
     }
     return { slots };
+  }
+
+  /**
+   * Gives back only the global SMS slot (no SMS was sent, e.g. unknown staff
+   * phone). Phone and IP slots stay recorded so the response cannot reveal
+   * whether the phone exists.
+   */
+  refundGlobal(reservation: SmsReservation): void {
+    for (const s of reservation.slots) {
+      if (s.namespace === 'sms_global_day') this.rateLimit.refund(s.namespace, s.key, s.at);
+    }
   }
 
   /** Gives the budget back after a send that failed. */
