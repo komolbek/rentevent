@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { memo, useCallback } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Heart, ArrowUpRight } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import type { Product } from '@/types';
 import { Card, Badge } from '@/components/ui';
 import { formatPrice } from '@/lib/utils';
@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { localizedName } from '@/lib/i18n/product';
+import { QuickAdd } from './QuickAdd';
 
 interface ProductCardProps {
   product: Product;
@@ -153,15 +154,9 @@ export const ProductCard = memo(function ProductCard({ product, className }: Pro
                 )}
               </p>
 
-              {/* The whole card is the link, so no "Подробнее" button (Krug:
-                  needless choice). A quiet arrow appears on hover, desktop
-                  only — phones have no hover and no room. */}
-              <span
-                className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-foreground/70 opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100 md:inline-flex"
-                aria-hidden="true"
-              >
-                <ArrowUpRight className="h-4 w-4" />
-              </span>
+              {/* The whole card is the link; the + / stepper sits in the price
+                  row and stops the navigation itself. */}
+              <QuickAdd product={product} name={name} />
             </div>
           </div>
         </Card>

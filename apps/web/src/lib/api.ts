@@ -231,6 +231,12 @@ export const eventsApi = {
 export interface HeroSlide {
   id: string;
   image_url: string;
+  /** Portrait 4:5 photo for phones; null → `image_url` cropped at the focal point. */
+  mobile_image_url?: string | null;
+  /** Focal point of `image_url` for the phone crop, 0-100; null → 50. */
+  focal_x?: number | null;
+  focal_y?: number | null;
+  alt?: string | null;
   title: string;
   title_uz: string | null;
   title_en: string | null;
