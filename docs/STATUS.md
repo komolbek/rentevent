@@ -1,5 +1,5 @@
 # Status — rentevent
-Updated: 2026-11-02
+Updated: 2026-11-16
 
 **Stage:** MVP (production services live on Railway; storefront behind a "coming soon" gate)
 
@@ -20,19 +20,34 @@ Updated: 2026-11-02
   (public, rate-limited; `docs/spec/order-quote.md`), `DELETE /user/profile` (anonymize;
   `docs/spec/account-deletion.md`), `/privacy` `/terms` `/contacts` open while gated,
   `/user/cards` and the `Card` model removed. Prod `cards` drop: `docs/ops/drop-cards-table.md`.
+- 2026-11-16: security T1 (`f83fa4d`) + T2 (`dd1af18`) committed on local `main` (owner OK), not pushed.
+  Reviewed, `scripts/check.sh` green. Details: fix plan "Progress". `docs/security/` still uncommitted.
+
+- 2026-11-16: hero slides H3 (UploadThing cleanup on replace/delete) + H4 (admin screen: focal point, mobile photo, alt,
+  dates, status badge) in working tree, uncommitted; `scripts/check.sh` green; not checked in a browser (no local DB).
 
 ## Next
+- Security fixes T3–T13 in plan order (T3 reuses T1's `normalizeUzPhone`), plan
+  `docs/security/fix-plan-2026-11-15.md`, audit `docs/security/audit-2026-11-15.md`. F3 (D1) before go-live.
 - Decide go-live: set `SITE_GATE_ENABLED=false` on the RentEvent Web service.
 - Populate content: Sets in admin, UZ/EN translations for products/sets/events.
 - Migration tracking for prod DB (today `prisma db push` by hand, see CLAUDE.md rule 2).
 
 ## Waiting on
+- Owner: OK to push `main` (deploys the 11-02 merge + T1 + T2); commit `docs/security/`? (lists open vulns).
+- iOS (`rentevent-ios`, not checked): after T2 the API returns 400 for past start / >90 days on
+  `GET /products` and `/products/:id/availability`. Verify the app never sends those before deploy.
 - Owner: OK to push/deploy the merge above, then OK to drop prod `cards` (`docs/ops/drop-cards-table.md`).
 - Owner/legal: retention of anonymized orders and `orders.notes` (`docs/spec/account-deletion.md`).
 - Owner: CI uses `pnpm install --no-frozen-lockfile` and the Dockerfiles likewise; frozen
   lockfile passes locally. Switch? (deploy/CI config, not done here)
 - Owner: client contact person, language and contract terms for `docs/client/brief.md`.
 - Owner OK needed before any schema change reaches prod DB (see CLAUDE.md rule 2).
+- Owner/client, security (fix plan D1–D7): F3 orders CONFIRMED unpaid (interim caps vs PENDING+expiry);
+  F6/F16 Multicard callback + error details (payments code); F8 `Staff.sessionVersion` (schema);
+  F9 MANAGER vs ADMIN rights; F17 OTP purpose (schema?); F18 shared rate-limit store before scaling.
+- Owner: check Railway env (test auth off, `SMS_PROVIDER`≠mock, secrets, `ALLOWED_ORIGINS`),
+  duplicate-phone users in prod, `pnpm audit --prod`.
 
 ## Known issues
 - No root `typecheck` script; `build` (nest build / next build) is the type check.
