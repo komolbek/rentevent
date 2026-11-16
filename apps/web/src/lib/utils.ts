@@ -118,9 +118,13 @@ export function calculatePrice(
   dailyPrice: number,
   rentalDays: number,
   quantity: number,
-  pricingTiers: { days: number; totalPrice: number }[],
-  quantityPricing: { quantity: number; totalPrice: number }[]
+  pricingTiers: { days: number; totalPrice: number }[] | null = [],
+  quantityPricing: { quantity: number; totalPrice: number }[] | null = []
 ): { totalPrice: number; dailyPriceUsed: number; savings: number } {
+  // Catalog list items carry no tiers (only the product page does): treat a
+  // missing list as "no tiers" instead of throwing.
+  pricingTiers = pricingTiers ?? [];
+  quantityPricing = quantityPricing ?? [];
   const fullPrice = dailyPrice * quantity * rentalDays;
 
   if (rentalDays === 1 && quantityPricing.length > 0) {

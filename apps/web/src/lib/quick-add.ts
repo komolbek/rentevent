@@ -69,3 +69,41 @@ export function quickAddStep(inCart: number, delta: 1 | -1, cap: number): QuickA
   if (inCart === 1) return { kind: 'remove' };
   return { kind: 'set', quantity: inCart - 1 };
 }
+
+export type QuickAddOutcome =
+  | { kind: 'add' }
+  | { kind: 'set'; quantity: number }
+  | { kind: 'remove' }
+  /** Nothing changes, the visitor is told why (i18n key). */
+  | { kind: 'message'; key: 'quick_add.max' | 'quick_add.no_stock' }
+  /** Dates are needed: open the picker; `stale` adds the "period not bookable" message. */
+  | { kind: 'pick_dates'; stale: boolean }
+  /** Not reachable from the UI (a stepper "−" exists only with an item in the cart). */
+  | { kind: 'noop' };
+
+/**
+ * Every tap maps to a cart change or a visible reaction, never to silence.
+ * `stored` is the rental period in the store: a set-but-unusable one (past
+ * start, over 90 days) is `stale`, so the visitor is told before the picker opens.
+ */
+export function quickAddOutcome(
+  inCart: number,
+  delta: 1 | -1,
+  cap: number,
+  period: QuickAddPeriod | null,
+  stored: { from: string | null },
+): QuickAddOutcome {
+  const action = quickAddStep(inCart, delta, cap);
+  switch (action.kind) {
+    case 'add':
+      return period ? { kind: 'add' } : { kind: 'pick_dates', stale: !!stored.from };
+    case 'set':
+      return { kind: 'set', quantity: action.quantity };
+    case 'remove':
+      return { kind: 'remove' };
+    case 'capped':
+      return { kind: 'message', key: 'quick_add.max' };
+    default:
+      return delta === 1 ? { kind: 'message', key: 'quick_add.no_stock' } : { kind: 'noop' };
+  }
+}

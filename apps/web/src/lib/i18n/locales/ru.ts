@@ -675,6 +675,8 @@ const ru = {
   'catalog.picks_fair_page': 'О выставке →',
   'fair.eyebrow': 'Выставка',
   'fair.all_fairs': 'Все выставки',
+  'quick_add.period_invalid': 'Период выставки нельзя забронировать как есть. Выберите даты.',
+  'quick_add.error': 'Не удалось добавить в корзину. Попробуйте ещё раз.',
   'fair.not_found': 'Выставка не найдена',
   'fair.delivery': 'Доставка на стенд',
   'fair.collection': 'Вывоз',

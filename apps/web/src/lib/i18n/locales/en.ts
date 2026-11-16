@@ -677,6 +677,8 @@ const en: Record<TranslationKey, string> = {
   'catalog.picks_fair_page': 'About the fair →',
   'fair.eyebrow': 'Fair',
   'fair.all_fairs': 'All fairs',
+  'quick_add.period_invalid': "This fair's period can't be booked as is. Choose dates.",
+  'quick_add.error': "Couldn't add to cart. Try again.",
   'fair.not_found': 'Fair not found',
   'fair.delivery': 'Delivery to the stand',
   'fair.collection': 'Collection',

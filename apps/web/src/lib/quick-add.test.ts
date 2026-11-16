@@ -58,3 +58,37 @@ describe('quickAddStep', () => {
     expect(quickAddStep(0, -1, 5)).toEqual({ kind: 'none' });
   });
 });
+
+import { calculatePrice } from './utils';
+import { quickAddOutcome } from './quick-add';
+
+describe('catalog list products have no pricing tiers (fair + bug)', () => {
+  it('calculatePrice does not throw on missing tiers and uses the base price', () => {
+    // list items arrive without tiers at runtime (undefined)
+    const r = calculatePrice(100, 3, 2, undefined, undefined);
+    expect(r).toEqual({ totalPrice: 600, dailyPriceUsed: 100, savings: 0 });
+  });
+});
+
+describe('quickAddOutcome: every tap does something visible', () => {
+  const period = { from: new Date(), to: new Date(), source: 'stored' as const };
+  const cases: [number, 1 | -1, number, typeof period | null, string | null][] = [
+    [0, 1, 1, period, 'add'],
+    [0, 1, 1, null, 'pick_dates'],
+    [0, 1, 0, period, 'message'],
+    [1, 1, 1, period, 'message'],
+    [1, 1, 3, period, 'set'],
+    [2, -1, 3, period, 'set'],
+    [1, -1, 3, period, 'remove'],
+  ];
+  it.each(cases)('inCart %i delta %i cap %i', (inCart, delta, cap, p, kind) => {
+    expect(quickAddOutcome(inCart, delta, cap, p, { from: null }).kind).toBe(kind);
+  });
+  it('a stored but unbookable period opens the picker with a message', () => {
+    expect(quickAddOutcome(0, 1, 1, null, { from: '2026-11-01T00:00:00.000Z' })).toEqual({ kind: 'pick_dates', stale: true });
+    expect(quickAddOutcome(0, 1, 1, null, { from: null })).toEqual({ kind: 'pick_dates', stale: false });
+  });
+  it('only an unreachable "−" with nothing in the cart is a no-op', () => {
+    expect(quickAddOutcome(0, -1, 1, period, { from: null }).kind).toBe('noop');
+  });
+});

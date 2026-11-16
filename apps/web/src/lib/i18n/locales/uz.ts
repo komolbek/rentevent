@@ -677,6 +677,8 @@ const uz: Record<TranslationKey, string> = {
   'catalog.picks_fair_page': 'Ko‘rgazma haqida →',
   'fair.eyebrow': 'Ko‘rgazma',
   'fair.all_fairs': 'Barcha ko‘rgazmalar',
+  'quick_add.period_invalid': 'Ko‘rgazma davrini bunday bron qilib bo‘lmaydi. Sanalarni tanlang.',
+  'quick_add.error': 'Savatga qo‘shib bo‘lmadi. Qayta urinib ko‘ring.',
   'fair.not_found': 'Ko‘rgazma topilmadi',
   'fair.delivery': 'Stendga yetkazish',
   'fair.collection': 'Olib ketish',

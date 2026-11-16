@@ -10,7 +10,8 @@ import { cn, formatDateShort, getTomorrow, calculateRentalDays } from '@/lib/uti
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useCartStore, useCartHydrated, cartEventId } from '@/stores/cart-store';
 import { useRentalPeriodStore } from '@/stores/rental-period-store';
-import { quickAddCap, quickAddStep, resolveQuickAddPeriod } from '@/lib/quick-add';
+import { quickAddCap, quickAddOutcome, resolveQuickAddPeriod } from '@/lib/quick-add';
+import { productsApi } from '@/lib/api';
 
 interface QuickAddProps {
   product: IProduct;
@@ -54,12 +55,26 @@ export function QuickAdd({ product, name }: QuickAddProps) {
   }, []);
 
   const addAt = useCallback(
-    (from: Date, to: Date, fromCart: boolean) => {
-      const { items, addItem } = useCartStore.getState();
+    async (from: Date, to: Date, fromCart: boolean) => {
+      const { items } = useCartStore.getState();
       const stored = useRentalPeriodStore.getState().event;
       const event = fromCart ? cartEventId(items) ?? stored?.id : stored?.id;
-      addItem(product, 1, from, to, product.eventPrice != null ? event ?? null : null);
-      toast.success(t('quick_add.added', { from: formatDateShort(from), to: formatDateShort(to) }));
+      // The catalog list carries no pricing tiers and, without a fair, no
+      // fair price: read the full product once so the cart prices it exactly
+      // like the product page. If that fails, say so instead of staying silent.
+      let full: IProduct = product;
+      try {
+        const res = await productsApi.getById(product.id, event ? { event_id: event } : undefined);
+        if (res?.id) full = res;
+      } catch {
+        // fall back to the list item below
+      }
+      try {
+        useCartStore.getState().addItem(full, 1, from, to, full.eventPrice != null ? event ?? null : null);
+        toast.success(t('quick_add.added', { from: formatDateShort(from), to: formatDateShort(to) }));
+      } catch {
+        toast.error(t('quick_add.error'));
+      }
     },
     [product, t],
   );
@@ -71,29 +86,29 @@ export function QuickAdd({ product, name }: QuickAddProps) {
 
   const handleStep = (delta: 1 | -1) => (e: React.MouseEvent) => {
     stop(e);
-    const action = quickAddStep(quantity, delta, cap);
-    const { updateItem, removeItem } = useCartStore.getState();
-    switch (action.kind) {
-      case 'add': {
-        const { items } = useCartStore.getState();
-        const { from, to } = useRentalPeriodStore.getState();
-        const period = resolveQuickAddPeriod(items, { from, to });
-        if (!period) {
-          setRange(undefined);
-          setPickerOpen(true);
-          return;
-        }
-        addAt(period.from, period.to, period.source === 'cart');
+    const { items, updateItem, removeItem } = useCartStore.getState();
+    const { from, to } = useRentalPeriodStore.getState();
+    const period = resolveQuickAddPeriod(items, { from, to });
+    const outcome = quickAddOutcome(quantity, delta, cap, period, { from });
+    switch (outcome.kind) {
+      case 'add':
+        if (period) void addAt(period.from, period.to, period.source === 'cart');
         return;
-      }
+      case 'pick_dates':
+        // A stored period that is not bookable (e.g. a fair already running
+        // or over 90 days) is explained, then the picker lets the visitor choose.
+        if (outcome.stale) toast(t('quick_add.period_invalid'));
+        setRange(undefined);
+        setPickerOpen(true);
+        return;
       case 'set':
-        updateItem(product.id, { quantity: action.quantity });
+        updateItem(product.id, { quantity: outcome.quantity });
         return;
       case 'remove':
         removeItem(product.id);
         return;
-      case 'capped':
-        showHint(t('quick_add.max'));
+      case 'message':
+        showHint(t(outcome.key));
         return;
       default:
         return;
@@ -110,7 +125,7 @@ export function QuickAdd({ product, name }: QuickAddProps) {
       updateItem(line.productId, { rentalStartDate: from.toISOString(), rentalEndDate: to.toISOString() });
     }
     useRentalPeriodStore.getState().setPeriod(from, to);
-    addAt(from, to, false);
+    void addAt(from, to, false);
     setPickerOpen(false);
   };
 
