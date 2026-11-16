@@ -6,6 +6,7 @@ import {
   SMS_TIMEOUT_MS,
   SmsConfigError,
   SmsService,
+  buildOtpMessage,
   parseSmsProvider,
 } from './sms.service';
 import { OtpService } from './otp.service';
@@ -556,5 +557,25 @@ describe('SMS3: abuse caps and server cooldown', () => {
     expect(rateLimit.count('sms_global_day', 'all', 24 * HOUR)).toBe(0);
     expect(rateLimit.count('admin_sms_phone_cooldown', unknown, MIN)).toBe(1);
     expect(rateLimit.count('sms_ip_day', '7.7.7.7', 24 * HOUR)).toBe(1);
+  });
+});
+
+describe('SMS8: approved OTP text', () => {
+  it('is the Eskiz-approved template byte for byte, nothing added', () => {
+    expect(buildOtpMessage('123456')).toBe(
+      'Kod dlya vhoda na platforme RentEvent: 123456. Nikomu ne soobshchayte etot kod.',
+    );
+  });
+
+  it('is sent unchanged for both login and admin reset', async () => {
+    vi.stubEnv('SMS_PROVIDER', 'mock');
+    vi.stubEnv('NODE_ENV', 'test');
+    const svc = new SmsService();
+    await svc.sendOTP('998901234567', '123456');
+    await svc.sendAdminOTP('998901234567', '123456');
+    const log = svc.getDevOTPLog();
+    expect(log).toHaveLength(2);
+    for (const e of log) expect(e.message).toBe(buildOtpMessage('123456'));
+    vi.unstubAllEnvs();
   });
 });

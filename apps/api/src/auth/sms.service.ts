@@ -22,6 +22,15 @@ export interface DevOTPEntry {
 
 const MAX_DEV_ENTRIES = 50;
 
+/**
+ * The single OTP text. Eskiz delivers only pre-approved templates and approved exactly this one
+ * (the only variable is the code), so both login and admin reset send it unchanged. Do not edit
+ * without a newly approved template: the gateway rejects any other wording.
+ */
+export function buildOtpMessage(code: string): string {
+  return `Kod dlya vhoda na platforme RentEvent: ${code}. Nikomu ne soobshchayte etot kod.`;
+}
+
 /** One provider call may take at most this long (the gateway itself waits up to 30 s for Eskiz). */
 export const SMS_TIMEOUT_MS = 8000;
 /** Consecutive failures that open the breaker, and for how long it stays open. */
@@ -94,7 +103,7 @@ export class SmsService implements OnModuleInit {
   }
 
   async sendOTP(phoneNumber: string, code: string): Promise<SMSResult> {
-    const message = `RentEvent: tasdiqlash kodi ${code}. Hech kimga aytmang.`;
+    const message = buildOtpMessage(code);
     if (this.isMockMode()) {
       this.addDevEntry(phoneNumber, code, 'customer_auth', message);
     }
@@ -102,7 +111,7 @@ export class SmsService implements OnModuleInit {
   }
 
   async sendAdminOTP(phoneNumber: string, code: string): Promise<SMSResult> {
-    const message = `RentEvent: parolni tiklash kodi ${code}. Hech kimga aytmang.`;
+    const message = buildOtpMessage(code);
     if (this.isMockMode()) {
       this.addDevEntry(phoneNumber, code, 'admin_reset', message);
     }
