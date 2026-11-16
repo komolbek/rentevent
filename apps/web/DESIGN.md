@@ -19,7 +19,7 @@ Paste this at the top of any prompt (ChatGPT, Claude, v0, Cursor) and the output
 6. **Facts, not adjectives.** "41 позиций", "от 500 000 сум", "48 ч" — never "широкий выбор", "лучшие цены". Copy is sourced from the FAQ and delivery pages, never invented.
 7. **Minimum tap target 40 px, minimum body text 14 px, minimum label 12 px.**
 8. **Contacts come from Business Settings** (`useBusinessContacts()`), never from code. A field that is not set renders nothing.
-9. **Colour scheme follows the OS.** There is no theme toggle; `.dark` is set on `<html>` by the inline script in `app/layout.tsx`.
+9. **Colour scheme: System / Light / Dark.** The visitor's choice (default System, which follows the OS live) is kept in `localStorage` key `theme` and switched from the header menu (`ThemeSwitcher`). `.dark`, `color-scheme` and the `theme-color` meta are set on `<html>` before first paint by the inline script in `app/layout.tsx`, whose text lives in `lib/theme.ts`.
 
 ## Tokens
 

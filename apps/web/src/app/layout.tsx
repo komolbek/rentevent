@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
 import { Header, Footer, BottomTabBar } from '@/components/layout';
+import { themeInitScript } from '@/lib/theme';
 import './globals.css';
 
 const SITE_URL = 'https://rentevent.uz';
@@ -54,23 +55,10 @@ export default function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
-        {/* Colour scheme follows the OS, nothing else: there is no manual
-            toggle (spec §3.3). Runs before paint so a dark-OS visitor never
-            sees a light flash; the listener follows live OS changes. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var mq = window.matchMedia('(prefers-color-scheme: dark)');
-                  var apply = function(dark) { document.documentElement.classList.toggle('dark', dark); };
-                  apply(mq.matches);
-                  mq.addEventListener('change', function(e) { apply(e.matches); });
-                } catch(e) {}
-              })();
-            `,
-          }}
-        />
+        {/* Theme (system / light / dark): applied before paint so there is no
+            flash; src/lib/theme.ts holds the script text. The CSP allows
+            inline scripts ('unsafe-inline'), no hash to update. */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript() }} />
       </head>
       {/* Bottom padding reserves the mobile tab bar's height (56 px + safe area). */}
       <body className="min-h-screen bg-background pb-[calc(3.5rem+env(safe-area-inset-bottom))] font-sans text-foreground antialiased md:pb-0">

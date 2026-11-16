@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { Button, Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui';
 import { LogoLockup } from './Logo';
 import { LanguageSwitcher } from './LanguageSwitcher';
+import { ThemeSwitcher } from './ThemeSwitcher';
 import { OPEN_SEARCH_EVENT } from './BottomTabBar';
 
 /**
@@ -207,6 +208,7 @@ export function Header() {
           <div className="ml-auto flex items-center gap-1 lg:flex-col lg:items-end lg:justify-center lg:gap-1">
             <div className="flex items-center">
               <LanguageSwitcher className="hidden lg:inline-flex" />
+              <ThemeSwitcher className="hidden lg:inline-flex" />
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link href="/favorites" className={cn(iconBtn, 'hidden sm:inline-flex')} aria-label={t('header.favorites')}>
@@ -402,7 +404,10 @@ export function Header() {
               </a>
             </div>
             <div className="flex items-center justify-between gap-3">
-              <LanguageSwitcher variant="full" align="start" />
+              <div className="flex items-center gap-2">
+                <LanguageSwitcher variant="full" align="start" />
+                <ThemeSwitcher variant="full" align="start" />
+              </div>
               {!isAuthenticated && (
                 <Button asChild size="sm">
                   <Link href="/auth">{t('header.login')}</Link>

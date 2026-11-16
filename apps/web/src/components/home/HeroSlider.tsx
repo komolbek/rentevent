@@ -9,6 +9,7 @@ import type { HeroSlide } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { localizedField } from '@/lib/i18n/product';
 import { cn } from '@/lib/utils';
+import type { HeroState } from '@/lib/hero-cache';
 
 const AUTOPLAY_MS = 6500;
 
@@ -17,6 +18,40 @@ interface HeroSliderProps {
   slides: HeroSlide[];
   /** The built-in orange brand hero: the only slide while there are no photo slides. */
   fallback: ReactNode;
+  /** loading → branded loader; fallback → orange hero; ready → carousel (loader until the first photo has decoded). */
+  status: HeroState;
+}
+
+/** Same box as the final hero so swapping loader → photo → fallback never shifts the page. */
+const HERO_BOX = 'min-h-[30rem] sm:min-h-[32rem] lg:min-h-[36rem]';
+const LOADER_FADE_MS = 300;
+/** If the first photo never settles (hung connection) the loader still has to go away. */
+const LOADER_MAX_MS = 8000;
+
+function HeroLoader({ done }: { done: boolean }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-busy={!done}
+      data-hero-loader
+      className={cn(
+        'absolute inset-0 z-30 overflow-hidden rounded-3xl bg-muted transition-opacity ease-out motion-reduce:transition-none dark:bg-card',
+        done ? 'pointer-events-none opacity-0' : 'opacity-100',
+      )}
+      style={{ transitionDuration: `${LOADER_FADE_MS}ms` }}
+    >
+      <div className="hero-shimmer absolute inset-0" aria-hidden="true" />
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-4" aria-hidden="true">
+        <span className="hero-mark font-display text-5xl font-bold tracking-tight text-foreground/15 sm:text-6xl">
+          re<span className="text-primary">.</span>
+        </span>
+      </div>
+      <div className="absolute inset-x-0 bottom-0 h-[3px] overflow-hidden bg-primary/10" aria-hidden="true">
+        <div className="hero-progress h-full w-1/3 rounded-full bg-primary" />
+      </div>
+    </div>
+  );
 }
 
 const clampPct = (v: number | null | undefined) =>
@@ -29,27 +64,54 @@ const clampPct = (v: number | null | undefined) =>
  * hover/focus and a hidden tab, dots, arrows (≥640 px), swipe, and stillness for
  * prefers-reduced-motion.
  */
-export function HeroSlider({ slides, fallback }: HeroSliderProps) {
+export function HeroSlider({ slides, fallback, status }: HeroSliderProps) {
   const { t, locale } = useTranslation();
   const reduceMotion = useReducedMotion();
   const [failed, setFailed] = useState<ReadonlySet<string>>(new Set());
   // An image-only slide whose photo failed to load would be a blank block: skip it.
-  const visible = slides.filter(
+  const visible = (status === 'ready' ? slides : []).filter(
     (s) => !(failed.has(s.id) && !localizedField(s, 'title', locale) && !localizedField(s, 'subtitle', locale)),
   );
   const hasPhotos = visible.length > 0;
   const count = hasPhotos ? visible.length : 1;
   const [index, setIndex] = useState(0);
+  // Loader: stays until the first photo has loaded and decoded (or there is nothing to wait for).
+  const [settled, setSettled] = useState<ReadonlySet<string>>(new Set());
+  const [introDone, setIntroDone] = useState(false);
+  const [loaderGone, setLoaderGone] = useState(false);
+  const settle = useCallback(
+    (id: string) => setSettled((prev) => (prev.has(id) ? prev : new Set(prev).add(id))),
+    [],
+  );
+  const firstId = visible[0]?.id;
+  useEffect(() => {
+    if (introDone) return;
+    if (status === 'fallback' || (status === 'ready' && !hasPhotos)) setIntroDone(true);
+    else if (status === 'ready' && firstId && settled.has(firstId)) setIntroDone(true);
+  }, [introDone, status, hasPhotos, firstId, settled]);
+  // Only a hung photo is timed out; while the list is loading the loader stays
+  // (the request ends in slides or the fallback, never a blank box).
+  const listKnown = status !== 'loading';
+  useEffect(() => {
+    if (!listKnown) return;
+    const id = window.setTimeout(() => setIntroDone(true), LOADER_MAX_MS);
+    return () => window.clearTimeout(id);
+  }, [listKnown]);
+  useEffect(() => {
+    if (!introDone) return;
+    const id = window.setTimeout(() => setLoaderGone(true), LOADER_FADE_MS + 50);
+    return () => window.clearTimeout(id);
+  }, [introDone]);
   const [paused, setPaused] = useState(false);
   const touchX = useRef<number | null>(null);
 
   const go = useCallback((next: number) => setIndex(((next % count) + count) % count), [count]);
 
   useEffect(() => {
-    if (count < 2 || paused || reduceMotion) return;
+    if (count < 2 || paused || reduceMotion || !introDone) return;
     const id = window.setTimeout(() => go(index + 1), AUTOPLAY_MS);
     return () => window.clearTimeout(id);
-  }, [count, index, paused, reduceMotion, go]);
+  }, [count, index, paused, reduceMotion, introDone, go]);
 
   useEffect(() => {
     const onVisibility = () => setPaused(document.hidden);
@@ -65,6 +127,7 @@ export function HeroSlider({ slides, fallback }: HeroSliderProps) {
   const current = Math.min(index, count - 1);
 
   const renderSlide = (i: number) => {
+    if (status === 'loading') return <div className={cn('h-full rounded-3xl', HERO_BOX)} aria-hidden="true" />;
     if (!hasPhotos) return fallback;
     const slide = visible[i];
     const title = localizedField(slide, 'title', locale);
@@ -81,7 +144,20 @@ export function HeroSlider({ slides, fallback }: HeroSliderProps) {
     const first = i === 0;
     const focus = `${clampPct(slide.focal_x)}% ${clampPct(slide.focal_y)}%`;
     const mobileSrc = slide.mobile_image_url || null;
-    const onError = () => setFailed((prev) => new Set(prev).add(slide.id));
+    const onError = () => {
+      setFailed((prev) => new Set(prev).add(slide.id));
+      if (first) settle(slide.id);
+    };
+    const onLoad = (e: { currentTarget: HTMLImageElement }) => {
+      const img = e.currentTarget;      // decode() so the cross-fade never reveals a half-painted photo.
+      // Never wait long: a backgrounded tab can postpone decode().
+      const decoded = typeof img.decode === 'function' ? img.decode().catch(() => {}) : Promise.resolve();
+      Promise.race([decoded, new Promise((r) => window.setTimeout(r, 600))]).then(() => settle(slide.id));
+    };
+    // A photo that finished loading before hydration never fires onLoad.
+    const checkComplete = (el: HTMLImageElement | null) => {
+      if (first && el && el.complete && el.naturalWidth > 0) settle(slide.id);
+    };
     // Phones show the portrait photo if there is one; otherwise the desktop photo
     // is cropped around the focal point. ≥640 px always centres the desktop photo.
     const desktopClass = mobileSrc
@@ -100,6 +176,8 @@ export function HeroSlider({ slides, fallback }: HeroSliderProps) {
           priority={first && !mobileSrc}
           sizes="(max-width: 1280px) 100vw, 1280px"
           className={desktopClass}
+          ref={checkComplete}
+          onLoad={onLoad}
           onError={onError}
         />
         {mobileSrc && (
@@ -109,6 +187,8 @@ export function HeroSlider({ slides, fallback }: HeroSliderProps) {
             fill
             sizes="100vw"
             className="object-cover sm:hidden"
+            ref={checkComplete}
+            onLoad={onLoad}
             onError={onError}
           />
         )}
@@ -196,10 +276,10 @@ export function HeroSlider({ slides, fallback }: HeroSliderProps) {
       <div className="relative">
         {/* Slides stack in one grid cell so the tallest sets the height and
             nothing jumps when they change. */}
-        <div className="grid">
+        <div className="relative grid">
           <AnimatePresence initial={false} mode="popLayout">
             <motion.div
-              key={current}
+              key={status === 'ready' && visible[current] ? visible[current].id : `s${current}`}
               className="col-start-1 row-start-1"
               initial={reduceMotion ? false : { opacity: 0, scale: 1.01 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -212,6 +292,7 @@ export function HeroSlider({ slides, fallback }: HeroSliderProps) {
               {renderSlide(current)}
             </motion.div>
           </AnimatePresence>
+          {!loaderGone && <HeroLoader done={introDone} />}
         </div>
 
         {count > 1 && (

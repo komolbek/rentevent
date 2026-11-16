@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useLayoutEffect, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Truck, Shield, Clock, Phone, PackageCheck, Send, CalendarDays, Sofa, Timer } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { HomeHeroSlide } from '@/components/home/HomeHero';
@@ -19,6 +19,7 @@ import { Reveal } from '@/components/home/Reveal';
 import { categoriesApi, contentApi, eventsApi, productsApi } from '@/lib/api';
 import { upcomingEvents } from '@/lib/events';
 import { useBusinessContacts } from '@/lib/business';
+import { readHeroCache, resolveHeroState, sanitizeHeroSlides, writeHeroCache } from '@/lib/hero-cache';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { ICategory } from '@rentevent/types';
 import { countLabel } from '@/lib/i18n';
@@ -39,11 +40,28 @@ export default function HomePage() {
     queryFn: () => productsApi.getAll({ sort: 'recommended', limit: 8 }),
   });
 
-  const { data: heroSlides } = useQuery({
+  const queryClient = useQueryClient();
+  const { data: heroSlides, isError: heroError } = useQuery({
     queryKey: ['hero-slides'],
-    queryFn: () => contentApi.getHeroSlides(),
+    queryFn: async () => {
+      const res = await contentApi.getHeroSlides();
+      const items = sanitizeHeroSlides(res.items);
+      writeHeroCache(items);
+      return { items };
+    },
     staleTime: 5 * 60 * 1000,
+    retry: 1,
+    retryDelay: 800,
   });
+  // Repeat visit: show the last known slides at once, then let the request above
+  // revalidate. Done after hydration (before paint) so server and client markup match.
+  useLayoutEffect(() => {
+    if (queryClient.getQueryData(['hero-slides'])) return;
+    const cached = readHeroCache();
+    if (cached) queryClient.setQueryData(['hero-slides'], { items: cached.slides }, { updatedAt: cached.savedAt });
+  }, [queryClient]);
+  const heroItems = heroSlides?.items ?? [];
+  const heroStatus = resolveHeroState({ hasData: !!heroSlides, isError: heroError, count: heroItems.length });
 
   const { data: events } = useQuery({
     queryKey: ['events', 'picker'],
@@ -102,7 +120,8 @@ export default function HomePage() {
   return (
     <div className="pb-8">
       <HeroSlider
-        slides={heroSlides?.items ?? []}
+        slides={heroItems}
+        status={heroStatus}
         fallback={<HomeHeroSlide products={popular?.items ?? []} productTotal={productTotal} />}
       />
 
