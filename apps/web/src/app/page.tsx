@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Truck, Shield, Clock, Phone, PackageCheck, Send, CalendarDays, Sofa, Timer } from 'lucide-react';
+import { Truck, Shield, Clock, Phone, PackageCheck, Send } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { HomeHeroSlide } from '@/components/home/HomeHero';
 import { HeroSlider } from '@/components/home/HeroSlider';
@@ -16,8 +16,7 @@ import { EventsRail } from '@/components/home/EventsRail';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { SectionHeader } from '@/components/home/SectionHeader';
 import { Reveal } from '@/components/home/Reveal';
-import { categoriesApi, contentApi, eventsApi, productsApi } from '@/lib/api';
-import { upcomingEvents } from '@/lib/events';
+import { categoriesApi, contentApi, productsApi } from '@/lib/api';
 import { useBusinessContacts } from '@/lib/business';
 import { readHeroCache, resolveHeroState, sanitizeHeroSlides, writeHeroCache } from '@/lib/hero-cache';
 import { useTranslation } from '@/lib/i18n/useTranslation';
@@ -62,13 +61,6 @@ export default function HomePage() {
   }, [queryClient]);
   const heroItems = heroSlides?.items ?? [];
   const heroStatus = resolveHeroState({ hasData: !!heroSlides, isError: heroError, count: heroItems.length });
-
-  const { data: events } = useQuery({
-    queryKey: ['events', 'picker'],
-    queryFn: () => eventsApi.getAll(),
-    staleTime: 5 * 60 * 1000,
-  });
-  const upcomingCount = upcomingEvents(events?.items ?? []).length;
 
   // Fallback artwork for categories without an image of their own: the
   // catalogue is small (≈40 items), so one request gives every category the
@@ -129,33 +121,6 @@ export default function HomePage() {
       <section className="container relative z-20 mx-auto -mt-7 px-4 sm:-mt-9">
         <div className="mx-auto max-w-4xl px-2 sm:px-6">
           <EventPicker />
-        </div>
-      </section>
-
-      {/* ================= FACTS STRIP ================= */}
-      <section className="container mx-auto px-4 pt-10 sm:pt-14">
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          {[
-            {
-              icon: Sofa,
-              value: productTotal !== undefined ? String(productTotal) : '—',
-              label: t('home.fact_items'),
-            },
-            {
-              icon: CalendarDays,
-              value: events ? String(upcomingCount) : '—',
-              label: t('home.fact_events'),
-            },
-            { icon: Timer, value: t('home.fact_min_value'), label: t('home.fact_min') },
-          ].map(({ icon: Icon, value, label }, i) => (
-            <Reveal key={label} delay={i * 0.05}>
-              <div className="relative h-full overflow-hidden rounded-2xl bg-gradient-to-br from-primary-50 to-accent-100/70 p-3.5 ring-1 ring-primary/10 dark:from-primary/15 dark:to-accent/10 sm:p-6">
-                <Icon className="absolute -bottom-3 -right-3 h-20 w-20 text-primary/10" aria-hidden="true" />
-                <p className="font-display text-2xl font-bold tracking-tight text-primary-text sm:text-4xl">{value}</p>
-                <p className="mt-1 text-xs font-medium text-foreground/75 sm:text-sm">{label}</p>
-              </div>
-            </Reveal>
-          ))}
         </div>
       </section>
 
