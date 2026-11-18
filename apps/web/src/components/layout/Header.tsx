@@ -148,7 +148,6 @@ export function Header() {
       <div className="bg-brand-graphite text-white dark:border-b dark:border-white/10" data-testid="top-bar">
         <div className="container mx-auto flex h-9 items-center justify-between gap-4 px-4 text-xs">
           <div className="hidden min-w-0 items-center gap-4 sm:flex">
-            <span className="truncate font-semibold uppercase tracking-[0.08em] text-white/70">{t('header.tagline')}</span>
             {contacts.phone && (
               <a href={contacts.phoneHref} className="inline-flex items-center gap-1.5 rounded font-semibold hover:text-white/80 focus-visible:ring-2 focus-visible:ring-white/60">
                 <Phone className="h-3.5 w-3.5" aria-hidden="true" /> {contacts.phone}
