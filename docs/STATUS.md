@@ -18,7 +18,7 @@ Updated: 2026-11-16 (evening)
 - Earlier: multilingual products, events/fairs, sets, UploadThing, header to the fair.rent reference (see git log).
 
 ## In progress
-- Uncommitted in this worktree (`apps/web`): graphite top bar above the header with the language switcher (tagline + phone left), half-sun/half-moon icon for the System theme, quick-add `+`/stepper uses `CARD_RADIUS` (shared with `Card`) instead of a circle. `scripts/check.sh` green; quick-add not seen live (no API/products locally).
+- Uncommitted in this worktree (`apps/web`): alternating full-width section bands on the home page (`docs/design/home-section-rhythm.md`): `Band` component + `.home-bands` CSS, rails render nothing while loading or empty (no skeletons) so the band rhythm never flips, `--color-primary-text` darkened to #B83C1C (spec's #C2431D gave only 4.29:1 on the tint). `scripts/check.sh` green; checked in the browser pane without API data (only the always-on sections render), rails with data not seen live.
 
 ## Next
 - Decide go-live: set `SITE_GATE_ENABLED=false` on the RentEvent Web service; first publish the hero photos

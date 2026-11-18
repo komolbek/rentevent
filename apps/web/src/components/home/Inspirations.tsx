@@ -8,6 +8,7 @@ import { contentApi, type Inspiration } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { localizedField } from '@/lib/i18n/product';
 import { cn } from '@/lib/utils';
+import { Band } from './Band';
 import { SectionHeader } from './SectionHeader';
 import { Reveal } from './Reveal';
 
@@ -74,7 +75,7 @@ export function Inspirations() {
 
   const [first, ...rest] = items;
   return (
-    <section className="container mx-auto px-4 pt-14 sm:pt-20">
+    <Band tint>
       <SectionHeader
         eyebrow={t('inspirations.eyebrow')}
         title={t('inspirations.title')}
@@ -96,6 +97,6 @@ export function Inspirations() {
           </div>
         )}
       </div>
-    </section>
+    </Band>
   );
 }

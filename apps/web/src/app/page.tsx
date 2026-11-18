@@ -15,6 +15,7 @@ import { SetsRail } from '@/components/home/SetsRail';
 import { EventsRail } from '@/components/home/EventsRail';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { SectionHeader } from '@/components/home/SectionHeader';
+import { Band } from '@/components/home/Band';
 import { Reveal } from '@/components/home/Reveal';
 import { categoriesApi, contentApi, productsApi } from '@/lib/api';
 import { useBusinessContacts } from '@/lib/business';
@@ -34,7 +35,7 @@ export default function HomePage() {
   });
 
   // "Recommended": pinned products first, then the admin's manual order.
-  const { data: popular, isLoading: popularLoading } = useQuery({
+  const { data: popular } = useQuery({
     queryKey: ['products', 'home-recommended'],
     queryFn: () => productsApi.getAll({ sort: 'recommended', limit: 8 }),
   });
@@ -110,7 +111,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="pb-8">
+    <div>
       <HeroSlider
         slides={heroItems}
         status={heroStatus}
@@ -124,9 +125,10 @@ export default function HomePage() {
         </div>
       </section>
 
+      <div className="home-bands">
       {/* ================= CATEGORIES ================= */}
       {rootCategories.length > 0 && (
-        <section className="container mx-auto px-4 pt-14 sm:pt-20">
+        <Band>
           <SectionHeader
             eyebrow={t('nav.catalog')}
             title={t('footer.all_categories')}
@@ -150,7 +152,7 @@ export default function HomePage() {
               </Reveal>
             ))}
           </div>
-        </section>
+        </Band>
       )}
 
       {/* ================= EVENTS ================= */}
@@ -163,7 +165,6 @@ export default function HomePage() {
         linkLabel={t('home.view_catalog')}
         href="/catalog?sort=popular"
         products={popular?.items}
-        isLoading={popularLoading}
       />
 
       {/* ================= SETS ================= */}
@@ -179,7 +180,7 @@ export default function HomePage() {
       <AppDownload />
 
       {/* ================= TERMS (concrete, not adjectives) ================= */}
-      <section className="container mx-auto px-4 pt-14 sm:pt-20">
+      <Band tint>
         <SectionHeader eyebrow={t('home.why_eyebrow')} title={t('home.why_title')} />
         <div className="grid grid-cols-1 overflow-hidden rounded-3xl border border-border bg-card sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => (
@@ -194,10 +195,10 @@ export default function HomePage() {
             </Reveal>
           ))}
         </div>
-      </section>
+      </Band>
 
       {/* ================= CLOSING BAND ================= */}
-      <section className="container mx-auto px-4 pt-14 sm:pt-20">
+      <Band>
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl bg-brand-graphite px-6 py-9 text-white sm:px-10 sm:py-12">
             <div
@@ -246,7 +247,8 @@ export default function HomePage() {
             </div>
           </div>
         </Reveal>
-      </section>
+      </Band>
+    </div>
     </div>
   );
 }

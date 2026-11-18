@@ -8,6 +8,7 @@ import { eventsApi } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { localizeEvent, formatEventRange, eventLastDay } from '@/lib/events';
 import { RentForEventButton } from '@/components/events/RentForEventButton';
+import { Band } from './Band';
 import { SectionHeader } from './SectionHeader';
 import { Reveal } from './Reveal';
 
@@ -18,7 +19,7 @@ import { Reveal } from './Reveal';
  */
 export function EventsRail() {
   const { t, locale } = useTranslation();
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ['events', 'home'],
     queryFn: () => eventsApi.getAll(),
   });
@@ -30,10 +31,12 @@ export function EventsRail() {
     .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
     .slice(0, 3);
 
-  if (!isLoading && upcoming.length === 0) return null;
+  // Nothing while loading too: a band that appears and vanishes would flip the
+  // even/odd rhythm of the home page bands.
+  if (upcoming.length === 0) return null;
 
   return (
-    <section className="container mx-auto px-4 pt-14 sm:pt-20">
+    <Band tint>
       <SectionHeader
         eyebrow={t('home.events_eyebrow')}
         title={t('home.events_title')}
@@ -43,11 +46,7 @@ export function EventsRail() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {isLoading
-          ? [...Array(3)].map((_, i) => (
-              <div key={i} className="h-56 animate-pulse rounded-2xl bg-muted" />
-            ))
-          : upcoming.map((e, index) => {
+        {upcoming.map((e, index) => {
               const title = localizeEvent(e, locale, 'title');
               const place = [e.venue, e.city].filter(Boolean).join(', ');
               return (
@@ -106,6 +105,6 @@ export function EventsRail() {
               );
             })}
       </div>
-    </section>
+    </Band>
   );
 }
