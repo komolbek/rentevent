@@ -23,7 +23,7 @@ export const LOCALES: { code: Locale; label: string; full: string; flag: string 
 
 interface LanguageSwitcherProps {
   /** `compact` is the header chip (globe + code); `full` names the language (phone menu). */
-  variant?: 'compact' | 'full';
+  variant?: 'compact' | 'full' | 'topbar';
   align?: 'start' | 'end';
   className?: string;
 }
@@ -43,20 +43,20 @@ export function LanguageSwitcher({ variant = 'compact', align = 'end', className
         className={cn(
           'inline-flex items-center gap-1.5 rounded-full font-semibold outline-none transition-colors',
           'focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-          variant === 'compact'
-            ? 'h-9 px-2.5 text-xs uppercase tracking-[0.08em] text-foreground/80 hover:bg-muted hover:text-foreground'
-            : 'h-10 border border-border px-3.5 text-sm hover:bg-muted',
+          variant === 'compact' && 'h-9 px-2.5 text-xs uppercase tracking-[0.08em] text-foreground/80 hover:bg-muted hover:text-foreground',
+          variant === 'topbar' && 'h-8 px-2.5 text-xs uppercase tracking-[0.08em] text-white hover:bg-white/10 focus-visible:ring-white/60 focus-visible:ring-offset-0',
+          variant === 'full' && 'h-10 border border-border px-3.5 text-sm hover:bg-muted',
           className,
         )}
         aria-label={`${t('header.language')}: ${current.full}`}
       >
-        {variant === 'compact' ? (
+        {variant !== 'full' ? (
           <Globe className="h-4 w-4" aria-hidden="true" />
         ) : (
           <span aria-hidden="true">{current.flag}</span>
         )}
-        {variant === 'compact' ? current.label : current.full}
-        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+        {variant !== 'full' ? current.label : current.full}
+        <ChevronDown className={cn('h-3.5 w-3.5', variant === 'topbar' ? 'text-white/70' : 'text-muted-foreground')} aria-hidden="true" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="w-52">
         <DropdownMenuLabel>{t('header.language')}</DropdownMenuLabel>

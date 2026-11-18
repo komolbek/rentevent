@@ -10,13 +10,16 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   animate?: boolean;
 }
 
+/** Corner radius of a card; shared so small controls on a card (quick-add) stay in step. */
+export const CARD_RADIUS = 'rounded-2xl';
+
 const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', hover = false, animate = false, children, ...props }, ref) => {
-    const baseStyles = 'rounded-2xl';
+    const baseStyles = CARD_RADIUS;
 
     const variants = {
       default: 'bg-card border border-border',
-      glass: 'glass-card rounded-2xl',
+      glass: `glass-card ${CARD_RADIUS}`,
       elevated: 'bg-card border border-border/60 elev-2',
       outline: 'border border-border bg-transparent',
     };
