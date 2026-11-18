@@ -22,7 +22,7 @@
      a warm amber so gradients read as "fire", never off-brand purple.
 
      #F2562B on white is 3.42:1 and fails WCAG AA for body text. Use
-     --color-primary-text (#CF4A25, 4.51:1) for orange *text* below 24px /
+     --color-primary-text (#B83C1C, 4.77:1 on the home band tint) for orange *text* below 24px /
      19px bold on light surfaces; the base orange is fine on dark ones, so
      the token flips back in .dark.
   --------------------------------------------------------------------- */
@@ -41,7 +41,7 @@
   --color-rent-hover: #B8231A;
 
   --color-primary: #F2562B;
-  --color-primary-text: #CF4A25;
+  --color-primary-text: #B83C1C; /* 4.77:1 on the home band tint, 5.67:1 on white */
   --color-primary-50: #fff6f2;
   --color-primary-100: #ffe9e0;
   --color-primary-200: #fecab7;
@@ -70,6 +70,8 @@
   --color-border: #ebe7e0;
   --color-input: #ebe7e0;
   --color-background: #fbfaf7;
+  --color-band: #efebe3;
+  --color-band-border: #e2ddd2;
   --color-foreground: #171717;
   --color-card: #ffffff;
   --color-card-foreground: #171717;
@@ -98,6 +100,8 @@
    graphite, not flat black, so the brand orange still sits naturally on it. */
 .dark {
   --color-background: #0e0e11;
+  --color-band: #08080a;
+  --color-band-border: #34343a;
   --color-foreground: #f6f4f0;
   --color-card: #17171a;
   --color-card-foreground: #f6f4f0;
@@ -112,6 +116,12 @@
   --color-accent-foreground: #f6f4f0;
   --color-primary-foreground: #ffffff;
   --color-primary-text: #F2562B; /* 5.52:1 on the dark ground — no need to darken */
+}
+
+/* Home page: tint is set per section (<Band tint>), never by position, so late data cannot flip it. */
+.home-band[data-tint] {
+  background-color: var(--color-band);
+  border-block: 1px solid var(--color-band-border);
 }
 
 :root {

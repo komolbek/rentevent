@@ -8,6 +8,7 @@ import { setsApi, type SetPublic } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { countLabel, type Locale } from '@/lib/i18n';
+import { Band } from './Band';
 import { SectionHeader } from './SectionHeader';
 import { Reveal } from './Reveal';
 
@@ -25,16 +26,17 @@ function localize(s: SetPublic, locale: Locale, field: 'name' | 'description'): 
  */
 export function SetsRail() {
   const { t, locale } = useTranslation();
-  const { data, isLoading } = useQuery({
+  const { data } = useQuery({
     queryKey: ['sets', 'home'],
     queryFn: () => setsApi.getAll(),
   });
 
   const sets = (data?.items ?? []).slice(0, 3);
-  if (!isLoading && sets.length === 0) return null;
+  // Nothing while loading too, so the band rhythm never flips (see EventsRail).
+  if (sets.length === 0) return null;
 
   return (
-    <section className="container mx-auto px-4 pt-14 sm:pt-20">
+    <Band tint>
       <SectionHeader
         eyebrow={t('home.sets_eyebrow')}
         title={t('home.sets_title')}
@@ -43,11 +45,7 @@ export function SetsRail() {
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {isLoading
-          ? [...Array(3)].map((_, i) => (
-              <div key={i} className="aspect-[4/3] animate-pulse rounded-2xl bg-muted" />
-            ))
-          : sets.map((set, index) => {
+        {sets.map((set, index) => {
               const name = localize(set, locale, 'name');
               const items = set.items
                 .map((i) => i.product)
@@ -107,6 +105,6 @@ export function SetsRail() {
               );
             })}
       </div>
-    </section>
+    </Band>
   );
 }

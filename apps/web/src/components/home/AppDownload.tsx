@@ -7,6 +7,7 @@ import { CalendarDays, CreditCard, ShoppingCart, Smartphone } from 'lucide-react
 import { settingsApi } from '@/lib/api';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { Reveal } from './Reveal';
+import { Band } from './Band';
 
 function AppleMark() {
   return (
@@ -91,7 +92,7 @@ export function AppDownload() {
   ];
 
   return (
-    <section className="container mx-auto px-4 pt-14 sm:pt-20" aria-labelledby="app-download-title">
+    <Band aria-labelledby="app-download-title">
       <Reveal>
         <div
           className="relative overflow-hidden rounded-3xl px-6 py-10 text-white sm:px-10 sm:py-12 lg:px-14"
@@ -166,6 +167,6 @@ export function AppDownload() {
           </div>
         </div>
       </Reveal>
-    </section>
+    </Band>
   );
 }

@@ -2,6 +2,7 @@
 
 import { CalendarCheck, ShoppingCart, Truck } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { Band } from './Band';
 import { SectionHeader } from './SectionHeader';
 import { Reveal } from './Reveal';
 
@@ -19,7 +20,7 @@ export function HowItWorks() {
   ];
 
   return (
-    <section className="container mx-auto px-4 pt-14 sm:pt-20">
+    <Band>
       <SectionHeader eyebrow={t('home.how_eyebrow')} title={t('home.how_title')} />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -40,6 +41,6 @@ export function HowItWorks() {
           </Reveal>
         ))}
       </div>
-    </section>
+    </Band>
   );
 }
