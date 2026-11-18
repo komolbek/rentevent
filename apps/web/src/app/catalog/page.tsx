@@ -106,7 +106,7 @@ function CatalogPageContent() {
     enabled: mounted,
   });
 
-  // Recommended for the chosen fair (admin → Мероприятия → Цены → ★). An
+  // Recommended for the chosen fair (admin → Выставки → Цены → ★). An
   // extra row above the full catalog, never a filter: everything else stays.
   const showPicks = !!eventId && !categoryId && !search && page === 1;
   const { data: picks } = useQuery({

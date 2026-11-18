@@ -5,7 +5,7 @@ import { Plus, Minus, CalendarDays } from 'lucide-react';
 import type { DateRange } from 'react-day-picker';
 import { toast } from 'react-hot-toast';
 import type { IProduct } from '@rentevent/types';
-import { Button, Modal, RangeCalendar } from '@/components/ui';
+import { Button, CARD_RADIUS, Modal, RangeCalendar } from '@/components/ui';
 import { cn, formatDateShort, getTomorrow, calculateRentalDays } from '@/lib/utils';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { useCartStore, useCartHydrated, cartEventId } from '@/stores/cart-store';
@@ -144,9 +144,9 @@ export function QuickAdd({ product, name }: QuickAddProps) {
           stop(e);
           showHint(t('quick_add.no_stock'));
         }}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-foreground"
+        className={cn('inline-flex h-11 w-11 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-foreground', CARD_RADIUS)}
       >
-        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground/60">
+        <span className={cn('inline-flex h-9 w-9 items-center justify-center bg-muted text-muted-foreground/60', CARD_RADIUS)}>
           <Plus className="h-5 w-5" aria-hidden="true" />
         </span>
       </button>
@@ -157,13 +157,13 @@ export function QuickAdd({ product, name }: QuickAddProps) {
       <div
         role="group"
         aria-label={t('quick_add.group', { name, count: quantity })}
-        className="inline-flex h-11 items-center rounded-full bg-rent text-white"
+        className={cn('inline-flex h-11 items-center bg-rent text-white', CARD_RADIUS)}
       >
         <button
           type="button"
           onClick={handleStep(-1)}
           aria-label={t('quick_add.dec')}
-          className="inline-flex h-11 w-11 items-center justify-center rounded-full outline-none hover:bg-black/10 focus-visible:ring-2 focus-visible:ring-foreground"
+          className={cn('inline-flex h-11 w-11 items-center justify-center outline-none hover:bg-black/10 focus-visible:ring-2 focus-visible:ring-foreground', CARD_RADIUS)}
         >
           <Minus className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -177,7 +177,8 @@ export function QuickAdd({ product, name }: QuickAddProps) {
           aria-disabled={atCap}
           aria-describedby={atCap ? hintId : undefined}
           className={cn(
-            'inline-flex h-11 w-11 items-center justify-center rounded-full outline-none hover:bg-black/10 focus-visible:ring-2 focus-visible:ring-foreground',
+            'inline-flex h-11 w-11 items-center justify-center outline-none hover:bg-black/10 focus-visible:ring-2 focus-visible:ring-foreground',
+            CARD_RADIUS,
             atCap && 'opacity-40',
           )}
         >
@@ -192,9 +193,9 @@ export function QuickAdd({ product, name }: QuickAddProps) {
         type="button"
         onClick={handleStep(1)}
         aria-label={t('quick_add.add', { name })}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-foreground"
+        className={cn('inline-flex h-11 w-11 items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-foreground', CARD_RADIUS)}
       >
-        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-rent text-white transition-colors hover:bg-rent/85">
+        <span className={cn('inline-flex h-9 w-9 items-center justify-center bg-rent text-white transition-colors hover:bg-rent/85', CARD_RADIUS)}>
           <Plus className="h-5 w-5" aria-hidden="true" />
         </span>
       </button>

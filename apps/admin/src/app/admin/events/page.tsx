@@ -203,13 +203,13 @@ export default function EventsPage() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold mb-6">Мероприятия</h1>
+      <h1 className="text-2xl font-bold mb-6">Выставки</h1>
 
       <div className="flex justify-between items-center mb-6">
         <p className="text-gray-600">Выставки и события — отображаются на сайте</p>
         <button onClick={openCreate} className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
           <Plus className="h-5 w-5 mr-2" />
-          Добавить мероприятие
+          Добавить выставку
         </button>
       </div>
 
@@ -219,13 +219,13 @@ export default function EventsPage() {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
           </div>
         ) : events.length === 0 ? (
-          <div className="text-center py-12 text-gray-500">Нет мероприятий. Добавьте первое.</div>
+          <div className="text-center py-12 text-gray-500">Нет выставок. Добавьте первую.</div>
         ) : (
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
                 <th className="w-10" />
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Мероприятие</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Выставка</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Даты</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Статус</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Действия</th>
@@ -310,7 +310,7 @@ export default function EventsPage() {
       <Modal
         open={showModal}
         onClose={() => setShowModal(false)}
-        title={editing ? 'Редактировать мероприятие' : 'Новое мероприятие'}
+        title={editing ? 'Редактировать выставку' : 'Новая выставка'}
         size="lg"
         footer={
           <>
@@ -418,7 +418,7 @@ export default function EventsPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">Ссылка (сайт мероприятия)</label>
+            <label className="block text-sm text-gray-600 mb-1">Ссылка (сайт выставки)</label>
             <input type="url" placeholder="https://" value={form.website_url} onChange={(e) => setForm({ ...form, website_url: e.target.value })} className={field} />
           </div>
           <div className="flex items-center">
@@ -434,7 +434,7 @@ export default function EventsPage() {
       <Modal
         open={!!deleteConfirm}
         onClose={() => setDeleteConfirm(null)}
-        title="Удалить мероприятие?"
+        title="Удалить выставку?"
         size="sm"
         footer={
           <>

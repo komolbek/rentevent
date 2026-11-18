@@ -18,7 +18,7 @@ Updated: 2026-11-16 (evening)
 - Earlier: multilingual products, events/fairs, sets, UploadThing, header to the fair.rent reference (see git log).
 
 ## In progress
-Nothing.
+- Uncommitted in this worktree (`apps/web`): graphite top bar above the header with the language switcher (tagline + phone left), half-sun/half-moon icon for the System theme, quick-add `+`/stepper uses `CARD_RADIUS` (shared with `Card`) instead of a circle. `scripts/check.sh` green; quick-add not seen live (no API/products locally).
 
 ## Next
 - Decide go-live: set `SITE_GATE_ENABLED=false` on the RentEvent Web service; first publish the hero photos
